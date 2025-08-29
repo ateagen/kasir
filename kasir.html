@@ -2,125 +2,204 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kasir Web</title>
+  <title>Kasir</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f7f7f7;}
-    header {background:#333; color:#fff; padding:10px; text-align:center; font-size:20px;}
-    .container {display:flex;}
-    .menu {width:60%; padding:10px; display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px;}
-    .menu button {padding:10px; background:#fff; border:1px solid #ccc; cursor:pointer; font-size:14px;}
-    .cart {width:40%; background:#fff; padding:10px; border-left:1px solid #ccc;}
-    table {width:100%; border-collapse: collapse;}
-    table td, table th {border-bottom:1px solid #ccc; padding:5px; text-align:left;}
-    .actions {margin-top:10px;}
-    .actions button {padding:10px; margin-right:5px;}
+    @media print {
+      body * { visibility: hidden; font-family: monospace; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 58mm;
+        font-size: 11px;
+        line-height: 1.2;
+        padding: 4px;
+      }
+      #printArea h2 { font-size: 14px; margin: 2px 0; text-align: center; }
+      #printArea table { width: 100%; font-size: 11px; }
+      #printArea td, #printArea th { padding: 2px 0; text-align: left; }
+      #printArea hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
+      #printArea p { margin: 2px 0; }
+    }
   </style>
 </head>
-<body>
-  <header>Kasir Web</header>
-  <div class="container">
-    <div class="menu" id="menu"></div>
-    <div class="cart">
-      <h3>Daftar Pesanan</h3>
-      <table id="cartTable">
-        <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <p><strong>Total: Rp <span id="total">0</span></strong></p>
-      <label>Kasir: <input id="cashier" placeholder="Nama kasir"></label><br>
-      <label>Metode Pembayaran: 
-        <select id="payment">
-          <option>Tunai</option>
-          <option>QRIS</option>
-          <option>Kartu</option>
-          <option>Transfer</option>
-        </select>
-      </label>
-      <div class="actions">
-        <button onclick="checkout()">Bayar & Simpan</button>
-        <button onclick="printReceipt()">Cetak Struk</button>
-        <button onclick="fetchProducts()">Refresh Produk</button>
-      </div>
+<body class="bg-gray-100 p-6">
+
+  <!-- Login -->
+  <div id="loginSection" class="max-w-sm mx-auto bg-white p-6 rounded-xl shadow">
+    <h2 class="text-xl font-bold mb-4 text-center">Login Kasir</h2>
+    <input id="loginUser" placeholder="Username" class="w-full border p-2 mb-3 rounded">
+    <input id="loginPass" type="password" placeholder="Password" class="w-full border p-2 mb-3 rounded">
+    <button onclick="loginKasir()" class="w-full bg-blue-600 text-white p-2 rounded">Login</button>
+    <p id="loginError" class="text-red-500 mt-2 text-center hidden">Login gagal!</p>
+  </div>
+
+  <!-- Kasir Panel -->
+  <div id="kasirSection" class="hidden">
+    <h2 class="text-xl font-bold mb-4">Halo, <span id="kasirName"></span></h2>
+
+    <!-- Pilih menu -->
+    <div class="flex gap-2 mb-4">
+      <select id="menuSelect" class="border p-2 rounded w-2/3"></select>
+      <input id="qtyInput" type="number" min="1" value="1" class="border p-2 rounded w-1/3" />
+      <button onclick="tambahItem()" class="bg-green-600 text-white px-4 rounded">Tambah</button>
+    </div>
+
+    <!-- Keranjang -->
+    <table class="w-full bg-white rounded shadow mb-4">
+      <thead class="bg-gray-200">
+        <tr><th class="p-2">Item</th><th>Qty</th><th>Total</th></tr>
+      </thead>
+      <tbody id="cartTable"></tbody>
+    </table>
+
+    <!-- Bayar -->
+    <div class="bg-white p-4 rounded shadow mb-4">
+      <p>Total: Rp <span id="totalHarga">0</span></p>
+      <input id="bayarInput" type="number" placeholder="Uang bayar" class="border p-2 rounded w-full mt-2" oninput="hitungKembali()" />
+      <p class="mt-2">Kembali: Rp <span id="kembaliHarga">0</span></p>
+    </div>
+
+    <!-- Tombol -->
+    <div class="flex gap-2">
+      <button onclick="simpanTransaksi()" class="flex-1 bg-blue-600 text-white p-2 rounded">Bayar</button>
+      <button onclick="cetakStruk()" class="flex-1 bg-gray-800 text-white p-2 rounded">Cetak Struk</button>
     </div>
   </div>
 
-<script>
-const API_URL = "PASTE_WEB_APP_URL_DISINI"; // Ganti dengan URL Web App GAS
-let products = [];
-let cart = {};
+  <!-- Area Print -->
+  <div id="printArea" class="hidden">
+    <h2>TOKO KITA</h2>
+    <p>No: <span id="strukNo"></span></p>
+    <p>Kasir: <span id="strukKasir"></span></p>
+    <p>Waktu: <span id="strukWaktu"></span></p>
+    <hr>
+    <table>
+      <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+      <tbody id="strukItems"></tbody>
+    </table>
+    <hr>
+    <p>Total: Rp <span id="strukTotal"></span></p>
+    <p>Bayar: Rp <span id="strukBayar"></span></p>
+    <p>Kembali: Rp <span id="strukKembali"></span></p>
+    <hr>
+    <p class="text-center">~ Terima Kasih ~</p>
+  </div>
 
-async function fetchProducts() {
-  const res = await fetch(`${API_URL}?action=getProducts`);
-  products = await res.json();
-  renderMenu();
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // ganti dengan URL WebApp Google Apps Script
+let menuList = [], cart = [], currentKasir = "";
+let uangBayar = 0, kembalian = 0;
+
+// Login Kasir
+async function loginKasir() {
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value.trim();
+  const res = await fetch(`${scriptURL}?action=getKasir`);
+  const data = await res.json();
+  const kasir = data.find(k => k.Username === user && k.Password === pass);
+  if (kasir) {
+    currentKasir = kasir.Username;
+    document.getElementById("kasirName").innerText = currentKasir;
+    document.getElementById("loginSection").classList.add("hidden");
+    document.getElementById("kasirSection").classList.remove("hidden");
+    loadMenu();
+  } else {
+    document.getElementById("loginError").classList.remove("hidden");
+  }
 }
 
-function renderMenu() {
-  const menuDiv = document.getElementById('menu');
-  menuDiv.innerHTML = '';
-  products.forEach(p => {
-    const btn = document.createElement('button');
-    btn.textContent = `${p.name}\nRp${p.price}`;
-    btn.onclick = () => addToCart(p);
-    menuDiv.appendChild(btn);
+// Load menu dari Sheet
+async function loadMenu() {
+  const res = await fetch(`${scriptURL}?action=getMenu`);
+  menuList = await res.json();
+  const select = document.getElementById("menuSelect");
+  select.innerHTML = "";
+  menuList.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.Nama;
+    opt.textContent = `${m.Nama} - Rp${m.Harga}`;
+    select.appendChild(opt);
   });
 }
 
-function addToCart(product) {
-  if (!cart[product.id]) {
-    cart[product.id] = {...product, qty:1};
-  } else {
-    cart[product.id].qty++;
-  }
+// Tambah item ke keranjang
+function tambahItem() {
+  const nama = document.getElementById("menuSelect").value;
+  const qty = parseInt(document.getElementById("qtyInput").value);
+  const menu = menuList.find(m => m.Nama === nama);
+  const total = qty * parseInt(menu.Harga);
+  cart.push({Nama: nama, Qty: qty, Total: total});
   renderCart();
 }
 
+// Render keranjang
 function renderCart() {
-  const tbody = document.querySelector('#cartTable tbody');
-  tbody.innerHTML = '';
+  const tbody = document.getElementById("cartTable");
+  tbody.innerHTML = "";
   let total = 0;
-  Object.values(cart).forEach(item => {
-    const subtotal = item.qty * item.price;
-    total += subtotal;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${item.name}</td><td>${item.qty}</td><td>${item.price}</td><td>${subtotal}</td>`;
+  cart.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${c.Nama}</td><td>${c.Qty}</td><td>Rp${c.Total}</td>`;
     tbody.appendChild(tr);
+    total += c.Total;
   });
-  document.getElementById('total').textContent = total;
+  document.getElementById("totalHarga").innerText = total;
 }
 
-async function checkout() {
-  const cashier = document.getElementById('cashier').value;
-  const payment = document.getElementById('payment').value;
-  const total = Object.values(cart).reduce((s,i)=>s+(i.qty*i.price),0);
-  if (!cashier || total === 0) {
-    alert('Isi nama kasir dan tambah produk');
-    return;
-  }
-  const body = {
-    action:'saveTransaction',
-    id: Date.now(),
-    cashier,
-    payment_method: payment,
-    total,
-    items: Object.values(cart)
+// Hitung kembali
+function hitungKembali() {
+  uangBayar = parseInt(document.getElementById("bayarInput").value) || 0;
+  const total = cart.reduce((s,c)=>s+c.Total,0);
+  kembalian = uangBayar - total;
+  document.getElementById("kembaliHarga").innerText = kembalian;
+}
+
+// Simpan transaksi ke Sheet
+async function simpanTransaksi() {
+  if (cart.length === 0) return alert("Keranjang kosong!");
+  const total = cart.reduce((s,c)=>s+c.Total,0);
+  const noTrx = "TRX-" + Date.now();
+  const data = {
+    action: "addTransaksi",
+    NoTransaksi: noTrx,
+    Kasir: currentKasir,
+    Waktu: new Date().toLocaleString(),
+    Items: JSON.stringify(cart),
+    Total: total,
+    Bayar: uangBayar,
+    Kembali: kembalian
   };
-  await fetch(API_URL, {method:'POST', body:JSON.stringify(body)});
-  alert('Transaksi tersimpan');
-  cart = {}; renderCart();
+  await fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  alert("Transaksi tersimpan!");
+  document.getElementById("strukNo").innerText = noTrx;
+  document.getElementById("strukKasir").innerText = currentKasir;
+  document.getElementById("strukWaktu").innerText = new Date().toLocaleString();
+  document.getElementById("strukTotal").innerText = total;
+  document.getElementById("strukBayar").innerText = uangBayar;
+  document.getElementById("strukKembali").innerText = kembalian;
+  const list = document.getElementById("strukItems");
+  list.innerHTML = "";
+  cart.forEach(c=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.Nama}</td><td>${c.Qty}</td><td>Rp${c.Total}</td>`;
+    list.appendChild(tr);
+  });
+  cart = [];
+  renderCart();
+  document.getElementById("bayarInput").value="";
+  document.getElementById("kembaliHarga").innerText=0;
 }
 
-function printReceipt(){
-  const printContents = document.querySelector('.cart').innerHTML;
-  const w = window.open('', '', 'width=300,height=600');
-  w.document.write('<html><head><title>Struk</title></head><body>'+printContents+'</body></html>');
-  w.document.close();
-  w.print();
+// Cetak struk
+function cetakStruk() {
+  window.print();
 }
-
-fetchProducts();
 </script>
 </body>
 </html>
-
