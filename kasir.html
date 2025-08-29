@@ -4,196 +4,168 @@
   <meta charset="UTF-8">
   <title>Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #struk, #struk * {
-        visibility: visible;
-      }
-      #struk {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 58mm;
-      }
-    }
-  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100">
 
-  <!-- LOGIN FORM -->
-  <div id="loginPage" class="w-full max-w-sm bg-white p-6 rounded-xl shadow-md">
-    <h2 class="text-xl font-bold mb-4 text-center">Login Kasir</h2>
-    <input id="username" type="text" placeholder="Username" class="w-full mb-3 p-2 border rounded">
-    <input id="password" type="password" placeholder="Password" class="w-full mb-3 p-2 border rounded">
-    <button onclick="loginKasir()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>
-    <p id="loginError" class="text-red-600 text-sm mt-2 hidden">Username / Password salah</p>
-  </div>
-
-  <!-- KASIR PAGE -->
-  <div id="kasirPage" class="hidden w-full max-w-3xl bg-white p-6 rounded-xl shadow-md">
-    <h2 class="text-xl font-bold mb-4">Kasir - <span id="kasirName"></span></h2>
-
-    <!-- Menu List -->
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4" id="menuList"></div>
-
-    <!-- Pesanan -->
-    <h3 class="font-bold mb-2">Daftar Pesanan</h3>
-    <table class="w-full border mb-3">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border p-1">Item</th>
-          <th class="border p-1">Qty</th>
-          <th class="border p-1">Harga</th>
-          <th class="border p-1">Total</th>
-        </tr>
-      </thead>
-      <tbody id="pesananList"></tbody>
-    </table>
-
-    <!-- Pembayaran -->
-    <div class="mb-2">Total: <span id="totalHarga">0</span></div>
-    <input id="bayarInput" type="number" placeholder="Bayar" class="border p-2 rounded w-full mb-2" oninput="hitungKembali()">
-    <div class="mb-4">Kembali: <span id="kembalian">0</span></div>
-
-    <div class="flex gap-2">
-      <button onclick="simpanTransaksi()" class="flex-1 bg-green-600 text-white p-2 rounded hover:bg-green-700">Bayar</button>
-      <button onclick="printStruk()" class="flex-1 bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Cetak Struk</button>
+  <!-- Login Form -->
+  <div id="loginPage" class="flex h-screen items-center justify-center">
+    <div class="bg-white shadow-lg rounded-xl p-8 w-96">
+      <h2 class="text-xl font-bold mb-4 text-center">Login Kasir</h2>
+      <input id="username" type="text" placeholder="Username" class="w-full border p-2 rounded mb-3">
+      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded mb-3">
+      <button onclick="loginKasir()" class="w-full bg-blue-500 text-white p-2 rounded">Login</button>
     </div>
   </div>
 
-  <!-- STRUK (58mm) -->
-  <div id="struk" class="hidden text-sm">
-    <h2 class="text-center font-bold">Struk Pembayaran</h2>
-    <div>Kasir: <span id="strukKasir"></span></div>
-    <div>Waktu: <span id="strukWaktu"></span></div>
-    <hr>
-    <div id="strukItems"></div>
-    <hr>
-    <div>Total: <span id="strukTotal"></span></div>
-    <div>Bayar: <span id="strukBayar"></span></div>
-    <div>Kembali: <span id="strukKembali"></span></div>
-    <hr>
-    <div class="text-center">Terima Kasih!</div>
+  <!-- Halaman Kasir -->
+  <div id="kasirPage" class="hidden p-4">
+    <h2 class="text-xl font-bold mb-4">Transaksi Kasir - <span id="kasirName"></span></h2>
+
+    <!-- Daftar Pesanan -->
+    <table class="w-full bg-white shadow rounded mb-4">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-2">Item</th>
+          <th class="p-2">Qty</th>
+          <th class="p-2">Harga</th>
+          <th class="p-2">Total</th>
+        </tr>
+      </thead>
+      <tbody id="orderList"></tbody>
+    </table>
+
+    <!-- Input Bayar -->
+    <div class="bg-white p-4 rounded shadow mb-4">
+      <div class="flex justify-between mb-2">
+        <span>Total:</span>
+        <span id="grandTotal">0</span>
+      </div>
+      <input id="bayar" type="number" placeholder="Uang Bayar" class="w-full border p-2 rounded mb-2" oninput="hitungKembalian()">
+      <div class="flex justify-between">
+        <span>Kembali:</span>
+        <span id="kembali">0</span>
+      </div>
+    </div>
+
+    <!-- Tombol -->
+    <div class="flex gap-2">
+      <button onclick="simpanTransaksi()" class="bg-green-500 text-white px-4 py-2 rounded">Bayar</button>
+      <button onclick="cetakStruk()" class="bg-blue-500 text-white px-4 py-2 rounded">Cetak Struk</button>
+    </div>
+
+    <!-- Area Struk (hidden) -->
+    <iframe id="strukFrame" class="hidden"></iframe>
   </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec";
-let kasirLogin = "";
-let pesanan = [];
+  const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // ganti dengan URL Apps Script
 
-// === LOGIN KASIR ===
-function loginKasir() {
-  const user = document.getElementById("username").value.trim();
-  const pass = document.getElementById("password").value.trim();
+  let currentKasir = "";
+  let orders = [
+    { item: "Nasi Goreng", qty: 2, harga: 15000 },
+    { item: "Es Teh", qty: 1, harga: 5000 }
+  ]; // contoh dummy, nanti bisa diambil dari Menu
 
-  fetch(`${scriptURL}?action=getKasir`)
-    .then(res => res.json())
-    .then(data => {
-      const kasir = data.find(k => k.Username === user && k.Password === pass);
-      if (kasir) {
-        kasirLogin = user;
-        document.getElementById("loginPage").classList.add("hidden");
-        document.getElementById("kasirPage").classList.remove("hidden");
-        document.getElementById("kasirName").textContent = kasirLogin;
-        loadMenu();
-      } else {
-        document.getElementById("loginError").classList.remove("hidden");
-      }
-    });
-}
+  function loginKasir() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
 
-// === LOAD MENU ===
-function loadMenu() {
-  fetch(`${scriptURL}?action=getMenu`)
-    .then(res => res.json())
-    .then(menu => {
-      const list = document.getElementById("menuList");
-      list.innerHTML = "";
-      menu.forEach(m => {
-        let btn = document.createElement("button");
-        btn.className = "bg-blue-200 p-2 rounded hover:bg-blue-300";
-        btn.textContent = `${m.Nama} - Rp${m.Harga}`;
-        btn.onclick = () => tambahPesanan(m.Nama, parseInt(m.Harga));
-        list.appendChild(btn);
+    fetch(`${scriptURL}?action=getKasir`)
+      .then(res => res.json())
+      .then(data => {
+        const kasir = data.find(k => k.Username === user && k.Password === pass);
+        if (kasir) {
+          currentKasir = user;
+          document.getElementById("kasirName").innerText = user;
+          document.getElementById("loginPage").classList.add("hidden");
+          document.getElementById("kasirPage").classList.remove("hidden");
+          renderOrders();
+        } else {
+          alert("Username / Password salah");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Gagal ambil data kasir");
       });
-    });
-}
-
-// === PESANAN ===
-function tambahPesanan(nama, harga) {
-  let item = pesanan.find(p => p.nama === nama);
-  if (item) {
-    item.qty++;
-    item.total = item.qty * item.harga;
-  } else {
-    pesanan.push({ nama, harga, qty: 1, total: harga });
   }
-  renderPesanan();
-}
 
-function renderPesanan() {
-  let tbody = document.getElementById("pesananList");
-  tbody.innerHTML = "";
-  let total = 0;
-  pesanan.forEach(p => {
-    total += p.total;
-    tbody.innerHTML += `
-      <tr>
-        <td class="border p-1">${p.nama}</td>
-        <td class="border p-1">${p.qty}</td>
-        <td class="border p-1">${p.harga}</td>
-        <td class="border p-1">${p.total}</td>
-      </tr>`;
-  });
-  document.getElementById("totalHarga").textContent = total;
-}
-
-// === PEMBAYARAN ===
-function hitungKembali() {
-  const bayar = parseInt(document.getElementById("bayarInput").value) || 0;
-  const total = parseInt(document.getElementById("totalHarga").textContent);
-  document.getElementById("kembalian").textContent = bayar - total;
-}
-
-function simpanTransaksi() {
-  const total = parseInt(document.getElementById("totalHarga").textContent);
-  const bayar = parseInt(document.getElementById("bayarInput").value);
-  const kembali = bayar - total;
-  const waktu = new Date().toLocaleString();
-  const items = pesanan.map(p => `${p.nama} x${p.qty}`).join(", ");
-
-  fetch(`${scriptURL}?action=addTransaksi&NoTransaksi=${Date.now()}&Kasir=${kasirLogin}&Waktu=${waktu}&Item=${items}&Qty=${pesanan.length}&Total=${total}&Bayar=${bayar}&Kembali=${kembali}`)
-    .then(res => res.json())
-    .then(r => {
-      if (r.status === "ok") {
-        alert("Transaksi tersimpan!");
-        cetakPreview(total, bayar, kembali, items, waktu);
-        pesanan = [];
-        renderPesanan();
-        document.getElementById("bayarInput").value = "";
-        document.getElementById("kembalian").textContent = "0";
-      }
+  function renderOrders() {
+    const tbody = document.getElementById("orderList");
+    tbody.innerHTML = "";
+    let grandTotal = 0;
+    orders.forEach(o => {
+      let total = o.qty * o.harga;
+      grandTotal += total;
+      tbody.innerHTML += `
+        <tr>
+          <td class="p-2">${o.item}</td>
+          <td class="p-2">${o.qty}</td>
+          <td class="p-2">${o.harga}</td>
+          <td class="p-2">${total}</td>
+        </tr>`;
     });
-}
+    document.getElementById("grandTotal").innerText = grandTotal;
+  }
 
-// === CETAK STRUK ===
-function cetakPreview(total, bayar, kembali, items, waktu) {
-  document.getElementById("strukKasir").textContent = kasirLogin;
-  document.getElementById("strukWaktu").textContent = waktu;
-  document.getElementById("strukItems").textContent = items;
-  document.getElementById("strukTotal").textContent = total;
-  document.getElementById("strukBayar").textContent = bayar;
-  document.getElementById("strukKembali").textContent = kembali;
-}
+  function hitungKembalian() {
+    const bayar = parseInt(document.getElementById("bayar").value) || 0;
+    const total = parseInt(document.getElementById("grandTotal").innerText) || 0;
+    const kembali = bayar - total;
+    document.getElementById("kembali").innerText = kembali >= 0 ? kembali : 0;
+  }
 
-function printStruk() {
-  document.getElementById("struk").classList.remove("hidden");
-  window.print();
-  document.getElementById("struk").classList.add("hidden");
-}
+  function simpanTransaksi() {
+    const total = document.getElementById("grandTotal").innerText;
+    const bayar = document.getElementById("bayar").value;
+    const kembali = document.getElementById("kembali").innerText;
+    const waktu = new Date().toLocaleString();
+
+    fetch(`${scriptURL}?action=addTransaksi&NoTransaksi=${Date.now()}&Kasir=${currentKasir}&Waktu=${encodeURIComponent(waktu)}&Item=${encodeURIComponent(JSON.stringify(orders))}&Qty=${orders.reduce((a,b)=>a+b.qty,0)}&Total=${total}&Bayar=${bayar}&Kembali=${kembali}`)
+      .then(res => res.json())
+      .then(r => {
+        if (r.status === "ok") {
+          alert("Transaksi tersimpan");
+        }
+      });
+  }
+
+  function cetakStruk() {
+    let struk = `
+      <html>
+      <head>
+        <style>
+          body { font-family: monospace; width: 58mm; }
+          table { width: 100%; font-size: 12px; }
+          td { padding: 2px; }
+        </style>
+      </head>
+      <body>
+        <h3 style="text-align:center">STRUK PEMBAYARAN</h3>
+        <p>Kasir: ${currentKasir}</p>
+        <p>Waktu: ${new Date().toLocaleString()}</p>
+        <hr>
+        <table>`;
+    orders.forEach(o => {
+      struk += `<tr><td>${o.item} x${o.qty}</td><td style="text-align:right">${o.harga * o.qty}</td></tr>`;
+    });
+    struk += `</table>
+        <hr>
+        <p>Total: ${document.getElementById("grandTotal").innerText}</p>
+        <p>Bayar: ${document.getElementById("bayar").value}</p>
+        <p>Kembali: ${document.getElementById("kembali").innerText}</p>
+        <hr>
+        <p style="text-align:center">Terima Kasih</p>
+      </body></html>
+    `;
+
+    const iframe = document.getElementById("strukFrame").contentWindow.document;
+    iframe.open();
+    iframe.write(struk);
+    iframe.close();
+    document.getElementById("strukFrame").contentWindow.print();
+  }
 </script>
+
 </body>
 </html>
