@@ -3,208 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <title>Halaman Admin</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:20px; background:#f7f7f7; }
-    h2 { margin-top:30px; }
-    .hidden { display:none; }
-    .box { background:#fff; padding:20px; margin:15px 0; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-    table { width:100%; border-collapse: collapse; margin-top:10px;}
-    th, td { border:1px solid #ddd; padding:8px; text-align:left;}
-    th { background:#eee; }
-    button { padding:6px 12px; margin:2px; cursor:pointer;}
-    #loading { 
-      position:fixed; top:0; left:0; right:0; bottom:0; 
-      background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; 
-      color:#fff; font-size:20px; font-weight:bold; display:none;
-    }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen p-6">
 
   <!-- LOGIN -->
-  <div id="loginBox" class="box">
-    <h2>Login Admin</h2>
-    <input type="text" id="username" placeholder="Username"><br><br>
-    <input type="password" id="password" placeholder="Password"><br><br>
-    <button onclick="login()">Login</button>
-    <p id="loginMsg" style="color:red;"></p>
+  <div id="loginBox" class="max-w-sm mx-auto bg-white p-8 rounded-2xl shadow-lg">
+    <h2 class="text-2xl font-bold text-center mb-6">Login Admin</h2>
+    <input type="text" id="username" placeholder="Username"
+           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
+    <input type="password" id="password" placeholder="Password"
+           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Login</button>
+    <p id="loginMsg" class="text-red-500 mt-3 text-center"></p>
   </div>
 
   <!-- DASHBOARD ADMIN -->
-  <div id="adminPanel" class="hidden">
-    <h1>Dashboard Admin</h1>
+  <div id="adminPanel" class="hidden max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-gray-700">Dashboard Admin</h1>
 
     <!-- Kasir -->
-    <div class="box">
-      <h2>Manajemen Kasir</h2>
-      <input type="text" id="kasirUsername" placeholder="Username Kasir">
-      <input type="password" id="kasirPassword" placeholder="Password Kasir">
-      <button onclick="addKasir()">Tambah Kasir</button>
-      <table>
-        <thead><tr><th>Username</th><th>Aksi</th></tr></thead>
+    <div class="bg-white p-6 rounded-2xl shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">Manajemen Kasir</h2>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="kasirUsername" placeholder="Username Kasir" class="flex-1 p-2 border rounded-md">
+        <input type="password" id="kasirPassword" placeholder="Password Kasir" class="flex-1 p-2 border rounded-md">
+        <button onclick="addKasir()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
+      </div>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2">Username</th>
+            <th class="p-2">Aksi</th>
+          </tr>
+        </thead>
         <tbody id="kasirList"></tbody>
       </table>
     </div>
 
     <!-- Menu -->
-    <div class="box">
-      <h2>Manajemen Menu</h2>
-      <input type="text" id="menuNama" placeholder="Nama Menu">
-      <input type="number" id="menuHarga" placeholder="Harga">
-      <button onclick="addMenu()">Tambah Menu</button>
-      <table>
-        <thead><tr><th>Nama</th><th>Harga</th><th>Aksi</th></tr></thead>
+    <div class="bg-white p-6 rounded-2xl shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">Manajemen Menu</h2>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="menuNama" placeholder="Nama Menu" class="flex-1 p-2 border rounded-md">
+        <input type="number" id="menuHarga" placeholder="Harga" class="w-32 p-2 border rounded-md">
+        <button onclick="addMenu()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
+      </div>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2">Nama</th>
+            <th class="p-2">Harga</th>
+            <th class="p-2">Aksi</th>
+          </tr>
+        </thead>
         <tbody id="menuList"></tbody>
       </table>
     </div>
 
     <!-- Transaksi -->
-    <div class="box">
-      <h2>Transaksi</h2>
-      <label>Pilih Tanggal: <input type="date" id="filterTanggal"></label>
-      <button onclick="loadTransaksi()">Filter</button>
-      <table>
-        <thead><tr>
-          <th>Tanggal</th><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th>
-          <th>Pembelian</th><th>Operasional</th><th>Keterangan</th>
-        </tr></thead>
-        <tbody id="transaksiList"></tbody>
-      </table>
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-xl font-semibold mb-4">Transaksi</h2>
+      <div class="flex items-center gap-2 mb-4">
+        <input type="date" id="filterTanggal" class="p-2 border rounded-md">
+        <button onclick="loadTransaksi()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Filter</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2">Tanggal</th>
+              <th class="p-2">Menu</th>
+              <th class="p-2">Harga</th>
+              <th class="p-2">Jumlah</th>
+              <th class="p-2">Total</th>
+              <th class="p-2">Pembelian</th>
+              <th class="p-2">Operasional</th>
+              <th class="p-2">Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="transaksiList"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div id="loading">Loading...</div>
+  <!-- Loading -->
+  <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-xl hidden">
+    Loading...
+  </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // Ganti dengan URL Web App hasil deploy Code.gs
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // ganti dengan URL Apps Script
 
-// ======= LOADING =======
-function showLoading(){ document.getElementById("loading").style.display="flex"; }
-function hideLoading(){ document.getElementById("loading").style.display="none"; }
+function showLoading(){ document.getElementById("loading").classList.remove("hidden"); }
+function hideLoading(){ document.getElementById("loading").classList.add("hidden"); }
 
 // ======= LOGIN =======
 function login(){
-  const u = document.getElementById("username").value;
-  const p = document.getElementById("password").value;
+  const u=document.getElementById("username").value;
+  const p=document.getElementById("password").value;
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"login", username:u, password:p})
-  })
-  .then(res=>res.json())
-  .then(data=>{
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"login",username:u,password:p})})
+  .then(r=>r.json()).then(d=>{
     hideLoading();
-    if(data.status==="ok" && data.role==="admin"){
+    if(d.status==="ok" && d.role==="admin"){
       document.getElementById("loginBox").classList.add("hidden");
       document.getElementById("adminPanel").classList.remove("hidden");
-      refreshKasir();
-      refreshMenu();
-      loadTransaksi();
+      refreshKasir(); refreshMenu(); loadTransaksi();
     } else {
-      document.getElementById("loginMsg").innerText = "Login gagal!";
+      document.getElementById("loginMsg").innerText="Login gagal!";
     }
   });
 }
 
 // ======= KASIR =======
 function refreshKasir(){
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"getKasirList"})
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    const tbody=document.getElementById("kasirList");
-    tbody.innerHTML="";
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getKasirList"})})
+  .then(r=>r.json()).then(data=>{
+    const tbody=document.getElementById("kasirList"); tbody.innerHTML="";
     data.forEach(k=>{
       let tr=document.createElement("tr");
-      tr.innerHTML=`<td>${k.username}</td>
-                    <td><button onclick="deleteKasir('${k.username}')">Hapus</button></td>`;
+      tr.innerHTML=`<td class="p-2">${k.username}</td>
+        <td class="p-2"><button onclick="deleteKasir('${k.username}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Hapus</button></td>`;
       tbody.appendChild(tr);
     });
   });
 }
 function addKasir(){
-  const u=document.getElementById("kasirUsername").value;
-  const p=document.getElementById("kasirPassword").value;
+  const u=document.getElementById("kasirUsername").value, p=document.getElementById("kasirPassword").value;
   if(!u||!p) return alert("Isi username & password");
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"addKasir", username:u, password:p})
-  })
-  .then(r=>r.json())
-  .then(d=>{ hideLoading(); refreshKasir(); });
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addKasir",username:u,password:p})})
+  .then(r=>r.json()).then(d=>{ hideLoading(); refreshKasir(); });
 }
 function deleteKasir(username){
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"deleteKasir", username:username})
-  })
-  .then(r=>r.json())
-  .then(d=>{ hideLoading(); refreshKasir(); });
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"deleteKasir",username:username})})
+  .then(r=>r.json()).then(d=>{ hideLoading(); refreshKasir(); });
 }
 
 // ======= MENU =======
 function refreshMenu(){
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"getMenuList"})
-  })
-  .then(r=>r.json())
-  .then(data=>{
-    const tbody=document.getElementById("menuList");
-    tbody.innerHTML="";
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getMenuList"})})
+  .then(r=>r.json()).then(data=>{
+    const tbody=document.getElementById("menuList"); tbody.innerHTML="";
     data.forEach(m=>{
       let tr=document.createElement("tr");
-      tr.innerHTML=`<td>${m.nama}</td><td>${m.harga}</td>
-                    <td><button onclick="deleteMenu('${m.nama}')">Hapus</button></td>`;
+      tr.innerHTML=`<td class="p-2">${m.nama}</td><td class="p-2">${m.harga}</td>
+        <td class="p-2"><button onclick="deleteMenu('${m.nama}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Hapus</button></td>`;
       tbody.appendChild(tr);
     });
   });
 }
 function addMenu(){
-  const n=document.getElementById("menuNama").value;
-  const h=document.getElementById("menuHarga").value;
+  const n=document.getElementById("menuNama").value, h=document.getElementById("menuHarga").value;
   if(!n||!h) return alert("Isi nama & harga menu");
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"addMenu", namaMenu:n, harga:h})
-  })
-  .then(r=>r.json())
-  .then(d=>{ hideLoading(); refreshMenu(); });
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addMenu",namaMenu:n,harga:h})})
+  .then(r=>r.json()).then(d=>{ hideLoading(); refreshMenu(); });
 }
 function deleteMenu(nama){
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"deleteMenu", namaMenu:nama})
-  })
-  .then(r=>r.json())
-  .then(d=>{ hideLoading(); refreshMenu(); });
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"deleteMenu",namaMenu:nama})})
+  .then(r=>r.json()).then(d=>{ hideLoading(); refreshMenu(); });
 }
 
 // ======= TRANSAKSI =======
 function loadTransaksi(){
   const tgl=document.getElementById("filterTanggal").value;
   showLoading();
-  fetch(SCRIPT_URL, {
-    method:"POST",
-    body:new URLSearchParams({action:"getTransaksi", tanggal:tgl})
-  })
-  .then(r=>r.json())
-  .then(data=>{
+  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getTransaksi",tanggal:tgl})})
+  .then(r=>r.json()).then(data=>{
     hideLoading();
-    const tbody=document.getElementById("transaksiList");
-    tbody.innerHTML="";
+    const tbody=document.getElementById("transaksiList"); tbody.innerHTML="";
     data.forEach(trx=>{
       let tr=document.createElement("tr");
-      tr.innerHTML=`<td>${trx.tanggal}</td><td>${trx.menu}</td><td>${trx.harga}</td>
-                    <td>${trx.jumlah}</td><td>${trx.total}</td>
-                    <td>${trx.pembelian}</td><td>${trx.operasional}</td>
-                    <td>${trx.keterangan}</td>`;
+      tr.innerHTML=`<td class="p-2">${trx.tanggal}</td><td class="p-2">${trx.menu}</td>
+        <td class="p-2">${trx.harga}</td><td class="p-2">${trx.jumlah}</td><td class="p-2">${trx.total}</td>
+        <td class="p-2">${trx.pembelian}</td><td class="p-2">${trx.operasional}</td><td class="p-2">${trx.keterangan}</td>`;
       tbody.appendChild(tr);
     });
   });
