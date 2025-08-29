@@ -2,149 +2,131 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Halaman Kas</title>
+  <title>Kas Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-3xl bg-white p-6 rounded-2xl shadow-md">
+    <!-- Header -->
+    <h1 class="text-2xl font-bold text-center mb-6">Dashboard Kas</h1>
 
-  <!-- LOGIN -->
-  <div id="loginBox" class="max-w-sm mx-auto bg-white p-8 rounded-2xl shadow-lg">
-    <h2 class="text-2xl font-bold text-center mb-6">Login Kas</h2>
-    <input type="text" id="username" placeholder="Username"
-           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
-    <input type="password" id="password" placeholder="Password"
-           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
-    <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Login</button>
-    <p id="loginMsg" class="text-red-500 mt-3 text-center"></p>
-  </div>
-
-  <!-- DASHBOARD KAS -->
-  <div id="kasPanel" class="hidden max-w-3xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-gray-700">Dashboard Kas</h1>
-
-    <!-- Kas Awal -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Kas Awal</h2>
-      <p id="kasAwal" class="text-lg font-bold text-green-700">Rp 0</p>
-    </div>
-
-    <!-- Input Pembelian -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Input Pembelian</h2>
-      <div class="flex gap-2 mb-3">
-        <input type="text" id="pembelianKet" placeholder="Keterangan" class="flex-1 p-2 border rounded-md">
-        <input type="number" id="pembelianNominal" placeholder="Nominal" class="w-40 p-2 border rounded-md">
-        <button onclick="addPembelian()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
+    <!-- Kas Awal & Penjualan -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-blue-50 p-4 rounded-xl shadow">
+        <p class="text-gray-600">Kas Awal</p>
+        <p id="kasAwal" class="text-xl font-bold">Rp 0</p>
       </div>
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Keterangan</th>
-            <th class="p-2">Nominal</th>
-          </tr>
-        </thead>
-        <tbody id="pembelianList"></tbody>
-      </table>
-    </div>
-
-    <!-- Input Operasional -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Input Biaya Operasional</h2>
-      <div class="flex gap-2 mb-3">
-        <input type="text" id="operasionalKet" placeholder="Keterangan" class="flex-1 p-2 border rounded-md">
-        <input type="number" id="operasionalNominal" placeholder="Nominal" class="w-40 p-2 border rounded-md">
-        <button onclick="addOperasional()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
+      <div class="bg-green-50 p-4 rounded-xl shadow">
+        <p class="text-gray-600">Total Penjualan Hari Ini</p>
+        <p id="penjualan" class="text-xl font-bold">Rp 0</p>
       </div>
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Keterangan</th>
-            <th class="p-2">Nominal</th>
-          </tr>
-        </thead>
-        <tbody id="operasionalList"></tbody>
-      </table>
     </div>
 
-    <!-- Penjualan Hari Ini -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Total Penjualan Hari Ini</h2>
-      <p id="penjualanHariIni" class="text-lg font-bold text-blue-700">Rp 0</p>
+    <!-- Form Pembelian -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Tambah Pembelian</h2>
+      <form id="formPembelian" class="flex gap-2">
+        <input type="text" id="ketPembelian" placeholder="Keterangan" class="flex-1 p-2 border rounded-lg">
+        <input type="number" id="nominalPembelian" placeholder="Nominal" class="w-40 p-2 border rounded-lg">
+        <button type="submit" class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700">Tambah</button>
+      </form>
+    </div>
+
+    <!-- Form Operasional -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-2">Tambah Operasional</h2>
+      <form id="formOperasional" class="flex gap-2">
+        <input type="text" id="ketOperasional" placeholder="Keterangan" class="flex-1 p-2 border rounded-lg">
+        <input type="number" id="nominalOperasional" placeholder="Nominal" class="w-40 p-2 border rounded-lg">
+        <button type="submit" class="bg-purple-600 text-white px-4 rounded-lg hover:bg-purple-700">Tambah</button>
+      </form>
+    </div>
+
+    <!-- List Pembelian & Operasional -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div>
+        <h2 class="font-semibold mb-2">Daftar Pembelian</h2>
+        <ul id="listPembelian" class="space-y-1 text-sm text-gray-700"></ul>
+      </div>
+      <div>
+        <h2 class="font-semibold mb-2">Daftar Operasional</h2>
+        <ul id="listOperasional" class="space-y-1 text-sm text-gray-700"></ul>
+      </div>
     </div>
 
     <!-- Kas Akhir -->
-    <div class="bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-xl font-semibold mb-4">Kas Akhir</h2>
-      <p id="kasAkhir" class="text-lg font-bold text-red-700">Rp 0</p>
+    <div class="bg-yellow-50 p-4 rounded-xl shadow text-center">
+      <p class="text-gray-600">Kas Akhir Hari Ini</p>
+      <p id="kasAkhir" class="text-2xl font-bold">Rp 0</p>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-xl hidden">
-    Loading...
-  </div>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // ganti dgn URL Web App kamu
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // ganti dengan URL Apps Script
+    async function fetchKasData() {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: new URLSearchParams({ action: "getKasData" })
+      });
+      const data = await res.json();
+      document.getElementById("kasAwal").textContent = "Rp " + data.kasAwal;
+      document.getElementById("penjualan").textContent = "Rp " + data.penjualan;
+      document.getElementById("kasAkhir").textContent = "Rp " + data.kasAkhir;
 
-function showLoading(){ document.getElementById("loading").classList.remove("hidden"); }
-function hideLoading(){ document.getElementById("loading").classList.add("hidden"); }
+      // tampilkan daftar pembelian
+      const listPembelian = document.getElementById("listPembelian");
+      listPembelian.innerHTML = "";
+      data.pembelian.forEach(item=>{
+        listPembelian.innerHTML += `<li>• ${item.ket} - Rp ${item.nominal}</li>`;
+      });
 
-// ======= LOGIN =======
-function login(){
-  const u=document.getElementById("username").value;
-  const p=document.getElementById("password").value;
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"login",username:u,password:p})})
-  .then(r=>r.json()).then(d=>{
-    hideLoading();
-    if(d.status==="ok" && d.role==="kas"){
-      document.getElementById("loginBox").classList.add("hidden");
-      document.getElementById("kasPanel").classList.remove("hidden");
-      loadKasData();
-    } else {
-      document.getElementById("loginMsg").innerText="Login gagal!";
+      // tampilkan daftar operasional
+      const listOperasional = document.getElementById("listOperasional");
+      listOperasional.innerHTML = "";
+      data.operasional.forEach(item=>{
+        listOperasional.innerHTML += `<li>• ${item.ket} - Rp ${item.nominal}</li>`;
+      });
     }
-  });
-}
 
-// ======= LOAD DATA KAS =======
-function loadKasData(){
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getKasData"})})
-  .then(r=>r.json()).then(d=>{
-    document.getElementById("kasAwal").innerText="Rp "+d.kasAwal;
-    document.getElementById("penjualanHariIni").innerText="Rp "+d.penjualan;
-    document.getElementById("kasAkhir").innerText="Rp "+d.kasAkhir;
-    renderList("pembelianList", d.pembelian);
-    renderList("operasionalList", d.operasional);
-  });
-}
+    // Tambah Pembelian
+    document.getElementById("formPembelian").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const ket = document.getElementById("ketPembelian").value;
+      const nominal = document.getElementById("nominalPembelian").value;
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          action: "addPembelian",
+          ket: ket,
+          nominal: nominal
+        })
+      });
+      document.getElementById("ketPembelian").value="";
+      document.getElementById("nominalPembelian").value="";
+      fetchKasData();
+    });
 
-function renderList(id, arr){
-  const tbody=document.getElementById(id); tbody.innerHTML="";
-  arr.forEach(i=>{
-    let tr=document.createElement("tr");
-    tr.innerHTML=`<td class="p-2">${i.ket}</td><td class="p-2">Rp ${i.nominal}</td>`;
-    tbody.appendChild(tr);
-  });
-}
+    // Tambah Operasional
+    document.getElementById("formOperasional").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const ket = document.getElementById("ketOperasional").value;
+      const nominal = document.getElementById("nominalOperasional").value;
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: new URLSearchParams({
+          action: "addOperasional",
+          ket: ket,
+          nominal: nominal
+        })
+      });
+      document.getElementById("ketOperasional").value="";
+      document.getElementById("nominalOperasional").value="";
+      fetchKasData();
+    });
 
-// ======= INPUT =======
-function addPembelian(){
-  const ket=document.getElementById("pembelianKet").value, nom=document.getElementById("pembelianNominal").value;
-  if(!ket||!nom) return alert("Isi keterangan & nominal");
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addPembelian",ket:ket,nominal:nom})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); loadKasData(); });
-}
-
-function addOperasional(){
-  const ket=document.getElementById("operasionalKet").value, nom=document.getElementById("operasionalNominal").value;
-  if(!ket||!nom) return alert("Isi keterangan & nominal");
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addOperasional",ket:ket,nominal:nom})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); loadKasData(); });
-}
-</script>
+    // load awal
+    fetchKasData();
+  </script>
 </body>
 </html>
