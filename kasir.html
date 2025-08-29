@@ -6,199 +6,193 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
-      body * { visibility: hidden; font-family: monospace; }
-      #printArea, #printArea * { visibility: visible; }
-      #printArea {
+      body * {
+        visibility: hidden;
+      }
+      #struk, #struk * {
+        visibility: visible;
+      }
+      #struk {
         position: absolute;
         left: 0;
         top: 0;
         width: 58mm;
-        font-size: 11px;
-        line-height: 1.2;
-        padding: 4px;
       }
-      #printArea h2 { font-size: 14px; margin: 2px 0; text-align: center; }
-      #printArea table { width: 100%; font-size: 11px; }
-      #printArea td, #printArea th { padding: 2px 0; text-align: left; }
-      #printArea hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
-      #printArea p { margin: 2px 0; }
     }
   </style>
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-  <!-- Login -->
-  <div id="loginSection" class="max-w-sm mx-auto bg-white p-6 rounded-xl shadow">
+  <!-- LOGIN FORM -->
+  <div id="loginPage" class="w-full max-w-sm bg-white p-6 rounded-xl shadow-md">
     <h2 class="text-xl font-bold mb-4 text-center">Login Kasir</h2>
-    <input id="loginUser" placeholder="Username" class="w-full border p-2 mb-3 rounded">
-    <input id="loginPass" type="password" placeholder="Password" class="w-full border p-2 mb-3 rounded">
-    <button onclick="loginKasir()" class="w-full bg-blue-600 text-white p-2 rounded">Login</button>
-    <p id="loginError" class="text-red-500 mt-2 text-center hidden">Login gagal!</p>
+    <input id="username" type="text" placeholder="Username" class="w-full mb-3 p-2 border rounded">
+    <input id="password" type="password" placeholder="Password" class="w-full mb-3 p-2 border rounded">
+    <button onclick="loginKasir()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>
+    <p id="loginError" class="text-red-600 text-sm mt-2 hidden">Username / Password salah</p>
   </div>
 
-  <!-- Kasir Panel -->
-  <div id="kasirSection" class="hidden">
-    <h2 class="text-xl font-bold mb-4">Halo, <span id="kasirName"></span></h2>
+  <!-- KASIR PAGE -->
+  <div id="kasirPage" class="hidden w-full max-w-3xl bg-white p-6 rounded-xl shadow-md">
+    <h2 class="text-xl font-bold mb-4">Kasir - <span id="kasirName"></span></h2>
 
-    <!-- Pilih menu -->
-    <div class="flex gap-2 mb-4">
-      <select id="menuSelect" class="border p-2 rounded w-2/3"></select>
-      <input id="qtyInput" type="number" min="1" value="1" class="border p-2 rounded w-1/3" />
-      <button onclick="tambahItem()" class="bg-green-600 text-white px-4 rounded">Tambah</button>
-    </div>
+    <!-- Menu List -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4" id="menuList"></div>
 
-    <!-- Keranjang -->
-    <table class="w-full bg-white rounded shadow mb-4">
-      <thead class="bg-gray-200">
-        <tr><th class="p-2">Item</th><th>Qty</th><th>Total</th></tr>
+    <!-- Pesanan -->
+    <h3 class="font-bold mb-2">Daftar Pesanan</h3>
+    <table class="w-full border mb-3">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-1">Item</th>
+          <th class="border p-1">Qty</th>
+          <th class="border p-1">Harga</th>
+          <th class="border p-1">Total</th>
+        </tr>
       </thead>
-      <tbody id="cartTable"></tbody>
+      <tbody id="pesananList"></tbody>
     </table>
 
-    <!-- Bayar -->
-    <div class="bg-white p-4 rounded shadow mb-4">
-      <p>Total: Rp <span id="totalHarga">0</span></p>
-      <input id="bayarInput" type="number" placeholder="Uang bayar" class="border p-2 rounded w-full mt-2" oninput="hitungKembali()" />
-      <p class="mt-2">Kembali: Rp <span id="kembaliHarga">0</span></p>
-    </div>
+    <!-- Pembayaran -->
+    <div class="mb-2">Total: <span id="totalHarga">0</span></div>
+    <input id="bayarInput" type="number" placeholder="Bayar" class="border p-2 rounded w-full mb-2" oninput="hitungKembali()">
+    <div class="mb-4">Kembali: <span id="kembalian">0</span></div>
 
-    <!-- Tombol -->
     <div class="flex gap-2">
-      <button onclick="simpanTransaksi()" class="flex-1 bg-blue-600 text-white p-2 rounded">Bayar</button>
-      <button onclick="cetakStruk()" class="flex-1 bg-gray-800 text-white p-2 rounded">Cetak Struk</button>
+      <button onclick="simpanTransaksi()" class="flex-1 bg-green-600 text-white p-2 rounded hover:bg-green-700">Bayar</button>
+      <button onclick="printStruk()" class="flex-1 bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Cetak Struk</button>
     </div>
   </div>
 
-  <!-- Area Print -->
-  <div id="printArea" class="hidden">
-    <h2>TOKO KITA</h2>
-    <p>No: <span id="strukNo"></span></p>
-    <p>Kasir: <span id="strukKasir"></span></p>
-    <p>Waktu: <span id="strukWaktu"></span></p>
+  <!-- STRUK (58mm) -->
+  <div id="struk" class="hidden text-sm">
+    <h2 class="text-center font-bold">Struk Pembayaran</h2>
+    <div>Kasir: <span id="strukKasir"></span></div>
+    <div>Waktu: <span id="strukWaktu"></span></div>
     <hr>
-    <table>
-      <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
-      <tbody id="strukItems"></tbody>
-    </table>
+    <div id="strukItems"></div>
     <hr>
-    <p>Total: Rp <span id="strukTotal"></span></p>
-    <p>Bayar: Rp <span id="strukBayar"></span></p>
-    <p>Kembali: Rp <span id="strukKembali"></span></p>
+    <div>Total: <span id="strukTotal"></span></div>
+    <div>Bayar: <span id="strukBayar"></span></div>
+    <div>Kembali: <span id="strukKembali"></span></div>
     <hr>
-    <p class="text-center">~ Terima Kasih ~</p>
+    <div class="text-center">Terima Kasih!</div>
   </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // ganti dengan URL WebApp Google Apps Script
-let menuList = [], cart = [], currentKasir = "";
-let uangBayar = 0, kembalian = 0;
+const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec";
+let kasirLogin = "";
+let pesanan = [];
 
-// Login Kasir
-async function loginKasir() {
-  const user = document.getElementById("loginUser").value.trim();
-  const pass = document.getElementById("loginPass").value.trim();
-  const res = await fetch(`${scriptURL}?action=getKasir`);
-  const data = await res.json();
-  const kasir = data.find(k => k.Username === user && k.Password === pass);
-  if (kasir) {
-    currentKasir = kasir.Username;
-    document.getElementById("kasirName").innerText = currentKasir;
-    document.getElementById("loginSection").classList.add("hidden");
-    document.getElementById("kasirSection").classList.remove("hidden");
-    loadMenu();
+// === LOGIN KASIR ===
+function loginKasir() {
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
+
+  fetch(`${scriptURL}?action=getKasir`)
+    .then(res => res.json())
+    .then(data => {
+      const kasir = data.find(k => k.Username === user && k.Password === pass);
+      if (kasir) {
+        kasirLogin = user;
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("kasirPage").classList.remove("hidden");
+        document.getElementById("kasirName").textContent = kasirLogin;
+        loadMenu();
+      } else {
+        document.getElementById("loginError").classList.remove("hidden");
+      }
+    });
+}
+
+// === LOAD MENU ===
+function loadMenu() {
+  fetch(`${scriptURL}?action=getMenu`)
+    .then(res => res.json())
+    .then(menu => {
+      const list = document.getElementById("menuList");
+      list.innerHTML = "";
+      menu.forEach(m => {
+        let btn = document.createElement("button");
+        btn.className = "bg-blue-200 p-2 rounded hover:bg-blue-300";
+        btn.textContent = `${m.Nama} - Rp${m.Harga}`;
+        btn.onclick = () => tambahPesanan(m.Nama, parseInt(m.Harga));
+        list.appendChild(btn);
+      });
+    });
+}
+
+// === PESANAN ===
+function tambahPesanan(nama, harga) {
+  let item = pesanan.find(p => p.nama === nama);
+  if (item) {
+    item.qty++;
+    item.total = item.qty * item.harga;
   } else {
-    document.getElementById("loginError").classList.remove("hidden");
+    pesanan.push({ nama, harga, qty: 1, total: harga });
   }
+  renderPesanan();
 }
 
-// Load menu dari Sheet
-async function loadMenu() {
-  const res = await fetch(`${scriptURL}?action=getMenu`);
-  menuList = await res.json();
-  const select = document.getElementById("menuSelect");
-  select.innerHTML = "";
-  menuList.forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m.Nama;
-    opt.textContent = `${m.Nama} - Rp${m.Harga}`;
-    select.appendChild(opt);
-  });
-}
-
-// Tambah item ke keranjang
-function tambahItem() {
-  const nama = document.getElementById("menuSelect").value;
-  const qty = parseInt(document.getElementById("qtyInput").value);
-  const menu = menuList.find(m => m.Nama === nama);
-  const total = qty * parseInt(menu.Harga);
-  cart.push({Nama: nama, Qty: qty, Total: total});
-  renderCart();
-}
-
-// Render keranjang
-function renderCart() {
-  const tbody = document.getElementById("cartTable");
+function renderPesanan() {
+  let tbody = document.getElementById("pesananList");
   tbody.innerHTML = "";
   let total = 0;
-  cart.forEach(c => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${c.Nama}</td><td>${c.Qty}</td><td>Rp${c.Total}</td>`;
-    tbody.appendChild(tr);
-    total += c.Total;
+  pesanan.forEach(p => {
+    total += p.total;
+    tbody.innerHTML += `
+      <tr>
+        <td class="border p-1">${p.nama}</td>
+        <td class="border p-1">${p.qty}</td>
+        <td class="border p-1">${p.harga}</td>
+        <td class="border p-1">${p.total}</td>
+      </tr>`;
   });
-  document.getElementById("totalHarga").innerText = total;
+  document.getElementById("totalHarga").textContent = total;
 }
 
-// Hitung kembali
+// === PEMBAYARAN ===
 function hitungKembali() {
-  uangBayar = parseInt(document.getElementById("bayarInput").value) || 0;
-  const total = cart.reduce((s,c)=>s+c.Total,0);
-  kembalian = uangBayar - total;
-  document.getElementById("kembaliHarga").innerText = kembalian;
+  const bayar = parseInt(document.getElementById("bayarInput").value) || 0;
+  const total = parseInt(document.getElementById("totalHarga").textContent);
+  document.getElementById("kembalian").textContent = bayar - total;
 }
 
-// Simpan transaksi ke Sheet
-async function simpanTransaksi() {
-  if (cart.length === 0) return alert("Keranjang kosong!");
-  const total = cart.reduce((s,c)=>s+c.Total,0);
-  const noTrx = "TRX-" + Date.now();
-  const data = {
-    action: "addTransaksi",
-    NoTransaksi: noTrx,
-    Kasir: currentKasir,
-    Waktu: new Date().toLocaleString(),
-    Items: JSON.stringify(cart),
-    Total: total,
-    Bayar: uangBayar,
-    Kembali: kembalian
-  };
-  await fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  });
-  alert("Transaksi tersimpan!");
-  document.getElementById("strukNo").innerText = noTrx;
-  document.getElementById("strukKasir").innerText = currentKasir;
-  document.getElementById("strukWaktu").innerText = new Date().toLocaleString();
-  document.getElementById("strukTotal").innerText = total;
-  document.getElementById("strukBayar").innerText = uangBayar;
-  document.getElementById("strukKembali").innerText = kembalian;
-  const list = document.getElementById("strukItems");
-  list.innerHTML = "";
-  cart.forEach(c=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${c.Nama}</td><td>${c.Qty}</td><td>Rp${c.Total}</td>`;
-    list.appendChild(tr);
-  });
-  cart = [];
-  renderCart();
-  document.getElementById("bayarInput").value="";
-  document.getElementById("kembaliHarga").innerText=0;
+function simpanTransaksi() {
+  const total = parseInt(document.getElementById("totalHarga").textContent);
+  const bayar = parseInt(document.getElementById("bayarInput").value);
+  const kembali = bayar - total;
+  const waktu = new Date().toLocaleString();
+  const items = pesanan.map(p => `${p.nama} x${p.qty}`).join(", ");
+
+  fetch(`${scriptURL}?action=addTransaksi&NoTransaksi=${Date.now()}&Kasir=${kasirLogin}&Waktu=${waktu}&Item=${items}&Qty=${pesanan.length}&Total=${total}&Bayar=${bayar}&Kembali=${kembali}`)
+    .then(res => res.json())
+    .then(r => {
+      if (r.status === "ok") {
+        alert("Transaksi tersimpan!");
+        cetakPreview(total, bayar, kembali, items, waktu);
+        pesanan = [];
+        renderPesanan();
+        document.getElementById("bayarInput").value = "";
+        document.getElementById("kembalian").textContent = "0";
+      }
+    });
 }
 
-// Cetak struk
-function cetakStruk() {
+// === CETAK STRUK ===
+function cetakPreview(total, bayar, kembali, items, waktu) {
+  document.getElementById("strukKasir").textContent = kasirLogin;
+  document.getElementById("strukWaktu").textContent = waktu;
+  document.getElementById("strukItems").textContent = items;
+  document.getElementById("strukTotal").textContent = total;
+  document.getElementById("strukBayar").textContent = bayar;
+  document.getElementById("strukKembali").textContent = kembali;
+}
+
+function printStruk() {
+  document.getElementById("struk").classList.remove("hidden");
   window.print();
+  document.getElementById("struk").classList.add("hidden");
 }
 </script>
 </body>
