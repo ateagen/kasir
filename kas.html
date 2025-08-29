@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Kas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Login Modal -->
+  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+      <h2 class="text-xl font-bold mb-4 text-center">Login</h2>
+      <input id="username" type="text" placeholder="Username" class="w-full mb-3 p-2 border rounded">
+      <input id="password" type="password" placeholder="Password" class="w-full mb-4 p-2 border rounded">
+      <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+      <p id="loginError" class="text-red-500 text-sm mt-2 hidden">Login gagal!</p>
+    </div>
+  </div>
+
+  <header class="bg-blue-600 text-white p-4 text-center text-xl font-bold">
+    Laporan Kas
+  </header>
+
+  <main class="flex-1 p-4 max-w-5xl mx-auto">
+    <!-- Ringkasan Kas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-gray-600">Kas Awal</h3>
+        <p id="kasAwal" class="text-2xl font-bold">Rp 0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-gray-600">Kas Akhir</h3>
+        <p id="kasAkhir" class="text-2xl font-bold">Rp 0</p>
+      </div>
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-gray-600">Tanggal</h3>
+        <p id="tanggalHariIni" class="text-xl font-bold"></p>
+      </div>
+    </div>
+
+    <!-- Form Input Pengeluaran -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+      <h3 class="text-lg font-bold mb-3">Input Pembelian / Operasional</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+        <input id="keterangan" type="text" placeholder="Keterangan" class="p-2 border rounded">
+        <select id="kategori" class="p-2 border rounded">
+          <option value="Barang">Barang</option>
+          <option value="Bahan">Bahan</option>
+          <option value="Operasional">Operasional</option>
+        </select>
+        <input id="nominal" type="number" placeholder="Nominal" class="p-2 border rounded">
+        <button onclick="tambahPengeluaran()" class="bg-green-500 text-white rounded p-2 hover:bg-green-600">Simpan</button>
+      </div>
+      <p id="formMsg" class="text-green-600 text-sm hidden">Data berhasil disimpan!</p>
+    </div>
+
+    <!-- Tabel Transaksi -->
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="text-lg font-bold mb-3">Catatan Transaksi</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full border">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="border px-2 py-1">Tanggal</th>
+              <th class="border px-2 py-1">Keterangan</th>
+              <th class="border px-2 py-1">Kategori</th>
+              <th class="border px-2 py-1">Nominal</th>
+              <th class="border px-2 py-1">Tipe</th>
+            </tr>
+          </thead>
+          <tbody id="tabelKeuangan"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Loading Overlay -->
+  <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow-lg">
+      <p class="text-lg font-bold">Loading...</p>
+    </div>
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyKH1ldyMiSIiSYYYECIwY8Tja1MULO8Uvh5PeVJ5P3jJhZGjS0sXsjdp-xv7rCAdM/exec"; // Ganti dengan URL Web App
+    let userRole = "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("tanggalHariIni").textContent = new Date().toLocaleDateString('id-ID');
+    });
+
+    async function login() {
+      showLoading(true);
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const res = await fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify({ action: "login", username, password }),
+      });
+      const data = await res.json();
+      showLoading(false);
+
+      if (data.success) {
+        userRole = data.role;
+        document.getElementById("loginModal").classList.add("hidden");
+        muatData();
+      } else {
+        document.getElementById("loginError").classList.remove("hidden");
+      }
+    }
+
+    async function muatData() {
+      showLoading(true);
+      const res = await fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify({ action: "getData", sheetName: "Keuangan" }),
+      });
+      const json = await res.json();
+      tampilkanTabel(json.data);
+      hitungKas(json.data);
+      showLoading(false);
+    }
+
+    function tampilkanTabel(data) {
+      const tbody = document.getElementById("tabelKeuangan");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border px-2 py-1">${row.Tanggal}</td>
+          <td class="border px-2 py-1">${row.Keterangan}</td>
+          <td class="border px-2 py-1">${row.Kategori}</td>
+          <td class="border px-2 py-1">Rp ${Number(row.Nominal).toLocaleString('id-ID')}</td>
+          <td class="border px-2 py-1">${row.Tipe}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function hitungKas(data) {
+      const today = new Date().toLocaleDateString('id-ID');
+      let kasAwal = 0, penjualanHariIni = 0, pengeluaranHariIni = 0;
+
+      data.forEach(row => {
+        const nominal = Number(row.Nominal);
+        if (row.Tipe === "Penjualan") kasAwal += nominal;
+        else kasAwal -= nominal;
+
+        if (row.Tanggal === today) {
+          if (row.Tipe === "Penjualan") penjualanHariIni += nominal;
+          else pengeluaranHariIni += nominal;
+        }
+      });
+
+      const kasAkhir = kasAwal; // Kas awal sudah mencakup semua
+      document.getElementById("kasAwal").textContent = `Rp ${kasAwal.toLocaleString('id-ID')}`;
+      document.getElementById("kasAkhir").textContent = `Rp ${(kasAwal).toLocaleString('id-ID')}`;
+    }
+
+    async function tambahPengeluaran() {
+      const keterangan = document.getElementById("keterangan").value;
+      const kategori = document.getElementById("kategori").value;
+      const nominal = document.getElementById("nominal").value;
+
+      if (!keterangan || !nominal) {
+        alert("Isi semua field!");
+        return;
+      }
+
+      showLoading(true);
+      const res = await fetch(scriptURL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "addKeuangan",
+          data: {
+            tanggal: new Date().toLocaleDateString('id-ID'),
+            keterangan,
+            kategori,
+            nominal,
+            tipe: "Pengeluaran"
+          }
+        }),
+      });
+      await res.json();
+      showLoading(false);
+
+      document.getElementById("formMsg").classList.remove("hidden");
+      setTimeout(() => document.getElementById("formMsg").classList.add("hidden"), 2000);
+
+      muatData();
+    }
+
+    function showLoading(show) {
+      document.getElementById("loading").classList.toggle("hidden", !show);
+    }
+  </script>
+</body>
+</html>

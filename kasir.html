@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir Web</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin:0; padding:0; background:#f7f7f7;}
+    header {background:#333; color:#fff; padding:10px; text-align:center; font-size:20px;}
+    .container {display:flex;}
+    .menu {width:60%; padding:10px; display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px;}
+    .menu button {padding:10px; background:#fff; border:1px solid #ccc; cursor:pointer; font-size:14px;}
+    .cart {width:40%; background:#fff; padding:10px; border-left:1px solid #ccc;}
+    table {width:100%; border-collapse: collapse;}
+    table td, table th {border-bottom:1px solid #ccc; padding:5px; text-align:left;}
+    .actions {margin-top:10px;}
+    .actions button {padding:10px; margin-right:5px;}
+  </style>
+</head>
+<body>
+  <header>Kasir Web</header>
+  <div class="container">
+    <div class="menu" id="menu"></div>
+    <div class="cart">
+      <h3>Daftar Pesanan</h3>
+      <table id="cartTable">
+        <thead><tr><th>Item</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p><strong>Total: Rp <span id="total">0</span></strong></p>
+      <label>Kasir: <input id="cashier" placeholder="Nama kasir"></label><br>
+      <label>Metode Pembayaran: 
+        <select id="payment">
+          <option>Tunai</option>
+          <option>QRIS</option>
+          <option>Kartu</option>
+          <option>Transfer</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button onclick="checkout()">Bayar & Simpan</button>
+        <button onclick="printReceipt()">Cetak Struk</button>
+        <button onclick="fetchProducts()">Refresh Produk</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_URL = "PASTE_WEB_APP_URL_DISINI"; // Ganti dengan URL Web App GAS
+let products = [];
+let cart = {};
+
+async function fetchProducts() {
+  const res = await fetch(`${API_URL}?action=getProducts`);
+  products = await res.json();
+  renderMenu();
+}
+
+function renderMenu() {
+  const menuDiv = document.getElementById('menu');
+  menuDiv.innerHTML = '';
+  products.forEach(p => {
+    const btn = document.createElement('button');
+    btn.textContent = `${p.name}\nRp${p.price}`;
+    btn.onclick = () => addToCart(p);
+    menuDiv.appendChild(btn);
+  });
+}
+
+function addToCart(product) {
+  if (!cart[product.id]) {
+    cart[product.id] = {...product, qty:1};
+  } else {
+    cart[product.id].qty++;
+  }
+  renderCart();
+}
+
+function renderCart() {
+  const tbody = document.querySelector('#cartTable tbody');
+  tbody.innerHTML = '';
+  let total = 0;
+  Object.values(cart).forEach(item => {
+    const subtotal = item.qty * item.price;
+    total += subtotal;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${item.name}</td><td>${item.qty}</td><td>${item.price}</td><td>${subtotal}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('total').textContent = total;
+}
+
+async function checkout() {
+  const cashier = document.getElementById('cashier').value;
+  const payment = document.getElementById('payment').value;
+  const total = Object.values(cart).reduce((s,i)=>s+(i.qty*i.price),0);
+  if (!cashier || total === 0) {
+    alert('Isi nama kasir dan tambah produk');
+    return;
+  }
+  const body = {
+    action:'saveTransaction',
+    id: Date.now(),
+    cashier,
+    payment_method: payment,
+    total,
+    items: Object.values(cart)
+  };
+  await fetch(API_URL, {method:'POST', body:JSON.stringify(body)});
+  alert('Transaksi tersimpan');
+  cart = {}; renderCart();
+}
+
+function printReceipt(){
+  const printContents = document.querySelector('.cart').innerHTML;
+  const w = window.open('', '', 'width=300,height=600');
+  w.document.write('<html><head><title>Struk</title></head><body>'+printContents+'</body></html>');
+  w.document.close();
+  w.print();
+}
+
+fetchProducts();
+</script>
+</body>
+</html>
+
