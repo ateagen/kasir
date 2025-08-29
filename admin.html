@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <title>Halaman Admin</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-    .hidden { display: none; }
-    .box { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #eee; }
-    button { padding: 6px 10px; margin: 3px; }
-    #loading { position: fixed; top:0; left:0; right:0; bottom:0;
-               background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
-               font-size:18px; color:#fff; }
+    body { font-family: Arial, sans-serif; margin:20px; background:#f7f7f7; }
+    h2 { margin-top:30px; }
+    .hidden { display:none; }
+    .box { background:#fff; padding:20px; margin:15px 0; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+    table { width:100%; border-collapse: collapse; margin-top:10px;}
+    th, td { border:1px solid #ddd; padding:8px; text-align:left;}
+    th { background:#eee; }
+    button { padding:6px 12px; margin:2px; cursor:pointer;}
+    #loading { 
+      position:fixed; top:0; left:0; right:0; bottom:0; 
+      background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; 
+      color:#fff; font-size:20px; font-weight:bold; display:none;
+    }
   </style>
 </head>
 <body>
@@ -23,199 +26,189 @@
     <h2>Login Admin</h2>
     <input type="text" id="username" placeholder="Username"><br><br>
     <input type="password" id="password" placeholder="Password"><br><br>
-    <button onclick="loginAdmin()">Login</button>
+    <button onclick="login()">Login</button>
+    <p id="loginMsg" style="color:red;"></p>
   </div>
 
-  <!-- ADMIN DASHBOARD -->
-  <div id="adminBox" class="hidden">
-    <h2>Dashboard Admin</h2>
+  <!-- DASHBOARD ADMIN -->
+  <div id="adminPanel" class="hidden">
+    <h1>Dashboard Admin</h1>
 
     <!-- Kasir -->
     <div class="box">
-      <h3>Manajemen Kasir</h3>
-      <input type="text" id="kasirUser" placeholder="Username Kasir">
-      <input type="password" id="kasirPass" placeholder="Password Kasir">
+      <h2>Manajemen Kasir</h2>
+      <input type="text" id="kasirUsername" placeholder="Username Kasir">
+      <input type="password" id="kasirPassword" placeholder="Password Kasir">
       <button onclick="addKasir()">Tambah Kasir</button>
-      <table id="kasirTable">
+      <table>
         <thead><tr><th>Username</th><th>Aksi</th></tr></thead>
-        <tbody></tbody>
+        <tbody id="kasirList"></tbody>
       </table>
     </div>
 
     <!-- Menu -->
     <div class="box">
-      <h3>Manajemen Menu</h3>
-      <input type="text" id="menuName" placeholder="Nama Menu">
-      <input type="number" id="menuPrice" placeholder="Harga">
+      <h2>Manajemen Menu</h2>
+      <input type="text" id="menuNama" placeholder="Nama Menu">
+      <input type="number" id="menuHarga" placeholder="Harga">
       <button onclick="addMenu()">Tambah Menu</button>
-      <table id="menuTable">
-        <thead><tr><th>Nama Menu</th><th>Harga</th><th>Aksi</th></tr></thead>
-        <tbody></tbody>
+      <table>
+        <thead><tr><th>Nama</th><th>Harga</th><th>Aksi</th></tr></thead>
+        <tbody id="menuList"></tbody>
       </table>
     </div>
 
     <!-- Transaksi -->
     <div class="box">
-      <h3>Transaksi Penjualan</h3>
-      <label>Filter tanggal: <input type="date" id="filterDate" onchange="loadTransaksi()"></label>
-      <table id="transaksiTable">
-        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Kasir</th><th>Menu</th><th>Jumlah</th><th>Total</th></tr></thead>
-        <tbody></tbody>
+      <h2>Transaksi</h2>
+      <label>Pilih Tanggal: <input type="date" id="filterTanggal"></label>
+      <button onclick="loadTransaksi()">Filter</button>
+      <table>
+        <thead><tr>
+          <th>Tanggal</th><th>Menu</th><th>Harga</th><th>Jumlah</th><th>Total</th>
+          <th>Pembelian</th><th>Operasional</th><th>Keterangan</th>
+        </tr></thead>
+        <tbody id="transaksiList"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- LOADING -->
-  <div id="loading" class="hidden">Loading...</div>
+  <div id="loading">Loading...</div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw85obV79pM3htJMLqwdCEF09U5vLA3QX_l8jtmnw-CMFXBd-Dj3uGSNtm07t-PcfjC/exec"; // <-- ganti dengan URL WebApp
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // Ganti dengan URL Web App hasil deploy Code.gs
 
-function showLoading(show) {
-  document.getElementById("loading").classList.toggle("hidden", !show);
-}
+// ======= LOADING =======
+function showLoading(){ document.getElementById("loading").style.display="flex"; }
+function hideLoading(){ document.getElementById("loading").style.display="none"; }
 
-// ---- LOGIN ----
-function loginAdmin() {
-  const user = document.getElementById("username").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if(user === "admin" && pass === "admin1490"){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("adminBox").classList.remove("hidden");
-    loadKasir();
-    loadMenu();
-    loadTransaksi();
-  } else {
-    alert("Username atau password salah!");
-  }
-}
-
-// ---- KASIR ----
-async function addKasir() {
-  const username = document.getElementById("kasirUser").value.trim();
-  const password = document.getElementById("kasirPass").value.trim();
-  if(!username || !password){ alert("Lengkapi data kasir"); return; }
-  showLoading(true);
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({ jenis:"Admin", action:"addKasir", username, password }),
-      headers: { "Content-Type":"application/json" }
-    });
-    document.getElementById("kasirUser").value="";
-    document.getElementById("kasirPass").value="";
-    await loadKasir();
-  } catch(err){
-    alert("Gagal tambah kasir: "+err);
-  }
-  showLoading(false);
-}
-
-async function deleteKasir(username) {
-  showLoading(true);
-  await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ jenis:"Admin", action:"deleteKasir", username }),
-    headers: { "Content-Type":"application/json" }
-  });
-  await loadKasir();
-  showLoading(false);
-}
-
-async function loadKasir() {
-  const res = await fetch(`${SCRIPT_URL}?jenis=Kasir`);
-  const data = await res.json();
-  const tbody = document.querySelector("#kasirTable tbody");
-  tbody.innerHTML = "";
-  if(data.length===0){
-    tbody.innerHTML = "<tr><td colspan='2'>Belum ada kasir</td></tr>";
-  }
-  data.forEach(row => {
-    if(row[1]){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${row[1]}</td>
-        <td><button onclick="deleteKasir('${row[1]}')">Hapus</button></td>`;
-      tbody.appendChild(tr);
+// ======= LOGIN =======
+function login(){
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"login", username:u, password:p})
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    hideLoading();
+    if(data.status==="ok" && data.role==="admin"){
+      document.getElementById("loginBox").classList.add("hidden");
+      document.getElementById("adminPanel").classList.remove("hidden");
+      refreshKasir();
+      refreshMenu();
+      loadTransaksi();
+    } else {
+      document.getElementById("loginMsg").innerText = "Login gagal!";
     }
   });
 }
 
-// ---- MENU ----
-async function addMenu() {
-  const namaMenu = document.getElementById("menuName").value.trim();
-  const harga = document.getElementById("menuPrice").value.trim();
-  if(!namaMenu || !harga){ alert("Lengkapi data menu"); return; }
-  showLoading(true);
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({ jenis:"Admin", action:"addMenu", namaMenu, harga }),
-      headers: { "Content-Type":"application/json" }
-    });
-    document.getElementById("menuName").value="";
-    document.getElementById("menuPrice").value="";
-    await loadMenu();
-  } catch(err){
-    alert("Gagal tambah menu: "+err);
-  }
-  showLoading(false);
-}
-
-async function deleteMenu(namaMenu) {
-  showLoading(true);
-  await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ jenis:"Admin", action:"deleteMenu", namaMenu }),
-    headers: { "Content-Type":"application/json" }
-  });
-  await loadMenu();
-  showLoading(false);
-}
-
-async function loadMenu() {
-  const res = await fetch(`${SCRIPT_URL}?jenis=Menu`);
-  const data = await res.json();
-  const tbody = document.querySelector("#menuTable tbody");
-  tbody.innerHTML = "";
-  if(data.length===0){
-    tbody.innerHTML = "<tr><td colspan='3'>Belum ada menu</td></tr>";
-  }
-  data.forEach(row => {
-    if(row[4]){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${row[4]}</td><td>${row[5]}</td>
-        <td><button onclick="deleteMenu('${row[4]}')">Hapus</button></td>`;
+// ======= KASIR =======
+function refreshKasir(){
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"getKasirList"})
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    const tbody=document.getElementById("kasirList");
+    tbody.innerHTML="";
+    data.forEach(k=>{
+      let tr=document.createElement("tr");
+      tr.innerHTML=`<td>${k.username}</td>
+                    <td><button onclick="deleteKasir('${k.username}')">Hapus</button></td>`;
       tbody.appendChild(tr);
-    }
+    });
   });
 }
+function addKasir(){
+  const u=document.getElementById("kasirUsername").value;
+  const p=document.getElementById("kasirPassword").value;
+  if(!u||!p) return alert("Isi username & password");
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"addKasir", username:u, password:p})
+  })
+  .then(r=>r.json())
+  .then(d=>{ hideLoading(); refreshKasir(); });
+}
+function deleteKasir(username){
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"deleteKasir", username:username})
+  })
+  .then(r=>r.json())
+  .then(d=>{ hideLoading(); refreshKasir(); });
+}
 
-// ---- TRANSAKSI ----
-async function loadTransaksi() {
-  const tanggal = document.getElementById("filterDate").value;
-  let url = `${SCRIPT_URL}?jenis=Penjualan`;
-  if(tanggal) url += `&tanggal=${tanggal}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const tbody = document.querySelector("#transaksiTable tbody");
-  tbody.innerHTML = "";
-  if(data.length===0){
-    tbody.innerHTML = "<tr><td colspan='6'>Belum ada transaksi</td></tr>";
-  }
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${new Date(row[3]).toLocaleString()}</td>
-      <td>${row[0]}</td>
-      <td>${row[1]}</td>
-      <td>${row[4]}</td>
-      <td>${row[6]}</td>
-      <td>${row[7]}</td>
-    `;
-    tbody.appendChild(tr);
+// ======= MENU =======
+function refreshMenu(){
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"getMenuList"})
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    const tbody=document.getElementById("menuList");
+    tbody.innerHTML="";
+    data.forEach(m=>{
+      let tr=document.createElement("tr");
+      tr.innerHTML=`<td>${m.nama}</td><td>${m.harga}</td>
+                    <td><button onclick="deleteMenu('${m.nama}')">Hapus</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+function addMenu(){
+  const n=document.getElementById("menuNama").value;
+  const h=document.getElementById("menuHarga").value;
+  if(!n||!h) return alert("Isi nama & harga menu");
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"addMenu", namaMenu:n, harga:h})
+  })
+  .then(r=>r.json())
+  .then(d=>{ hideLoading(); refreshMenu(); });
+}
+function deleteMenu(nama){
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"deleteMenu", namaMenu:nama})
+  })
+  .then(r=>r.json())
+  .then(d=>{ hideLoading(); refreshMenu(); });
+}
+
+// ======= TRANSAKSI =======
+function loadTransaksi(){
+  const tgl=document.getElementById("filterTanggal").value;
+  showLoading();
+  fetch(SCRIPT_URL, {
+    method:"POST",
+    body:new URLSearchParams({action:"getTransaksi", tanggal:tgl})
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    hideLoading();
+    const tbody=document.getElementById("transaksiList");
+    tbody.innerHTML="";
+    data.forEach(trx=>{
+      let tr=document.createElement("tr");
+      tr.innerHTML=`<td>${trx.tanggal}</td><td>${trx.menu}</td><td>${trx.harga}</td>
+                    <td>${trx.jumlah}</td><td>${trx.total}</td>
+                    <td>${trx.pembelian}</td><td>${trx.operasional}</td>
+                    <td>${trx.keterangan}</td>`;
+      tbody.appendChild(tr);
+    });
   });
 }
 </script>
-
 </body>
 </html>
