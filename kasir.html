@@ -2,170 +2,45 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kasir</title>
+  <title>Login Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-  <!-- Login Form -->
-  <div id="loginPage" class="flex h-screen items-center justify-center">
-    <div class="bg-white shadow-lg rounded-xl p-8 w-96">
-      <h2 class="text-xl font-bold mb-4 text-center">Login Kasir</h2>
-      <input id="username" type="text" placeholder="Username" class="w-full border p-2 rounded mb-3">
-      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded mb-3">
-      <button onclick="loginKasir()" class="w-full bg-blue-500 text-white p-2 rounded">Login</button>
-    </div>
+  <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
+    <h1 class="text-xl font-bold mb-4 text-center">Login Kasir</h1>
+
+    <input id="username" placeholder="Username" class="border rounded p-2 w-full mb-2">
+    <input id="password" placeholder="Password" type="password" class="border rounded p-2 w-full mb-4">
+
+    <button onclick="loginKasir()" class="bg-green-500 text-white px-4 py-2 rounded w-full">Login</button>
   </div>
 
-  <!-- Halaman Kasir -->
-  <div id="kasirPage" class="hidden p-4">
-    <h2 class="text-xl font-bold mb-4">Transaksi Kasir - <span id="kasirName"></span></h2>
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec";
 
-    <!-- Daftar Pesanan -->
-    <table class="w-full bg-white shadow rounded mb-4">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="p-2">Item</th>
-          <th class="p-2">Qty</th>
-          <th class="p-2">Harga</th>
-          <th class="p-2">Total</th>
-        </tr>
-      </thead>
-      <tbody id="orderList"></tbody>
-    </table>
+    function loginKasir() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
 
-    <!-- Input Bayar -->
-    <div class="bg-white p-4 rounded shadow mb-4">
-      <div class="flex justify-between mb-2">
-        <span>Total:</span>
-        <span id="grandTotal">0</span>
-      </div>
-      <input id="bayar" type="number" placeholder="Uang Bayar" class="w-full border p-2 rounded mb-2" oninput="hitungKembalian()">
-      <div class="flex justify-between">
-        <span>Kembali:</span>
-        <span id="kembali">0</span>
-      </div>
-    </div>
-
-    <!-- Tombol -->
-    <div class="flex gap-2">
-      <button onclick="simpanTransaksi()" class="bg-green-500 text-white px-4 py-2 rounded">Bayar</button>
-      <button onclick="cetakStruk()" class="bg-blue-500 text-white px-4 py-2 rounded">Cetak Struk</button>
-    </div>
-
-    <!-- Area Struk (hidden) -->
-    <iframe id="strukFrame" class="hidden"></iframe>
-  </div>
-
-<script>
-  const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // ganti dengan URL Apps Script
-
-  let currentKasir = "";
-  let orders = [
-    { item: "Nasi Goreng", qty: 2, harga: 15000 },
-    { item: "Es Teh", qty: 1, harga: 5000 }
-  ]; // contoh dummy, nanti bisa diambil dari Menu
-
-  function loginKasir() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
-
-    fetch(`${scriptURL}?action=getKasir`)
-      .then(res => res.json())
-      .then(data => {
-        const kasir = data.find(k => k.Username === user && k.Password === pass);
-        if (kasir) {
-          currentKasir = user;
-          document.getElementById("kasirName").innerText = user;
-          document.getElementById("loginPage").classList.add("hidden");
-          document.getElementById("kasirPage").classList.remove("hidden");
-          renderOrders();
-        } else {
-          alert("Username / Password salah");
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Gagal ambil data kasir");
-      });
-  }
-
-  function renderOrders() {
-    const tbody = document.getElementById("orderList");
-    tbody.innerHTML = "";
-    let grandTotal = 0;
-    orders.forEach(o => {
-      let total = o.qty * o.harga;
-      grandTotal += total;
-      tbody.innerHTML += `
-        <tr>
-          <td class="p-2">${o.item}</td>
-          <td class="p-2">${o.qty}</td>
-          <td class="p-2">${o.harga}</td>
-          <td class="p-2">${total}</td>
-        </tr>`;
-    });
-    document.getElementById("grandTotal").innerText = grandTotal;
-  }
-
-  function hitungKembalian() {
-    const bayar = parseInt(document.getElementById("bayar").value) || 0;
-    const total = parseInt(document.getElementById("grandTotal").innerText) || 0;
-    const kembali = bayar - total;
-    document.getElementById("kembali").innerText = kembali >= 0 ? kembali : 0;
-  }
-
-  function simpanTransaksi() {
-    const total = document.getElementById("grandTotal").innerText;
-    const bayar = document.getElementById("bayar").value;
-    const kembali = document.getElementById("kembali").innerText;
-    const waktu = new Date().toLocaleString();
-
-    fetch(`${scriptURL}?action=addTransaksi&NoTransaksi=${Date.now()}&Kasir=${currentKasir}&Waktu=${encodeURIComponent(waktu)}&Item=${encodeURIComponent(JSON.stringify(orders))}&Qty=${orders.reduce((a,b)=>a+b.qty,0)}&Total=${total}&Bayar=${bayar}&Kembali=${kembali}`)
-      .then(res => res.json())
-      .then(r => {
-        if (r.status === "ok") {
-          alert("Transaksi tersimpan");
-        }
-      });
-  }
-
-  function cetakStruk() {
-    let struk = `
-      <html>
-      <head>
-        <style>
-          body { font-family: monospace; width: 58mm; }
-          table { width: 100%; font-size: 12px; }
-          td { padding: 2px; }
-        </style>
-      </head>
-      <body>
-        <h3 style="text-align:center">STRUK PEMBAYARAN</h3>
-        <p>Kasir: ${currentKasir}</p>
-        <p>Waktu: ${new Date().toLocaleString()}</p>
-        <hr>
-        <table>`;
-    orders.forEach(o => {
-      struk += `<tr><td>${o.item} x${o.qty}</td><td style="text-align:right">${o.harga * o.qty}</td></tr>`;
-    });
-    struk += `</table>
-        <hr>
-        <p>Total: ${document.getElementById("grandTotal").innerText}</p>
-        <p>Bayar: ${document.getElementById("bayar").value}</p>
-        <p>Kembali: ${document.getElementById("kembali").innerText}</p>
-        <hr>
-        <p style="text-align:center">Terima Kasih</p>
-      </body></html>
-    `;
-
-    const iframe = document.getElementById("strukFrame").contentWindow.document;
-    iframe.open();
-    iframe.write(struk);
-    iframe.close();
-    document.getElementById("strukFrame").contentWindow.print();
-  }
-</script>
-
+      fetch(`${scriptURL}?action=getKasir`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("LOGIN DATA:", data);
+          const kasir = data.find(k => k.Username === user && k.Password === pass);
+          if (kasir) {
+            alert("Login berhasil!");
+            localStorage.setItem("kasir", user);
+            window.location.href = "kas.html";
+          } else {
+            alert("Username / Password salah");
+          }
+        })
+        .catch(err => {
+          console.error("ERROR:", err);
+          alert("Gagal ambil data kasir");
+        });
+    }
+  </script>
 </body>
 </html>
