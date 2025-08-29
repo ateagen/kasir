@@ -1,70 +1,141 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
 
-  <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl">
-    <h1 class="text-2xl font-bold mb-4">Admin Panel</h1>
+  <div class="w-full max-w-4xl bg-white shadow-lg rounded-xl p-6 space-y-6">
+
+    <h1 class="text-2xl font-bold text-center">Admin Panel</h1>
 
     <!-- Tambah Kasir -->
-    <div class="mb-6">
-      <h2 class="font-semibold">Tambah Kasir</h2>
-      <input id="usernameKasir" placeholder="Username" class="border rounded p-2 w-full mb-2">
-      <input id="passwordKasir" placeholder="Password" type="password" class="border rounded p-2 w-full mb-2">
-      <button onclick="addKasir()" class="bg-blue-500 text-white px-4 py-2 rounded">Tambah Kasir</button>
+    <div class="border p-4 rounded-xl">
+      <h2 class="font-semibold text-lg mb-3">Tambah Kasir</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input id="kasirUsername" type="text" placeholder="Username"
+          class="border rounded-lg px-3 py-2 w-full" />
+        <input id="kasirPassword" type="password" placeholder="Password"
+          class="border rounded-lg px-3 py-2 w-full" />
+      </div>
+      <button onclick="tambahKasir()" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan Kasir</button>
+    </div>
+
+    <!-- Tambah Menu -->
+    <div class="border p-4 rounded-xl">
+      <h2 class="font-semibold text-lg mb-3">Tambah Menu</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <input id="menuNama" type="text" placeholder="Nama Menu"
+          class="border rounded-lg px-3 py-2 w-full" />
+        <input id="menuHarga" type="number" placeholder="Harga"
+          class="border rounded-lg px-3 py-2 w-full" />
+      </div>
+      <button onclick="tambahMenu()" class="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg">Simpan Menu</button>
     </div>
 
     <!-- Daftar Kasir -->
-    <div>
-      <h2 class="font-semibold mb-2">Daftar Kasir</h2>
-      <table class="w-full border" id="kasirTable">
+    <div class="border p-4 rounded-xl">
+      <h2 class="font-semibold text-lg mb-3">Daftar Kasir</h2>
+      <table class="w-full border-collapse">
         <thead>
           <tr class="bg-gray-200">
-            <th class="border px-2">Username</th>
-            <th class="border px-2">Password</th>
+            <th class="border px-2 py-1">Username</th>
+            <th class="border px-2 py-1">Password</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="kasirList"></tbody>
+      </table>
+    </div>
+
+    <!-- Daftar Menu -->
+    <div class="border p-4 rounded-xl">
+      <h2 class="font-semibold text-lg mb-3">Daftar Menu</h2>
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border px-2 py-1">Nama</th>
+            <th class="border px-2 py-1">Harga</th>
+          </tr>
+        </thead>
+        <tbody id="menuList"></tbody>
       </table>
     </div>
   </div>
 
+  <!-- Popup Loading -->
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
+      <p class="mt-3">Menyimpan data...</p>
+    </div>
+  </div>
+
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // Ganti dengan URL Apps Script kamu
 
-    function loadKasir() {
-      fetch(`${scriptURL}?action=getKasir`)
-        .then(res => res.json())
-        .then(data => {
-          console.log("KASIR DATA:", data);
-          const tbody = document.querySelector("#kasirTable tbody");
-          tbody.innerHTML = "";
-          data.forEach(k => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td class="border px-2">${k.Username}</td>
-                            <td class="border px-2">${k.Password}</td>`;
-            tbody.appendChild(tr);
-          });
-        });
+    async function fetchKasir() {
+      let res = await fetch(`${scriptURL}?action=getKasir`);
+      let data = await res.json();
+      let list = document.getElementById("kasirList");
+      list.innerHTML = "";
+      data.forEach(k => {
+        list.innerHTML += `<tr>
+          <td class="border px-2 py-1">${k.Username}</td>
+          <td class="border px-2 py-1">${k.Password}</td>
+        </tr>`;
+      });
     }
 
-    function addKasir() {
-      const user = document.getElementById("usernameKasir").value;
-      const pass = document.getElementById("passwordKasir").value;
-      fetch(`${scriptURL}?action=addKasir&Username=${encodeURIComponent(user)}&Password=${encodeURIComponent(pass)}`)
-        .then(res => res.json())
-        .then(() => {
-          loadKasir();
-          document.getElementById("usernameKasir").value = "";
-          document.getElementById("passwordKasir").value = "";
-        });
+    async function fetchMenu() {
+      let res = await fetch(`${scriptURL}?action=getMenu`);
+      let data = await res.json();
+      let list = document.getElementById("menuList");
+      list.innerHTML = "";
+      data.forEach(m => {
+        list.innerHTML += `<tr>
+          <td class="border px-2 py-1">${m.Nama}</td>
+          <td class="border px-2 py-1">Rp ${m.Harga}</td>
+        </tr>`;
+      });
     }
 
-    loadKasir();
+    async function tambahKasir() {
+      let user = document.getElementById("kasirUsername").value;
+      let pass = document.getElementById("kasirPassword").value;
+      if (!user || !pass) return alert("Lengkapi data kasir!");
+
+      toggleLoading(true);
+      await fetch(`${scriptURL}?action=addKasir&Username=${encodeURIComponent(user)}&Password=${encodeURIComponent(pass)}`);
+      toggleLoading(false);
+      fetchKasir();
+      document.getElementById("kasirUsername").value = "";
+      document.getElementById("kasirPassword").value = "";
+    }
+
+    async function tambahMenu() {
+      let nama = document.getElementById("menuNama").value;
+      let harga = document.getElementById("menuHarga").value;
+      if (!nama || !harga) return alert("Lengkapi data menu!");
+
+      toggleLoading(true);
+      await fetch(`${scriptURL}?action=addMenu&Nama=${encodeURIComponent(nama)}&Harga=${encodeURIComponent(harga)}`);
+      toggleLoading(false);
+      fetchMenu();
+      document.getElementById("menuNama").value = "";
+      document.getElementById("menuHarga").value = "";
+    }
+
+    function toggleLoading(show) {
+      document.getElementById("loadingPopup").classList.toggle("hidden", !show);
+    }
+
+    // Load data awal
+    fetchKasir();
+    fetchMenu();
   </script>
+
 </body>
 </html>
