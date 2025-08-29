@@ -1,141 +1,215 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Kasir</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    .hidden { display: none; }
+    .card { background: #fff; padding: 20px; margin: 15px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; }
+    label { display: block; margin-top: 10px; }
+    input, button, select { padding: 8px; margin-top: 5px; width: 100%; box-sizing: border-box; }
+    button { background: #1976d2; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #1565c0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    #loading { 
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+      background: rgba(0,0,0,0.4); display: flex; 
+      align-items: center; justify-content: center; 
+      font-size: 18px; color: white; font-weight: bold; 
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+<body>
+  <h1>Admin Panel</h1>
 
-  <div class="w-full max-w-4xl bg-white shadow-lg rounded-xl p-6 space-y-6">
+  <!-- Loading Popup -->
+  <div id="loading" class="hidden">Loading...</div>
 
-    <h1 class="text-2xl font-bold text-center">Admin Panel</h1>
+  <!-- Login -->
+  <div id="loginBox" class="card">
+    <h2>Login Admin</h2>
+    <label>Username</label>
+    <input type="text" id="username">
+    <label>Password</label>
+    <input type="password" id="password">
+    <button onclick="loginAdmin()">Login</button>
+  </div>
 
-    <!-- Tambah Kasir -->
-    <div class="border p-4 rounded-xl">
-      <h2 class="font-semibold text-lg mb-3">Tambah Kasir</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input id="kasirUsername" type="text" placeholder="Username"
-          class="border rounded-lg px-3 py-2 w-full" />
-        <input id="kasirPassword" type="password" placeholder="Password"
-          class="border rounded-lg px-3 py-2 w-full" />
-      </div>
-      <button onclick="tambahKasir()" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg">Simpan Kasir</button>
-    </div>
+  <!-- Admin Area -->
+  <div id="adminBox" class="hidden">
 
-    <!-- Tambah Menu -->
-    <div class="border p-4 rounded-xl">
-      <h2 class="font-semibold text-lg mb-3">Tambah Menu</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input id="menuNama" type="text" placeholder="Nama Menu"
-          class="border rounded-lg px-3 py-2 w-full" />
-        <input id="menuHarga" type="number" placeholder="Harga"
-          class="border rounded-lg px-3 py-2 w-full" />
-      </div>
-      <button onclick="tambahMenu()" class="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg">Simpan Menu</button>
-    </div>
-
-    <!-- Daftar Kasir -->
-    <div class="border p-4 rounded-xl">
-      <h2 class="font-semibold text-lg mb-3">Daftar Kasir</h2>
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border px-2 py-1">Username</th>
-            <th class="border px-2 py-1">Password</th>
-          </tr>
-        </thead>
-        <tbody id="kasirList"></tbody>
+    <!-- Manajemen Kasir -->
+    <div class="card">
+      <h2>Manajemen Kasir</h2>
+      <label>Username Kasir</label>
+      <input type="text" id="kasirUser">
+      <label>Password Kasir</label>
+      <input type="password" id="kasirPass">
+      <button onclick="addKasir()">Tambah Kasir</button>
+      <table id="kasirTable">
+        <thead><tr><th>Username</th><th>Aksi</th></tr></thead>
+        <tbody></tbody>
       </table>
     </div>
 
-    <!-- Daftar Menu -->
-    <div class="border p-4 rounded-xl">
-      <h2 class="font-semibold text-lg mb-3">Daftar Menu</h2>
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border px-2 py-1">Nama</th>
-            <th class="border px-2 py-1">Harga</th>
-          </tr>
-        </thead>
-        <tbody id="menuList"></tbody>
+    <!-- Manajemen Menu -->
+    <div class="card">
+      <h2>Manajemen Menu</h2>
+      <label>Nama Menu</label>
+      <input type="text" id="menuName">
+      <label>Harga</label>
+      <input type="number" id="menuPrice">
+      <button onclick="addMenu()">Tambah Menu</button>
+      <table id="menuTable">
+        <thead><tr><th>Nama Menu</th><th>Harga</th><th>Aksi</th></tr></thead>
+        <tbody></tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Popup Loading -->
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
-      <p class="mt-3">Menyimpan data...</p>
+    <!-- Laporan Transaksi -->
+    <div class="card">
+      <h2>Laporan Transaksi</h2>
+      <label>Filter Tanggal</label>
+      <input type="date" id="filterDate" onchange="loadTransaksi()">
+      <table id="transaksiTable">
+        <thead><tr>
+          <th>Tanggal</th><th>Jenis</th><th>Kasir</th><th>Menu</th><th>Jumlah</th><th>Total</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
+
   </div>
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyNWXKPM9tuGjwS7YLvNEoxV0CYoVYeEPEqvWqmBcAVi_SqnEFvXPXpLvppJOg68Ps/exec"; // Ganti dengan URL Apps Script kamu
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw85obV79pM3htJMLqwdCEF09U5vLA3QX_l8jtmnw-CMFXBd-Dj3uGSNtm07t-PcfjC/exec"; // ganti dengan URL web app GS
 
-    async function fetchKasir() {
-      let res = await fetch(`${scriptURL}?action=getKasir`);
-      let data = await res.json();
-      let list = document.getElementById("kasirList");
-      list.innerHTML = "";
-      data.forEach(k => {
-        list.innerHTML += `<tr>
-          <td class="border px-2 py-1">${k.Username}</td>
-          <td class="border px-2 py-1">${k.Password}</td>
-        </tr>`;
-      });
-    }
+function showLoading(show) {
+  document.getElementById("loading").classList.toggle("hidden", !show);
+}
 
-    async function fetchMenu() {
-      let res = await fetch(`${scriptURL}?action=getMenu`);
-      let data = await res.json();
-      let list = document.getElementById("menuList");
-      list.innerHTML = "";
-      data.forEach(m => {
-        list.innerHTML += `<tr>
-          <td class="border px-2 py-1">${m.Nama}</td>
-          <td class="border px-2 py-1">Rp ${m.Harga}</td>
-        </tr>`;
-      });
-    }
+// ---- LOGIN ----
+function loginAdmin() {
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+  if(user === "admin" && pass === "admin1490"){
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("adminBox").classList.remove("hidden");
+    loadKasir();
+    loadMenu();
+    loadTransaksi();
+  } else {
+    alert("Username atau password salah!");
+  }
+}
 
-    async function tambahKasir() {
-      let user = document.getElementById("kasirUsername").value;
-      let pass = document.getElementById("kasirPassword").value;
-      if (!user || !pass) return alert("Lengkapi data kasir!");
+// ---- KASIR ----
+async function addKasir() {
+  const username = document.getElementById("kasirUser").value;
+  const password = document.getElementById("kasirPass").value;
+  if(!username || !password){ alert("Lengkapi data kasir"); return; }
+  showLoading(true);
+  await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ jenis:"Admin", action:"addKasir", username, password }),
+    headers: { "Content-Type":"application/json" }
+  });
+  document.getElementById("kasirUser").value="";
+  document.getElementById("kasirPass").value="";
+  await loadKasir();
+  showLoading(false);
+}
 
-      toggleLoading(true);
-      await fetch(`${scriptURL}?action=addKasir&Username=${encodeURIComponent(user)}&Password=${encodeURIComponent(pass)}`);
-      toggleLoading(false);
-      fetchKasir();
-      document.getElementById("kasirUsername").value = "";
-      document.getElementById("kasirPassword").value = "";
-    }
+async function deleteKasir(username) {
+  showLoading(true);
+  await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ jenis:"Admin", action:"deleteKasir", username }),
+    headers: { "Content-Type":"application/json" }
+  });
+  await loadKasir();
+  showLoading(false);
+}
 
-    async function tambahMenu() {
-      let nama = document.getElementById("menuNama").value;
-      let harga = document.getElementById("menuHarga").value;
-      if (!nama || !harga) return alert("Lengkapi data menu!");
+async function loadKasir() {
+  const res = await fetch(`${SCRIPT_URL}?jenis=Kasir`);
+  const data = await res.json();
+  const tbody = document.querySelector("#kasirTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${row[1]}</td>
+      <td><button onclick="deleteKasir('${row[1]}')">Hapus</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
 
-      toggleLoading(true);
-      await fetch(`${scriptURL}?action=addMenu&Nama=${encodeURIComponent(nama)}&Harga=${encodeURIComponent(harga)}`);
-      toggleLoading(false);
-      fetchMenu();
-      document.getElementById("menuNama").value = "";
-      document.getElementById("menuHarga").value = "";
-    }
+// ---- MENU ----
+async function addMenu() {
+  const namaMenu = document.getElementById("menuName").value;
+  const harga = document.getElementById("menuPrice").value;
+  if(!namaMenu || !harga){ alert("Lengkapi data menu"); return; }
+  showLoading(true);
+  await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ jenis:"Admin", action:"addMenu", namaMenu, harga }),
+    headers: { "Content-Type":"application/json" }
+  });
+  document.getElementById("menuName").value="";
+  document.getElementById("menuPrice").value="";
+  await loadMenu();
+  showLoading(false);
+}
 
-    function toggleLoading(show) {
-      document.getElementById("loadingPopup").classList.toggle("hidden", !show);
-    }
+async function deleteMenu(namaMenu) {
+  showLoading(true);
+  await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ jenis:"Admin", action:"deleteMenu", namaMenu }),
+    headers: { "Content-Type":"application/json" }
+  });
+  await loadMenu();
+  showLoading(false);
+}
 
-    // Load data awal
-    fetchKasir();
-    fetchMenu();
-  </script>
+async function loadMenu() {
+  const res = await fetch(`${SCRIPT_URL}?jenis=Menu`);
+  const data = await res.json();
+  const tbody = document.querySelector("#menuTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${row[4]}</td><td>${row[5]}</td>
+      <td><button onclick="deleteMenu('${row[4]}')">Hapus</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
 
+// ---- TRANSAKSI ----
+async function loadTransaksi() {
+  const tanggal = document.getElementById("filterDate").value;
+  const url = tanggal ? `${SCRIPT_URL}?jenis=Penjualan&tanggal=${tanggal}` : `${SCRIPT_URL}?jenis=Penjualan`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const tbody = document.querySelector("#transaksiTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(row[3]).toLocaleString()}</td>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[4]}</td>
+      <td>${row[6]}</td>
+      <td>${row[7]}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
 </body>
 </html>
