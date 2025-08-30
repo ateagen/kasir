@@ -1,220 +1,360 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel</title>
+  <!-- Tailwind (CDN). Aman untuk dev/tes. -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-slate-100 min-h-screen">
 
-  <!-- Login Page -->
-  <div id="loginPage" class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg">
-    <h2 class="text-2xl font-bold mb-4 text-center">Login Admin</h2>
-    <input id="username" type="text" placeholder="Username"
-      class="w-full border px-3 py-2 mb-3 rounded-lg focus:outline-none focus:ring">
-    <input id="password" type="password" placeholder="Password"
-      class="w-full border px-3 py-2 mb-3 rounded-lg focus:outline-none focus:ring">
-    <button onclick="login()"
-      class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">Login</button>
-  </div>
-
-  <!-- Admin Dashboard -->
-  <div id="adminPage" class="hidden w-full p-6">
-    <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
-
-    <!-- Akun Section -->
-    <div class="mb-8 bg-white p-6 rounded-xl shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Kelola Akun</h2>
-      <div class="flex space-x-2 mb-4">
-        <input id="newUser" type="text" placeholder="Username" class="border px-3 py-2 rounded-lg flex-1">
-        <input id="newPass" type="password" placeholder="Password" class="border px-3 py-2 rounded-lg flex-1">
-        <button onclick="tambahAkun()" class="bg-green-500 text-white px-4 rounded-lg hover:bg-green-600">Tambah</button>
-      </div>
-      <ul id="akunList" class="list-disc pl-6"></ul>
+  <!-- NAV -->
+  <header class="bg-white shadow sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800">Admin Dashboard</h1>
+      <div class="text-sm text-slate-500">Versi Admin</div>
     </div>
+  </header>
 
-    <!-- Menu Section -->
-    <div class="mb-8 bg-white p-6 rounded-xl shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Kelola Menu</h2>
-      <div class="flex space-x-2 mb-4">
-        <input id="newMenu" type="text" placeholder="Nama Menu" class="border px-3 py-2 rounded-lg flex-1">
-        <input id="newHarga" type="number" placeholder="Harga" class="border px-3 py-2 rounded-lg flex-1">
-        <button onclick="tambahMenu()" class="bg-green-500 text-white px-4 rounded-lg hover:bg-green-600">Tambah</button>
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- CARD LOGIN -->
+    <section id="loginCard" class="max-w-md mx-auto bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Login Admin</h2>
+      <div class="space-y-3">
+        <input id="inpUser" type="text" placeholder="Username"
+               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring">
+        <input id="inpPass" type="password" placeholder="Password"
+               class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring">
+        <button id="btnLogin"
+                class="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700"
+                onclick="handleLogin()">Login</button>
       </div>
-      <ul id="menuList" class="list-disc pl-6"></ul>
-    </div>
+      <p class="text-xs text-slate-500 mt-3">Gunakan <b>admin</b> / <b>admin1490</b></p>
+    </section>
 
-    <!-- Transaksi Section -->
-    <div class="bg-white p-6 rounded-xl shadow-md">
-      <h2 class="text-xl font-semibold mb-4">Transaksi</h2>
-      <div class="flex items-center space-x-2 mb-4">
-        <input type="date" id="filterTanggal" class="border px-3 py-2 rounded-lg">
-        <button onclick="getTransaksi()" class="bg-blue-500 text-white px-4 rounded-lg hover:bg-blue-600">Filter</button>
+    <!-- DASHBOARD -->
+    <section id="app" class="hidden space-y-8">
+
+      <!-- Kelola Akun -->
+      <div class="bg-white rounded-2xl shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Kelola Akun</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <input id="newUsername" type="text" placeholder="Username" class="border rounded-lg px-3 py-2">
+          <input id="newPassword" type="text" placeholder="Password" class="border rounded-lg px-3 py-2">
+          <button onclick="tambahAkun()"
+                  class="bg-emerald-600 text-white rounded-lg px-4 py-2 hover:bg-emerald-700">Tambah Akun</button>
+          <button onclick="muatAkun()"
+                  class="bg-slate-100 text-slate-700 rounded-lg px-4 py-2 hover:bg-slate-200">Refresh</button>
+        </div>
+
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm border border-slate-200">
+            <thead class="bg-slate-50 text-slate-700">
+              <tr>
+                <th class="px-3 py-2 border-b text-left">Username</th>
+                <th class="px-3 py-2 border-b text-left">Password</th>
+                <th class="px-3 py-2 border-b text-left w-32">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tblAkun" class="divide-y"></tbody>
+          </table>
+        </div>
       </div>
-      <table class="w-full border-collapse border text-sm">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border px-2 py-1">Tanggal</th>
-            <th class="border px-2 py-1">Username</th>
-            <th class="border px-2 py-1">Menu</th>
-            <th class="border px-2 py-1">Harga</th>
-            <th class="border px-2 py-1">Jumlah</th>
-            <th class="border px-2 py-1">Total</th>
-          </tr>
-        </thead>
-        <tbody id="transaksiTable"></tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- Loading Popup -->
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-xl shadow-lg">
-      <p class="text-lg font-semibold">Loading...</p>
+      <!-- Kelola Menu -->
+      <div class="bg-white rounded-2xl shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Kelola Menu</h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <input id="menuNama" type="text" placeholder="Nama Menu" class="border rounded-lg px-3 py-2">
+          <input id="menuHarga" type="number" placeholder="Harga" class="border rounded-lg px-3 py-2">
+          <button onclick="tambahMenu()"
+                  class="bg-emerald-600 text-white rounded-lg px-4 py-2 hover:bg-emerald-700">Tambah Menu</button>
+          <button onclick="muatMenu()"
+                  class="bg-slate-100 text-slate-700 rounded-lg px-4 py-2 hover:bg-slate-200">Refresh</button>
+        </div>
+
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm border border-slate-200">
+            <thead class="bg-slate-50 text-slate-700">
+              <tr>
+                <th class="px-3 py-2 border-b text-left">Nama Menu</th>
+                <th class="px-3 py-2 border-b text-left">Harga</th>
+                <th class="px-3 py-2 border-b text-left w-32">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tblMenu" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transaksi + Filter Tanggal -->
+      <div class="bg-white rounded-2xl shadow p-6">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-semibold">Transaksi</h3>
+            <p class="text-xs text-slate-500">Tampilkan transaksi hari ini atau pilih tanggal lain.</p>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input id="filterTanggal" type="date" class="border rounded-lg px-3 py-2">
+            <button onclick="muatTransaksi()"
+                    class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700">Filter</button>
+          </div>
+        </div>
+
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm border border-slate-200">
+            <thead class="bg-slate-50 text-slate-700">
+              <tr>
+                <th class="px-3 py-2 border-b text-left">Tanggal</th>
+                <th class="px-3 py-2 border-b text-left">Kasir</th>
+                <th class="px-3 py-2 border-b text-left">Menu</th>
+                <th class="px-3 py-2 border-b text-right">Harga</th>
+                <th class="px-3 py-2 border-b text-right">Jumlah</th>
+                <th class="px-3 py-2 border-b text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="tblTransaksi" class="divide-y"></tbody>
+            <tfoot>
+              <tr class="bg-slate-50">
+                <td colspan="5" class="px-3 py-2 border-t text-right font-semibold">Grand Total</td>
+                <td id="grandTotal" class="px-3 py-2 border-t text-right font-bold">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50">
+    <div class="w-full h-full flex items-center justify-center">
+      <div class="bg-white rounded-xl shadow p-4 flex items-center gap-3">
+        <svg class="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8v4A4 4 0 008 12H4z"></path>
+        </svg>
+        <span class="text-sm font-medium">Memproses...</span>
+      </div>
     </div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzSETZz3UiD0GoDiwpsuaiHEBezbBWNuoQJAyo5JP7DCev1YkgsdtjeXHW5lihHxeR6/exec";
+    // ===== Konfigurasi API =====
+    const API_URL = "https://script.google.com/macros/s/AKfycbwLr9Jc7wPvfA5ZkLwggJIYDsa6sOGa2NyYKderpI-hmvyxf1Px_61ssk6YSNyn1_qu/exec";
 
-    // === Login ===
-    function login() {
-      const user = document.getElementById("username").value;
-      const pass = document.getElementById("password").value;
-      if (user === "admin" && pass === "admin1490") {
-        document.getElementById("loginPage").classList.add("hidden");
-        document.getElementById("adminPage").classList.remove("hidden");
-        loadAkun();
-        loadMenu();
-        todayTanggal();
-        getTransaksi();
-      } else {
-        alert("Login gagal");
+    // ===== Util UI =====
+    const el = id => document.getElementById(id);
+    const show = (node) => node.classList.remove("hidden");
+    const hide = (node) => node.classList.add("hidden");
+
+    function toggleLoading(state) {
+      const overlay = el("loadingOverlay");
+      if (state) show(overlay); else hide(overlay);
+    }
+
+    // Local ISO by Asia/Jakarta (yyyy-mm-dd)
+    function todayISO() {
+      try {
+        return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+      } catch {
+        // fallback
+        const d = new Date();
+        const pad = n => (n<10? "0"+n : n);
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
       }
     }
 
-    // === Loading ===
-    function showLoading(show = true) {
-      document.getElementById("loadingPopup").classList.toggle("hidden", !show);
+    // ===== Fetch helper (tanpa custom header agar anti-preflight) =====
+    async function api(payload) {
+      toggleLoading(true);
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+          // JANGAN set headers apapun di sini supaya tidak memicu preflight
+        });
+        // Jika server error (non-2xx)
+        if (!res.ok) {
+          const txt = await res.text().catch(()=> "");
+          throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+        }
+        // Coba parse JSON
+        let data;
+        try {
+          data = await res.json();
+        } catch(e) {
+          const txt = await res.text();
+          throw new Error("Respon bukan JSON: " + txt);
+        }
+        return data;
+      } finally {
+        toggleLoading(false);
+      }
     }
 
-    // === Akun ===
-    async function loadAkun() {
-      showLoading(true);
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getAkun" })
+    // ===== Login khusus admin =====
+    async function handleLogin() {
+      const u = el("inpUser").value.trim();
+      const p = el("inpPass").value.trim();
+      if (!(u && p)) { alert("Isi username dan password"); return; }
+
+      // Validasi ke backend (opsional, admin juga hardcoded)
+      let rsp;
+      try {
+        rsp = await api({ action: "login", username: u, password: p });
+      } catch (e) {
+        console.error(e);
+        alert("Gagal konek ke server.");
+        return;
+      }
+
+      if (rsp.status === "success" && u === "admin" && p === "admin1490") {
+        hide(el("loginCard"));
+        show(el("app"));
+        // Init
+        el("filterTanggal").value = todayISO();
+        muatAkun();
+        muatMenu();
+        muatTransaksi();
+      } else {
+        alert(rsp.message || "Login gagal");
+      }
+    }
+
+    // ====== Akun ======
+    async function muatAkun() {
+      const rsp = await api({ action: "getAkun" });
+      const rows = rsp.akun || [];
+      const tbody = el("tblAkun");
+      tbody.innerHTML = "";
+      rows.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2">${escapeHtml(row.username)}</td>
+          <td class="px-3 py-2">${escapeHtml(row.password)}</td>
+          <td class="px-3 py-2">
+            <button class="text-red-600 hover:underline" onclick="hapusAkun('${jsStr(row.username)}')">Hapus</button>
+          </td>`;
+        tbody.appendChild(tr);
       });
-      const data = await res.json();
-      const list = document.getElementById("akunList");
-      list.innerHTML = "";
-      data.data.forEach(acc => {
-        const li = document.createElement("li");
-        li.textContent = acc.username + " ";
-        const btn = document.createElement("button");
-        btn.textContent = "Hapus";
-        btn.className = "ml-2 text-red-500";
-        btn.onclick = () => hapusAkun(acc.username);
-        li.appendChild(btn);
-        list.appendChild(li);
-      });
-      showLoading(false);
     }
 
     async function tambahAkun() {
-      const user = document.getElementById("newUser").value;
-      const pass = document.getElementById("newPass").value;
-      if (!user || !pass) return alert("Isi semua field!");
-      showLoading(true);
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "tambahAkun", username: user, password: pass })
-      });
-      await loadAkun();
+      const u = el("newUsername").value.trim();
+      const p = el("newPassword").value.trim();
+      if (!(u && p)) { alert("Isi username & password"); return; }
+      const rsp = await api({ action: "tambahAkun", username: u, password: p });
+      if (rsp.status === "success") {
+        el("newUsername").value = "";
+        el("newPassword").value = "";
+        await muatAkun(); // auto refresh
+      } else {
+        alert(rsp.message || "Gagal menambah akun");
+      }
     }
 
-    async function hapusAkun(user) {
-      showLoading(true);
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "hapusAkun", username: user })
-      });
-      await loadAkun();
+    async function hapusAkun(username) {
+      if (!confirm(`Hapus akun "${username}"?`)) return;
+      const rsp = await api({ action: "hapusAkun", username });
+      if (rsp.status === "success") {
+        await muatAkun();
+      } else {
+        alert(rsp.message || "Gagal menghapus akun");
+      }
     }
 
-    // === Menu ===
-    async function loadMenu() {
-      showLoading(true);
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getMenu" })
+    // ====== Menu ======
+    async function muatMenu() {
+      const rsp = await api({ action: "getMenu" });
+      const rows = rsp.menu || [];
+      const tbody = el("tblMenu");
+      tbody.innerHTML = "";
+      rows.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="px-3 py-2">${escapeHtml(row.namaMenu)}</td>
+          <td class="px-3 py-2">Rp ${formatNumber(row.harga)}</td>
+          <td class="px-3 py-2">
+            <button class="text-red-600 hover:underline" onclick="hapusMenu('${jsStr(row.namaMenu)}')">Hapus</button>
+          </td>`;
+        tbody.appendChild(tr);
       });
-      const data = await res.json();
-      const list = document.getElementById("menuList");
-      list.innerHTML = "";
-      data.data.forEach(menu => {
-        const li = document.createElement("li");
-        li.textContent = menu.namaMenu + " - Rp" + menu.harga;
-        const btn = document.createElement("button");
-        btn.textContent = "Hapus";
-        btn.className = "ml-2 text-red-500";
-        btn.onclick = () => hapusMenu(menu.namaMenu);
-        li.appendChild(btn);
-        list.appendChild(li);
-      });
-      showLoading(false);
     }
 
     async function tambahMenu() {
-      const nama = document.getElementById("newMenu").value;
-      const harga = document.getElementById("newHarga").value;
-      if (!nama || !harga) return alert("Isi semua field!");
-      showLoading(true);
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "tambahMenu", namaMenu: nama, harga: harga })
-      });
-      await loadMenu();
+      const nama = el("menuNama").value.trim();
+      const harga = el("menuHarga").value.trim();
+      if (!(nama && harga)) { alert("Isi nama & harga"); return; }
+      const rsp = await api({ action: "tambahMenu", namaMenu: nama, harga: Number(harga) });
+      if (rsp.status === "success") {
+        el("menuNama").value = "";
+        el("menuHarga").value = "";
+        await muatMenu();
+      } else {
+        alert(rsp.message || "Gagal menambah menu");
+      }
     }
 
-    async function hapusMenu(nama) {
-      showLoading(true);
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "hapusMenu", namaMenu: nama })
-      });
-      await loadMenu();
+    async function hapusMenu(namaMenu) {
+      if (!confirm(`Hapus menu "${namaMenu}"?`)) return;
+      const rsp = await api({ action: "hapusMenu", namaMenu });
+      if (rsp.status === "success") {
+        await muatMenu();
+      } else {
+        alert(rsp.message || "Gagal menghapus menu");
+      }
     }
 
-    // === Transaksi ===
-    function todayTanggal() {
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("filterTanggal").value = today;
-    }
+    // ====== Transaksi (tampilkan hari ini + filter) ======
+    async function muatTransaksi() {
+      const tanggal = el("filterTanggal").value || todayISO();
+      const rsp = await api({ action: "getTransaksi", tanggal });
+      const rows = (rsp.transaksi || []);
 
-    async function getTransaksi() {
-      const tanggal = document.getElementById("filterTanggal").value;
-      showLoading(true);
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "getTransaksi", tanggal })
-      });
-      const data = await res.json();
-      const tbody = document.getElementById("transaksiTable");
+      const tbody = el("tblTransaksi");
       tbody.innerHTML = "";
-      data.data.forEach(trx => {
+      let grand = 0;
+
+      rows.forEach(r => {
+        const total = Number(r.total || 0);
+        grand += total;
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="border px-2 py-1">${new Date(trx.tanggal).toLocaleString()}</td>
-          <td class="border px-2 py-1">${trx.username}</td>
-          <td class="border px-2 py-1">${trx.namaMenu}</td>
-          <td class="border px-2 py-1">${trx.harga}</td>
-          <td class="border px-2 py-1">${trx.jumlah}</td>
-          <td class="border px-2 py-1">${trx.total}</td>
+          <td class="px-3 py-2">${escapeHtml(r.tanggal)}</td>
+          <td class="px-3 py-2">${escapeHtml(r.username)}</td>
+          <td class="px-3 py-2">${escapeHtml(r.namaMenu)}</td>
+          <td class="px-3 py-2 text-right">Rp ${formatNumber(r.harga)}</td>
+          <td class="px-3 py-2 text-right">${formatNumber(r.jumlah)}</td>
+          <td class="px-3 py-2 text-right">Rp ${formatNumber(total)}</td>
         `;
         tbody.appendChild(tr);
       });
-      showLoading(false);
+
+      el("grandTotal").textContent = "Rp " + formatNumber(grand);
+    }
+
+    // ===== Helper kecil =====
+    function formatNumber(n) {
+      const num = Number(n || 0);
+      return num.toLocaleString("id-ID");
+    }
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function jsStr(s) {
+      // escape untuk dipakai di atribut onclick
+      return String(s ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/'/g, "\\'");
     }
   </script>
 </body>
