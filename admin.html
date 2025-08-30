@@ -1,191 +1,349 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Halaman Admin</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-
-  <!-- LOGIN -->
-  <div id="loginBox" class="max-w-sm mx-auto bg-white p-8 rounded-2xl shadow-lg">
-    <h2 class="text-2xl font-bold text-center mb-6">Login Admin</h2>
-    <input type="text" id="username" placeholder="Username"
-           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
-    <input type="password" id="password" placeholder="Password"
-           class="w-full mb-3 p-2 border rounded-md focus:ring focus:ring-blue-200">
-    <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Login</button>
-    <p id="loginMsg" class="text-red-500 mt-3 text-center"></p>
-  </div>
-
-  <!-- DASHBOARD ADMIN -->
-  <div id="adminPanel" class="hidden max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 text-gray-700">Dashboard Admin</h1>
-
-    <!-- Kasir -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">Manajemen Kasir</h2>
-      <div class="flex gap-2 mb-4">
-        <input type="text" id="kasirUsername" placeholder="Username Kasir" class="flex-1 p-2 border rounded-md">
-        <input type="password" id="kasirPassword" placeholder="Password Kasir" class="flex-1 p-2 border rounded-md">
-        <button onclick="addKasir()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
-      </div>
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Username</th>
-            <th class="p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="kasirList"></tbody>
-      </table>
-    </div>
-
-    <!-- Menu -->
-    <div class="bg-white p-6 rounded-2xl shadow mb-8">
-      <h2 class="text-xl font-semibold mb-4">Manajemen Menu</h2>
-      <div class="flex gap-2 mb-4">
-        <input type="text" id="menuNama" placeholder="Nama Menu" class="flex-1 p-2 border rounded-md">
-        <input type="number" id="menuHarga" placeholder="Harga" class="w-32 p-2 border rounded-md">
-        <button onclick="addMenu()" class="bg-green-600 text-white px-4 rounded-md hover:bg-green-700">Tambah</button>
-      </div>
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Nama</th>
-            <th class="p-2">Harga</th>
-            <th class="p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="menuList"></tbody>
-      </table>
-    </div>
-
-    <!-- Transaksi -->
-    <div class="bg-white p-6 rounded-2xl shadow">
-      <h2 class="text-xl font-semibold mb-4">Transaksi</h2>
-      <div class="flex items-center gap-2 mb-4">
-        <input type="date" id="filterTanggal" class="p-2 border rounded-md">
-        <button onclick="loadTransaksi()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Filter</button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2">Tanggal</th>
-              <th class="p-2">Menu</th>
-              <th class="p-2">Harga</th>
-              <th class="p-2">Jumlah</th>
-              <th class="p-2">Total</th>
-              <th class="p-2">Pembelian</th>
-              <th class="p-2">Operasional</th>
-              <th class="p-2">Keterangan</th>
-            </tr>
-          </thead>
-          <tbody id="transaksiList"></tbody>
-        </table>
-      </div>
+<body class="bg-slate-100 min-h-screen">
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="fixed inset-0 hidden items-center justify-center bg-black/40 z-50">
+    <div class="bg-white rounded-xl p-6 shadow-xl text-center">
+      <div class="mx-auto mb-3 h-12 w-12 border-4 border-t-transparent border-indigo-500 rounded-full animate-spin"></div>
+      <div class="font-medium text-slate-700">Memproses...</div>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center text-white text-xl hidden">
-    Loading...
+  <!-- Wrapper -->
+  <div class="max-w-6xl mx-auto p-6">
+
+    <!-- Header -->
+    <header class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Admin Panel</h1>
+      <button id="logoutBtn" class="hidden bg-slate-800 text-white px-4 py-2 rounded-lg shadow hover:bg-slate-700"
+        onclick="logout()">Logout</button>
+    </header>
+
+    <!-- Login Card -->
+    <section id="loginSection" class="bg-white rounded-2xl shadow p-6">
+      <h2 class="text-xl font-semibold mb-4 text-slate-800">Login Admin</h2>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <input id="loginUser" type="text" placeholder="Username" class="border rounded-lg px-3 py-2">
+        <input id="loginPass" type="password" placeholder="Password" class="border rounded-lg px-3 py-2">
+        <button class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-500"
+          onclick="loginAdmin()">Login</button>
+      </div>
+      <p class="text-sm text-slate-500 mt-3">Gunakan <span class="font-mono">admin / admin1490</span></p>
+    </section>
+
+    <!-- Main App -->
+    <main id="appSection" class="hidden space-y-6">
+
+      <!-- Grids -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Manajemen Akun -->
+        <section class="bg-white rounded-2xl shadow p-6">
+          <h3 class="text-lg font-semibold mb-4 text-slate-800">Manajemen Akun</h3>
+          <div class="flex flex-col sm:flex-row gap-2 mb-4">
+            <input id="akunUsername" type="text" placeholder="Username baru" class="border rounded-lg px-3 py-2 w-full">
+            <input id="akunPassword" type="password" placeholder="Password" class="border rounded-lg px-3 py-2 w-full">
+            <button class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-500"
+              onclick="handleTambahAkun()">Tambah</button>
+          </div>
+          <div class="overflow-auto border rounded-xl">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-700 text-sm">
+                <tr>
+                  <th class="p-3">Username</th>
+                  <th class="p-3 w-32">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="akunTable" class="text-sm"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Manajemen Menu -->
+        <section class="bg-white rounded-2xl shadow p-6">
+          <h3 class="text-lg font-semibold mb-4 text-slate-800">Manajemen Menu</h3>
+          <div class="flex flex-col sm:flex-row gap-2 mb-4">
+            <input id="menuNama" type="text" placeholder="Nama Menu" class="border rounded-lg px-3 py-2 w-full">
+            <input id="menuHarga" type="number" placeholder="Harga" class="border rounded-lg px-3 py-2 w-full">
+            <button class="bg-emerald-600 text-white rounded-lg px-4 py-2 hover:bg-emerald-500"
+              onclick="handleTambahMenu()">Tambah</button>
+          </div>
+          <div class="overflow-auto border rounded-xl">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 text-slate-700 text-sm">
+                <tr>
+                  <th class="p-3">Nama Menu</th>
+                  <th class="p-3">Harga</th>
+                  <th class="p-3 w-32">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="menuTable" class="text-sm"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Transaksi Hari Ini + Filter -->
+      <section class="bg-white rounded-2xl shadow p-6">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-800">Transaksi</h3>
+            <p class="text-sm text-slate-500">Default menampilkan transaksi <span class="font-medium">hari ini</span>. Gunakan filter untuk cek hari lain.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="tanggalFilter" type="date" class="border rounded-lg px-3 py-2">
+            <button class="bg-purple-600 text-white rounded-lg px-4 py-2 hover:bg-purple-500"
+              onclick="loadTransaksi()">Filter</button>
+          </div>
+        </div>
+
+        <div class="overflow-auto border rounded-xl">
+          <table class="w-full text-left">
+            <thead class="bg-slate-50 text-slate-700 text-sm">
+              <tr>
+                <th class="p-3">Tanggal</th>
+                <th class="p-3">Username</th>
+                <th class="p-3">Nama Menu</th>
+                <th class="p-3">Harga</th>
+                <th class="p-3">Jumlah</th>
+                <th class="p-3">Total</th>
+                <th class="p-3">Pembelian</th>
+                <th class="p-3">Operasional</th>
+                <th class="p-3">Keterangan</th>
+                <th class="p-3">Kas Awal</th>
+                <th class="p-3">Kas Akhir</th>
+              </tr>
+            </thead>
+            <tbody id="transaksiTable" class="text-sm"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
   </div>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // ganti dengan URL Apps Script
+  <script>
+    // ========== KONFIG ==========
+    // GANTI dengan URL Web App Apps Script kamu
+    const API_URL = "https://script.google.com/macros/s/AKfycbxJKwYJ8MvMmyoYiuI4xfcMlMRfTIzpsZjJNMKtyyRb9ODFcDqWy8RWrob83gnToDGL/exec";
 
-function showLoading(){ document.getElementById("loading").classList.remove("hidden"); }
-function hideLoading(){ document.getElementById("loading").classList.add("hidden"); }
-
-// ======= LOGIN =======
-function login(){
-  const u=document.getElementById("username").value;
-  const p=document.getElementById("password").value;
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"login",username:u,password:p})})
-  .then(r=>r.json()).then(d=>{
-    hideLoading();
-    if(d.status==="ok" && d.role==="admin"){
-      document.getElementById("loginBox").classList.add("hidden");
-      document.getElementById("adminPanel").classList.remove("hidden");
-      refreshKasir(); refreshMenu(); loadTransaksi();
-    } else {
-      document.getElementById("loginMsg").innerText="Login gagal!";
+    // ========== UTIL ==========
+    function showLoading() {
+      document.getElementById("loadingOverlay").classList.remove("hidden");
+      document.getElementById("loadingOverlay").classList.add("flex");
     }
-  });
-}
+    function hideLoading() {
+      document.getElementById("loadingOverlay").classList.add("hidden");
+      document.getElementById("loadingOverlay").classList.remove("flex");
+    }
+    async function post(action, payload = {}) {
+      const body = JSON.stringify({ action, ...payload });
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+      });
+      if (!res.ok) throw new Error("Gagal menghubungi server");
+      return res.json();
+    }
+    const fmtIDR = (n) => (n || n === 0) ? new Intl.NumberFormat("id-ID").format(Number(n)) : "";
 
-// ======= KASIR =======
-function refreshKasir(){
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getKasirList"})})
-  .then(r=>r.json()).then(data=>{
-    const tbody=document.getElementById("kasirList"); tbody.innerHTML="";
-    data.forEach(k=>{
-      let tr=document.createElement("tr");
-      tr.innerHTML=`<td class="p-2">${k.username}</td>
-        <td class="p-2"><button onclick="deleteKasir('${k.username}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Hapus</button></td>`;
-      tbody.appendChild(tr);
-    });
-  });
-}
-function addKasir(){
-  const u=document.getElementById("kasirUsername").value, p=document.getElementById("kasirPassword").value;
-  if(!u||!p) return alert("Isi username & password");
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addKasir",username:u,password:p})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); refreshKasir(); });
-}
-function deleteKasir(username){
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"deleteKasir",username:username})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); refreshKasir(); });
-}
+    // ========== AUTH SIMPLE ==========
+    async function loginAdmin() {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+      if (!u || !p) { alert("Isi username & password"); return; }
+      showLoading();
+      try {
+        const r = await post("login", { username: u, password: p });
+        if (r.success && (u === "admin")) {
+          localStorage.setItem("isAdmin", "true");
+          document.getElementById("loginSection").classList.add("hidden");
+          document.getElementById("appSection").classList.remove("hidden");
+          document.getElementById("logoutBtn").classList.remove("hidden");
+          await initData();
+        } else {
+          alert("Hanya admin yang dapat mengakses halaman ini.");
+        }
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        hideLoading();
+      }
+    }
+    function logout() {
+      localStorage.removeItem("isAdmin");
+      location.reload();
+    }
 
-// ======= MENU =======
-function refreshMenu(){
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getMenuList"})})
-  .then(r=>r.json()).then(data=>{
-    const tbody=document.getElementById("menuList"); tbody.innerHTML="";
-    data.forEach(m=>{
-      let tr=document.createElement("tr");
-      tr.innerHTML=`<td class="p-2">${m.nama}</td><td class="p-2">${m.harga}</td>
-        <td class="p-2"><button onclick="deleteMenu('${m.nama}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Hapus</button></td>`;
-      tbody.appendChild(tr);
-    });
-  });
-}
-function addMenu(){
-  const n=document.getElementById("menuNama").value, h=document.getElementById("menuHarga").value;
-  if(!n||!h) return alert("Isi nama & harga menu");
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"addMenu",namaMenu:n,harga:h})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); refreshMenu(); });
-}
-function deleteMenu(nama){
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"deleteMenu",namaMenu:nama})})
-  .then(r=>r.json()).then(d=>{ hideLoading(); refreshMenu(); });
-}
+    // ========== AKUN ==========
+    async function loadAkun() {
+      const tbody = document.getElementById("akunTable");
+      const r = await post("getAkun");
+      tbody.innerHTML = "";
+      (r.data || []).forEach(row => {
+        const username = row[0];
+        const tr = document.createElement("tr");
+        tr.className = "border-t";
+        tr.innerHTML = `
+          <td class="p-3">${username}</td>
+          <td class="p-3">
+            <button class="px-3 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-500 disabled:opacity-50"
+              ${username === "admin" ? "disabled" : `onclick="handleHapusAkun('${username}')"`}>
+              Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    async function handleTambahAkun() {
+      const u = document.getElementById("akunUsername").value.trim();
+      const p = document.getElementById("akunPassword").value.trim();
+      if (!u || !p) { alert("Lengkapi username & password"); return; }
+      if (u.toLowerCase() === "admin") { alert("Tidak dapat menambah/mengubah akun admin default di sini."); return; }
+      showLoading();
+      try {
+        await post("tambahAkun", { username: u, password: p });
+        await loadAkun(); // pastikan tabel sudah ter-update
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        hideLoading(); // sembunyikan loading setelah tabel selesai di-refresh
+        document.getElementById("akunUsername").value = "";
+        document.getElementById("akunPassword").value = "";
+      }
+    }
+    async function handleHapusAkun(username) {
+      if (!confirm(`Hapus akun "${username}"?`)) return;
+      showLoading();
+      try {
+        await post("hapusAkun", { username });
+        await loadAkun();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        hideLoading();
+      }
+    }
 
-// ======= TRANSAKSI =======
-function loadTransaksi(){
-  const tgl=document.getElementById("filterTanggal").value;
-  showLoading();
-  fetch(SCRIPT_URL,{method:"POST",body:new URLSearchParams({action:"getTransaksi",tanggal:tgl})})
-  .then(r=>r.json()).then(data=>{
-    hideLoading();
-    const tbody=document.getElementById("transaksiList"); tbody.innerHTML="";
-    data.forEach(trx=>{
-      let tr=document.createElement("tr");
-      tr.innerHTML=`<td class="p-2">${trx.tanggal}</td><td class="p-2">${trx.menu}</td>
-        <td class="p-2">${trx.harga}</td><td class="p-2">${trx.jumlah}</td><td class="p-2">${trx.total}</td>
-        <td class="p-2">${trx.pembelian}</td><td class="p-2">${trx.operasional}</td><td class="p-2">${trx.keterangan}</td>`;
-      tbody.appendChild(tr);
+    // ========== MENU ==========
+    async function loadMenu() {
+      const tbody = document.getElementById("menuTable");
+      const r = await post("getMenu");
+      tbody.innerHTML = "";
+      (r.data || []).forEach(m => {
+        const tr = document.createElement("tr");
+        tr.className = "border-t";
+        tr.innerHTML = `
+          <td class="p-3">${m.nama}</td>
+          <td class="p-3">Rp ${fmtIDR(m.harga)}</td>
+          <td class="p-3">
+            <button class="px-3 py-1 rounded-lg bg-rose-600 text-white hover:bg-rose-500"
+              onclick="handleHapusMenu('${m.nama.replace(/'/g, "\\'")}')">
+              Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    async function handleTambahMenu() {
+      const nama = document.getElementById("menuNama").value.trim();
+      const harga = Number(document.getElementById("menuHarga").value);
+      if (!nama || !harga) { alert("Isi nama menu & harga yang valid"); return; }
+      showLoading();
+      try {
+        await post("tambahMenu", { namaMenu: nama, harga });
+        await loadMenu();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        hideLoading();
+        document.getElementById("menuNama").value = "";
+        document.getElementById("menuHarga").value = "";
+      }
+    }
+    async function handleHapusMenu(namaMenu) {
+      if (!confirm(`Hapus menu "${namaMenu}"?`)) return;
+      showLoading();
+      try {
+        await post("hapusMenu", { namaMenu });
+        await loadMenu();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // ========== TRANSAKSI ==========
+    function getTodayYYYYMMDD() {
+      // gunakan zona waktu browser; bila butuh Asia/Jakarta spesifik, bisa offset manual
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    async function loadTransaksi() {
+      const input = document.getElementById("tanggalFilter");
+      let tgl = input.value;
+      if (!tgl) {
+        tgl = getTodayYYYYMMDD();
+        input.value = tgl;
+      }
+      const tbody = document.getElementById("transaksiTable");
+      tbody.innerHTML = "";
+      try {
+        const r = await post("getTransaksi", { tanggal: tgl });
+        (r.data || []).forEach(row => {
+          const tr = document.createElement("tr");
+          tr.className = "border-t";
+          // row index sesuai struktur: [Tanggal, Username, Nama Menu, Harga, Jumlah, Total, Pembelian, Operasional, Keterangan, Kas Awal, Kas Akhir]
+          const tanggal = row[0] ? new Date(row[0]) : "";
+          tr.innerHTML = `
+            <td class="p-3">${row[0] ? tanggal.toLocaleString("id-ID") : ""}</td>
+            <td class="p-3">${row[1] ?? ""}</td>
+            <td class="p-3">${row[2] ?? ""}</td>
+            <td class="p-3">${row[3] ? "Rp "+fmtIDR(row[3]) : ""}</td>
+            <td class="p-3">${row[4] ?? ""}</td>
+            <td class="p-3">${row[5] ? "Rp "+fmtIDR(row[5]) : ""}</td>
+            <td class="p-3">${row[6] ? "Rp "+fmtIDR(row[6]) : ""}</td>
+            <td class="p-3">${row[7] ? "Rp "+fmtIDR(row[7]) : ""}</td>
+            <td class="p-3">${row[8] ?? ""}</td>
+            <td class="p-3">${row[9] ? "Rp "+fmtIDR(row[9]) : ""}</td>
+            <td class="p-3">${row[10] ? "Rp "+fmtIDR(row[10]) : ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        alert("Gagal memuat transaksi: " + e.message);
+      }
+    }
+
+    // ========== INIT ==========
+    async function initData() {
+      // set default tanggal = hari ini
+      const input = document.getElementById("tanggalFilter");
+      if (!input.value) input.value = getTodayYYYYMMDD();
+      await Promise.all([loadAkun(), loadMenu(), loadTransaksi()]);
+    }
+
+    // On load: cek sesi admin
+    window.addEventListener("DOMContentLoaded", async () => {
+      if (localStorage.getItem("isAdmin") === "true") {
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("appSection").classList.remove("hidden");
+        document.getElementById("logoutBtn").classList.remove("hidden");
+        showLoading();
+        try { await initData(); } finally { hideLoading(); }
+      }
     });
-  });
-}
-</script>
+  </script>
 </body>
 </html>
