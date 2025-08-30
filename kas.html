@@ -2,131 +2,61 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kas Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Halaman Kas</title>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="w-full max-w-3xl bg-white p-6 rounded-2xl shadow-md">
-    <!-- Header -->
-    <h1 class="text-2xl font-bold text-center mb-6">Dashboard Kas</h1>
+<body>
+  <h2>Dashboard Kas</h2>
 
-    <!-- Kas Awal & Penjualan -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-      <div class="bg-blue-50 p-4 rounded-xl shadow">
-        <p class="text-gray-600">Kas Awal</p>
-        <p id="kasAwal" class="text-xl font-bold">Rp 0</p>
-      </div>
-      <div class="bg-green-50 p-4 rounded-xl shadow">
-        <p class="text-gray-600">Total Penjualan Hari Ini</p>
-        <p id="penjualan" class="text-xl font-bold">Rp 0</p>
-      </div>
-    </div>
+  <form id="pembelianForm">
+    <h3>Input Pembelian</h3>
+    <input type="date" id="tanggalPembelian">
+    <input type="text" id="pembelian" placeholder="Nominal">
+    <input type="text" id="ketPembelian" placeholder="Keterangan">
+    <button type="submit">Simpan</button>
+  </form>
 
-    <!-- Form Pembelian -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold mb-2">Tambah Pembelian</h2>
-      <form id="formPembelian" class="flex gap-2">
-        <input type="text" id="ketPembelian" placeholder="Keterangan" class="flex-1 p-2 border rounded-lg">
-        <input type="number" id="nominalPembelian" placeholder="Nominal" class="w-40 p-2 border rounded-lg">
-        <button type="submit" class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700">Tambah</button>
-      </form>
-    </div>
-
-    <!-- Form Operasional -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold mb-2">Tambah Operasional</h2>
-      <form id="formOperasional" class="flex gap-2">
-        <input type="text" id="ketOperasional" placeholder="Keterangan" class="flex-1 p-2 border rounded-lg">
-        <input type="number" id="nominalOperasional" placeholder="Nominal" class="w-40 p-2 border rounded-lg">
-        <button type="submit" class="bg-purple-600 text-white px-4 rounded-lg hover:bg-purple-700">Tambah</button>
-      </form>
-    </div>
-
-    <!-- List Pembelian & Operasional -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-      <div>
-        <h2 class="font-semibold mb-2">Daftar Pembelian</h2>
-        <ul id="listPembelian" class="space-y-1 text-sm text-gray-700"></ul>
-      </div>
-      <div>
-        <h2 class="font-semibold mb-2">Daftar Operasional</h2>
-        <ul id="listOperasional" class="space-y-1 text-sm text-gray-700"></ul>
-      </div>
-    </div>
-
-    <!-- Kas Akhir -->
-    <div class="bg-yellow-50 p-4 rounded-xl shadow text-center">
-      <p class="text-gray-600">Kas Akhir Hari Ini</p>
-      <p id="kasAkhir" class="text-2xl font-bold">Rp 0</p>
-    </div>
-  </div>
+  <form id="operasionalForm">
+    <h3>Input Operasional</h3>
+    <input type="date" id="tanggalOperasional">
+    <input type="text" id="operasional" placeholder="Nominal">
+    <input type="text" id="ketOperasional" placeholder="Keterangan">
+    <button type="submit">Simpan</button>
+  </form>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec"; // ganti dgn URL Web App kamu
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec";
 
-    async function fetchKasData() {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: new URLSearchParams({ action: "getKasData" })
-      });
-      const data = await res.json();
-      document.getElementById("kasAwal").textContent = "Rp " + data.kasAwal;
-      document.getElementById("penjualan").textContent = "Rp " + data.penjualan;
-      document.getElementById("kasAkhir").textContent = "Rp " + data.kasAkhir;
-
-      // tampilkan daftar pembelian
-      const listPembelian = document.getElementById("listPembelian");
-      listPembelian.innerHTML = "";
-      data.pembelian.forEach(item=>{
-        listPembelian.innerHTML += `<li>• ${item.ket} - Rp ${item.nominal}</li>`;
-      });
-
-      // tampilkan daftar operasional
-      const listOperasional = document.getElementById("listOperasional");
-      listOperasional.innerHTML = "";
-      data.operasional.forEach(item=>{
-        listOperasional.innerHTML += `<li>• ${item.ket} - Rp ${item.nominal}</li>`;
-      });
-    }
-
-    // Tambah Pembelian
-    document.getElementById("formPembelian").addEventListener("submit", async (e)=>{
+    // === Input Pembelian ===
+    document.getElementById("pembelianForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const ket = document.getElementById("ketPembelian").value;
-      const nominal = document.getElementById("nominalPembelian").value;
       await fetch(SCRIPT_URL, {
         method: "POST",
-        body: new URLSearchParams({
+        body: JSON.stringify({
           action: "addPembelian",
-          ket: ket,
-          nominal: nominal
-        })
+          tanggal: document.getElementById("tanggalPembelian").value,
+          pembelian: document.getElementById("pembelian").value,
+          keterangan: document.getElementById("ketPembelian").value
+        }),
+        headers: { "Content-Type": "application/json" }
       });
-      document.getElementById("ketPembelian").value="";
-      document.getElementById("nominalPembelian").value="";
-      fetchKasData();
+      alert("Pembelian tersimpan!");
     });
 
-    // Tambah Operasional
-    document.getElementById("formOperasional").addEventListener("submit", async (e)=>{
+    // === Input Operasional ===
+    document.getElementById("operasionalForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const ket = document.getElementById("ketOperasional").value;
-      const nominal = document.getElementById("nominalOperasional").value;
       await fetch(SCRIPT_URL, {
         method: "POST",
-        body: new URLSearchParams({
+        body: JSON.stringify({
           action: "addOperasional",
-          ket: ket,
-          nominal: nominal
-        })
+          tanggal: document.getElementById("tanggalOperasional").value,
+          operasional: document.getElementById("operasional").value,
+          keterangan: document.getElementById("ketOperasional").value
+        }),
+        headers: { "Content-Type": "application/json" }
       });
-      document.getElementById("ketOperasional").value="";
-      document.getElementById("nominalOperasional").value="";
-      fetchKasData();
+      alert("Operasional tersimpan!");
     });
-
-    // load awal
-    fetchKasData();
   </script>
 </body>
 </html>
