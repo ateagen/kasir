@@ -1,61 +1,374 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Halaman Kas</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Kas</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Hilangkan spin button di input number (Chrome) */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  </style>
 </head>
-<body>
-  <h2>Dashboard Kas</h2>
+<body class="bg-slate-50 text-slate-800">
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">Dashboard Kas</h1>
+        <p class="text-sm text-slate-500">Kelola kas harian: kas awal, pembelian, operasional, dan kas akhir.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="todayLabel" class="text-sm px-3 py-1 rounded-full bg-slate-200"></span>
+        <button id="logoutBtn" class="text-sm px-3 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600">Logout</button>
+      </div>
+    </header>
 
-  <form id="pembelianForm">
-    <h3>Input Pembelian</h3>
-    <input type="date" id="tanggalPembelian">
-    <input type="text" id="pembelian" placeholder="Nominal">
-    <input type="text" id="ketPembelian" placeholder="Keterangan">
-    <button type="submit">Simpan</button>
-  </form>
+    <!-- Ringkasan / KPI cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div class="rounded-2xl bg-white shadow p-4">
+        <p class="text-xs text-slate-500">Kas Awal</p>
+        <p id="kasAwal" class="text-xl font-semibold mt-1">Rp 0</p>
+        <p id="kasAwalNote" class="text-[11px] text-slate-400 mt-1"></p>
+      </div>
+      <div class="rounded-2xl bg-white shadow p-4">
+        <p class="text-xs text-slate-500">Total Penjualan Hari Ini</p>
+        <p id="totalPenjualan" class="text-xl font-semibold mt-1">Rp 0</p>
+      </div>
+      <div class="rounded-2xl bg-white shadow p-4">
+        <p class="text-xs text-slate-500">Total Pembelian</p>
+        <p id="totalPembelian" class="text-xl font-semibold mt-1">Rp 0</p>
+      </div>
+      <div class="rounded-2xl bg-white shadow p-4">
+        <p class="text-xs text-slate-500">Total Operasional</p>
+        <p id="totalOperasional" class="text-xl font-semibold mt-1">Rp 0</p>
+      </div>
+      <div class="rounded-2xl bg-white shadow p-4">
+        <p class="text-xs text-slate-500">Kas Akhir (otomatis)</p>
+        <p id="kasAkhir" class="text-xl font-semibold mt-1">Rp 0</p>
+      </div>
+    </section>
 
-  <form id="operasionalForm">
-    <h3>Input Operasional</h3>
-    <input type="date" id="tanggalOperasional">
-    <input type="text" id="operasional" placeholder="Nominal">
-    <input type="text" id="ketOperasional" placeholder="Keterangan">
-    <button type="submit">Simpan</button>
-  </form>
+    <!-- Forms -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Pembelian -->
+      <div class="bg-white rounded-2xl shadow p-5">
+        <h2 class="text-lg font-semibold mb-4">Input Pembelian</h2>
+        <form id="pembelianForm" class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="text-sm">Tanggal</label>
+            <input type="date" id="tanggalPembelian" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div>
+            <label class="text-sm">Jumlah Pembelian</label>
+            <input type="number" inputmode="numeric" id="pembelian" placeholder="0" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div>
+            <label class="text-sm">Keterangan</label>
+            <input type="text" id="ketPembelian" placeholder="Opsional" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button type="reset" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50">Reset</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Simpan</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Operasional -->
+      <div class="bg-white rounded-2xl shadow p-5">
+        <h2 class="text-lg font-semibold mb-4">Input Biaya Operasional</h2>
+        <form id="operasionalForm" class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="text-sm">Tanggal</label>
+            <input type="date" id="tanggalOperasional" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div>
+            <label class="text-sm">Jumlah Operasional</label>
+            <input type="number" inputmode="numeric" id="operasional" placeholder="0" required class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div>
+            <label class="text-sm">Keterangan</label>
+            <input type="text" id="ketOperasional" placeholder="Opsional" class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring focus:ring-slate-200" />
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button type="reset" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50">Reset</button>
+            <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Data Hari Ini -->
+    <section class="bg-white rounded-2xl shadow p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Data Kas Hari Ini</h2>
+        <button id="saveKasAkhirBtn" class="px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed">Simpan Kas Akhir Hari Ini</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-100 text-slate-600">
+            <tr>
+              <th class="text-left p-2">Tanggal</th>
+              <th class="text-left p-2">Pembelian</th>
+              <th class="text-left p-2">Operasional</th>
+              <th class="text-left p-2">Keterangan</th>
+            </tr>
+          </thead>
+          <tbody id="kasTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-400">&copy; <span id="year"></span> Kas App</footer>
+  </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwntcLJWpFrrL17EWkBI3Jr720BbyZ8BhIbB1iRf9wX2otAspP4aGUXALmcEDLeozht/exec";
+    // ======================
+    // KONFIGURASI
+    // ======================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUhu2HDoU7b6twcq0R_JAJhdemj3SW_8BLiFAPo4k/dev"; // <- Ganti dengan URL Web App Google Apps Script kamu
+    const DATE_TZ_OFFSET_MIN = 0; // Jika perlu paksa zona waktu, set offset menit (mis: WIB +7 = 420). Biarkan 0 gunakan waktu browser.
 
-    // === Input Pembelian ===
-    document.getElementById("pembelianForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "addPembelian",
-          tanggal: document.getElementById("tanggalPembelian").value,
-          pembelian: document.getElementById("pembelian").value,
-          keterangan: document.getElementById("ketPembelian").value
-        }),
-        headers: { "Content-Type": "application/json" }
+    // ======================
+    // UTIL
+    // ======================
+    function todayStr() {
+      const now = new Date();
+      if (DATE_TZ_OFFSET_MIN) {
+        // paksa zona waktu tertentu
+        const local = new Date(now.getTime() + (DATE_TZ_OFFSET_MIN + now.getTimezoneOffset()) * 60000);
+        return local.toISOString().slice(0, 10);
+      }
+      return new Date().toISOString().slice(0,10);
+    }
+    function addDaysStr(isoDate, plusDays) {
+      const d = new Date(isoDate);
+      d.setDate(d.getDate() + plusDays);
+      return d.toISOString().slice(0,10);
+    }
+    function ydayStr() { return addDaysStr(todayStr(), -1); }
+    function fmtIDR(n) {
+      const v = Number(n || 0);
+      return v.toLocaleString('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 });
+    }
+    function parseNum(x){ const n = Number(String(x||'').toString().replace(/[^\d.-]/g,'')); return isFinite(n)? n: 0; }
+
+    function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
+
+    // ======================
+    // AUTH GUARD (Hanya kasir)
+    // ======================
+    // Maksud requirement: Hanya akun dengan Jenis = "kasir" yang bisa mengakses halaman ini.
+    // Saran: di halaman login, setelah sukses, lakukan:
+    // sessionStorage.setItem('role', data.role); sessionStorage.setItem('username', inputUsername);
+    (function guard(){
+      const role = sessionStorage.getItem('role');
+      if (role !== 'kasir') {
+        alert('Akses ditolak. Halaman ini hanya untuk akun dengan Jenis = kasir.');
+        window.location.href = 'login.html';
+      }
+    })();
+
+    // ======================
+    // STATE
+    // ======================
+    let kasDataRaw = [];     // dari action getKasData (array of arrays)
+    let transaksiAll = [];   // dari action getAdminData (array of objects)
+
+    // ======================
+    // FETCH HELPERS
+    // ======================
+    async function postJSON(payload){
+      const res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if (!res.ok){ throw new Error('Network error'); }
+      return res.json();
+    }
+
+    // ======================
+    // LOAD & HITUNG
+    // ======================
+    async function loadAll(){
+      setText('todayLabel', `Tanggal: ${todayStr()}`);
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Ambil data kas (jenis = "kas")
+      const kasResp = await postJSON({ action: 'getKasData' });
+      kasDataRaw = kasResp?.data || [];
+
+      // Ambil transaksi semua (pakai getAdminData agar bisa hitung penjualan hari ini)
+      const admResp = await postJSON({ action: 'getAdminData' });
+      transaksiAll = admResp?.transaksi || [];
+
+      renderTodayTable();
+      computeAndRenderKPI();
+    }
+
+    function findKasMarker(dateStr, marker){
+      // marker: 'KAS_AWAL' atau 'KAS_AKHIR' pada kolom ket (index 10)
+      const row = kasDataRaw.find(r => r[3] === dateStr && typeof r[10] === 'string' && r[10].toUpperCase().startsWith(marker+':'));
+      if (!row) return null;
+      const val = parseNum(String(row[10]).split(':')[1]);
+      return { row, value: val };
+    }
+
+    function sumKasOf(dateStr){
+      // total pembelian & operasional pada tanggal tertentu (abaikan baris marker)
+      let pembelian = 0, operasional = 0;
+      kasDataRaw.forEach(r => {
+        if (r[3] === dateStr) {
+          const ket = String(r[10]||'').toUpperCase();
+          if (ket.startsWith('KAS_AWAL') || ket.startsWith('KAS_AKHIR')) return; // skip marker
+          pembelian += parseNum(r[8]);
+          operasional += parseNum(r[9]);
+        }
       });
-      alert("Pembelian tersimpan!");
+      return { pembelian, operasional };
+    }
+
+    function totalPenjualanOf(dateStr){
+      // dari admResp.transaksi (obj), filter jenis=='kasir' & tanggal = dateStr, sum total
+      let tot = 0;
+      transaksiAll.forEach(t => {
+        if ((t.jenis === 'kasir') && t.tanggal === dateStr) {
+          tot += parseNum(t.total);
+        }
+      });
+      return tot;
+    }
+
+    function computeAndRenderKPI(){
+      const today = todayStr();
+      const yesterday = ydayStr();
+
+      // Kas Awal hari ini = Kas Akhir kemarin (jika ada), else 0
+      let kasAwal = 0;
+      const yAkhir = findKasMarker(yesterday, 'KAS_AKHIR');
+      if (yAkhir) kasAwal = yAkhir.value;
+
+      const { pembelian, operasional } = sumKasOf(today);
+      const totalJual = totalPenjualanOf(today);
+
+      const kasAkhir = kasAwal + totalJual - (pembelian + operasional);
+
+      setText('kasAwal', fmtIDR(kasAwal));
+      setText('kasAwalNote', yAkhir ? `Diambil dari Kas Akhir ${yesterday}` : 'Tidak ada Kas Akhir kemarin (diasumsikan 0)');
+      setText('totalPembelian', fmtIDR(pembelian));
+      setText('totalOperasional', fmtIDR(operasional));
+      setText('totalPenjualan', fmtIDR(totalJual));
+      setText('kasAkhir', fmtIDR(kasAkhir));
+
+      // Atur tombol Simpan Kas Akhir (disable jika sudah tersimpan)
+      const hasTodayAkhir = !!findKasMarker(today, 'KAS_AKHIR');
+      const btn = document.getElementById('saveKasAkhirBtn');
+      btn.disabled = hasTodayAkhir;
+      btn.title = hasTodayAkhir ? 'Kas Akhir hari ini sudah tersimpan' : 'Simpan Kas Akhir & set Kas Awal besok';
+      btn.dataset.kasAkhirValue = String(kasAkhir);
+    }
+
+    function renderTodayTable(){
+      const tbody = document.getElementById('kasTableBody');
+      tbody.innerHTML = '';
+      const today = todayStr();
+      kasDataRaw
+        .filter(r => r[3] === today)
+        .forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b last:border-b-0';
+          const tgl = r[3] || '';
+          const pembelian = r[8] || '';
+          const operasional = r[9] || '';
+          const ket = r[10] || '';
+          tr.innerHTML = `
+            <td class="p-2">${tgl}</td>
+            <td class="p-2">${pembelian ? fmtIDR(pembelian) : '-'}</td>
+            <td class="p-2">${operasional ? fmtIDR(operasional) : '-'}</td>
+            <td class="p-2">${ket}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+    }
+
+    // ======================
+    // SUBMIT HANDLERS
+    // ======================
+    document.getElementById('pembelianForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        action: 'addPembelian',
+        tanggal: document.getElementById('tanggalPembelian').value || todayStr(),
+        pembelian: document.getElementById('pembelian').value,
+        keterangan: document.getElementById('ketPembelian').value
+      };
+      await postJSON(payload);
+      e.target.reset();
+      document.getElementById('tanggalPembelian').value = todayStr();
+      await loadAll();
+      alert('Pembelian tersimpan.');
     });
 
-    // === Input Operasional ===
-    document.getElementById("operasionalForm").addEventListener("submit", async (e) => {
+    document.getElementById('operasionalForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "addOperasional",
-          tanggal: document.getElementById("tanggalOperasional").value,
-          operasional: document.getElementById("operasional").value,
-          keterangan: document.getElementById("ketOperasional").value
-        }),
-        headers: { "Content-Type": "application/json" }
+      const payload = {
+        action: 'addOperasional',
+        tanggal: document.getElementById('tanggalOperasional').value || todayStr(),
+        operasional: document.getElementById('operasional').value,
+        keterangan: document.getElementById('ketOperasional').value
+      };
+      await postJSON(payload);
+      e.target.reset();
+      document.getElementById('tanggalOperasional').value = todayStr();
+      await loadAll();
+      alert('Operasional tersimpan.');
+    });
+
+    // Simpan Kas Akhir hari ini + set Kas Awal besok (pakai baris marker pada kolom Keterangan)
+    document.getElementById('saveKasAkhirBtn').addEventListener('click', async () => {
+      const today = todayStr();
+      const tomorrow = addDaysStr(today, 1);
+      const kasAkhirVal = parseNum(document.getElementById('saveKasAkhirBtn').dataset.kasAkhirValue);
+
+      // Cegah duplikasi jika sudah ada marker KAS_AKHIR hari ini
+      if (findKasMarker(today, 'KAS_AKHIR')) {
+        alert('Kas Akhir hari ini sudah tersimpan.');
+        return;
+      }
+
+      // Simpan KAS_AKHIR (pakai endpoint addOperasional, nilai 0, taruh info di kolom keterangan)
+      await postJSON({
+        action: 'addOperasional',
+        tanggal: today,
+        operasional: 0,
+        keterangan: `KAS_AKHIR:${kasAkhirVal}`
       });
-      alert("Operasional tersimpan!");
+
+      // Set Kas Awal besok = Kas Akhir hari ini (marker KAS_AWAL di tanggal besok)
+      await postJSON({
+        action: 'addOperasional',
+        tanggal: tomorrow,
+        operasional: 0,
+        keterangan: `KAS_AWAL:${kasAkhirVal}`
+      });
+
+      await loadAll();
+      alert('Kas Akhir tersimpan & Kas Awal untuk besok dibuat.');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    // Init default tanggal
+    document.getElementById('tanggalPembelian').value = todayStr();
+    document.getElementById('tanggalOperasional').value = todayStr();
+
+    // Load pertama kali
+    loadAll().catch(err => {
+      console.error(err);
+      alert('Gagal memuat data. Pastikan SCRIPT_URL benar dan Web App di-deploy dengan akses Anyone/Anyone with link.');
     });
   </script>
 </body>
