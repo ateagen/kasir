@@ -1,57 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kasir Dashboard</title>
+  <title>POS Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-6">
 
-  <div class="w-full max-w-4xl p-6">
-    <h1 class="text-3xl font-bold text-center mb-8">Selamat Datang</h1>
+  <!-- Header -->
+  <header class="mb-10 text-center">
+    <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Selamat Datang di POS Kasir</h1>
+    <p class="text-gray-600 mt-2 text-lg">Silakan pilih menu di bawah untuk melanjutkan</p>
+  </header>
 
-    <!-- Grid Menu -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      
-      <!-- Admin -->
-      <a href="admin.html" 
-         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-blue-100 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 7.292m0 0a4 4 0 110 7.292m0-14.584a9.985 9.985 0 00-7 2.906M5 19a9.985 9.985 0 007 2.906m7-2.906a9.985 9.985 0 007-2.906M12 21v-9" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold">Admin</h2>
-        <p class="text-gray-500 mt-2">Kelola user, barang, dan laporan</p>
-      </a>
+  <!-- Grid Menu -->
+  <main class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-4xl">
+    <!-- Admin -->
+    <a href="admin.html"
+      class="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
+      <div class="bg-blue-100 text-blue-600 w-16 h-16 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+        A
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800">Admin</h2>
+      <p class="text-gray-600 text-center text-sm mt-2">Kelola pengguna, barang, dan transaksi</p>
+    </a>
 
-      <!-- Kas -->
-      <a href="kas.html" 
-         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.104 0-2 .672-2 1.5s.896 1.5 2 1.5 2 .672 2 1.5S13.104 14 12 14m0-6c1.657 0 3 1.119 3 2.5S13.657 13 12 13s-3-1.119-3-2.5S10.343 8 12 8zm0 0V6m0 10v-2m-7 2a9 9 0 1114 0H5z" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold">Kas</h2>
-        <p class="text-gray-500 mt-2">Catatan keuangan harian</p>
-      </a>
+    <!-- Kas -->
+    <a href="kas.html"
+      class="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
+      <div class="bg-green-100 text-green-600 w-16 h-16 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+        K
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800">Kas</h2>
+      <p class="text-gray-600 text-center text-sm mt-2">Catat kas awal, kas masuk, dan kas keluar</p>
+    </a>
 
-      <!-- Kasir -->
-      <a href="kasir.html" 
-         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
-        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-yellow-100 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9m-5-9V6a2 2 0 10-4 0v7" />
-          </svg>
-        </div>
-        <h2 class="text-xl font-semibold">Kasir</h2>
-        <p class="text-gray-500 mt-2">Transaksi penjualan barang</p>
-      </a>
+    <!-- Kasir -->
+    <a href="kasir.html"
+      class="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center justify-center hover:shadow-xl transition">
+      <div class="bg-yellow-100 text-yellow-600 w-16 h-16 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+        S
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800">Kasir</h2>
+      <p class="text-gray-600 text-center text-sm mt-2">Lakukan transaksi penjualan barang</p>
+    </a>
+  </main>
 
-    </div>
-  </div>
+  <!-- Footer -->
+  <footer class="mt-12 text-gray-500 text-sm">
+    &copy; 2025 POS Kasir. Semua Hak Dilindungi.
+  </footer>
 
 </body>
 </html>
