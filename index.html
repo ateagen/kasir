@@ -1,62 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-sm">
-    <h1 class="text-2xl font-bold text-center mb-6">Login</h1>
-    <form id="loginForm" class="space-y-4">
-      <input id="username" type="text" placeholder="Username" required class="w-full border p-3 rounded focus:ring focus:ring-blue-300"/>
-      <input id="password" type="password" placeholder="Password" required class="w-full border p-3 rounded focus:ring focus:ring-blue-300"/>
-      <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700">Login</button>
-    </form>
+  <div class="w-full max-w-4xl p-6">
+    <h1 class="text-3xl font-bold text-center mb-8">Selamat Datang</h1>
+
+    <!-- Grid Menu -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      
+      <!-- Admin -->
+      <a href="admin.html" 
+         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-blue-100 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 7.292m0 0a4 4 0 110 7.292m0-14.584a9.985 9.985 0 00-7 2.906M5 19a9.985 9.985 0 007 2.906m7-2.906a9.985 9.985 0 007-2.906M12 21v-9" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold">Admin</h2>
+        <p class="text-gray-500 mt-2">Kelola user, barang, dan laporan</p>
+      </a>
+
+      <!-- Kas -->
+      <a href="kas.html" 
+         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-green-100 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.104 0-2 .672-2 1.5s.896 1.5 2 1.5 2 .672 2 1.5S13.104 14 12 14m0-6c1.657 0 3 1.119 3 2.5S13.657 13 12 13s-3-1.119-3-2.5S10.343 8 12 8zm0 0V6m0 10v-2m-7 2a9 9 0 1114 0H5z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold">Kas</h2>
+        <p class="text-gray-500 mt-2">Catatan keuangan harian</p>
+      </a>
+
+      <!-- Kasir -->
+      <a href="kasir.html" 
+         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-8 flex flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-yellow-100 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m13-9l2 9m-5-9V6a2 2 0 10-4 0v7" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-semibold">Kasir</h2>
+        <p class="text-gray-500 mt-2">Transaksi penjualan barang</p>
+      </a>
+
+    </div>
   </div>
 
-<script>
-  // Konfigurasi Supabase
-  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co"; 
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY"; // ganti dengan anon key kamu
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const loginForm = document.getElementById("loginForm");
-
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
-
-    // Cari user di Supabase
-    const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("username", username)
-      .eq("password", password)
-      .single();
-
-    if (error || !data) {
-      alert("Username atau password salah!");
-      return;
-    }
-
-    // Simpan session
-    localStorage.setItem("user", JSON.stringify(data));
-
-    // Redirect sesuai role
-    if (data.role === "admin") {
-      window.location.href = "admin.html";
-    } else if (data.role === "kasir") {
-      // default ke kasir.html, tapi dia juga boleh akses kas.html
-      window.location.href = "kasir.html";
-    } else {
-      alert("Role tidak dikenal!");
-    }
-  });
-</script>
 </body>
 </html>
