@@ -30,6 +30,7 @@
         </select>
         <button id="addUserBtn" class="bg-green-500 text-white px-4 py-2 rounded">Tambah</button>
       </div>
+      <div id="loadingUser" class="hidden text-blue-600 mb-2">⏳ Menyimpan user...</div>
       <table class="w-full border">
         <thead>
           <tr class="bg-gray-200">
@@ -50,6 +51,7 @@
         <input id="newStok" type="number" placeholder="Stok" class="border p-2 rounded w-1/3">
         <button id="addBarangBtn" class="bg-green-500 text-white px-4 py-2 rounded">Tambah</button>
       </div>
+      <div id="loadingBarang" class="hidden text-blue-600 mb-2">⏳ Menyimpan barang...</div>
       <table class="w-full border">
         <thead>
           <tr class="bg-gray-200">
@@ -95,7 +97,7 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Login function
+    // Login
     async function handleLogin() {
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
@@ -105,45 +107,116 @@
         return;
       }
 
-      try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("username", username)
-          .eq("password", password)
-          .single();
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single();
 
-        if (error || !data) {
-          alert("Akun tidak dikenali, Anda akan kembali ke halaman awal.");
-          window.location.href = "index.html";
-          return;
-        }
+      if (error || !data) {
+        alert("Akun tidak dikenali, Anda akan kembali ke halaman awal.");
+        window.location.href = "index.html";
+        return;
+      }
 
-        if (data.role !== "admin") {
-          alert("Akses ditolak, hanya Admin yang bisa masuk.");
-          window.location.href = "index.html";
-          return;
-        }
+      if (data.role !== "admin") {
+        alert("Akses ditolak, hanya Admin yang bisa masuk.");
+        window.location.href = "index.html";
+        return;
+      }
 
-        localStorage.setItem("user", JSON.stringify(data));
-        document.getElementById("loginModal").classList.add("hidden");
-        alert("Login berhasil!");
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("Terjadi kesalahan saat login.");
+      localStorage.setItem("user", JSON.stringify(data));
+      document.getElementById("loginModal").classList.add("hidden");
+    }
+
+    // Load Users
+    async function loadUsers() {
+      const { data, error } = await supabase.from("users").select("username, role");
+      if (!error) {
+        const tbody = document.getElementById("userTable");
+        tbody.innerHTML = "";
+        data.forEach(u => {
+          tbody.innerHTML += `<tr><td class="border px-2 py-1">${u.username}</td><td class="border px-2 py-1">${u.role}</td></tr>`;
+        });
       }
     }
 
-    // Event listener
+    // Add User
+    async function addUser() {
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value.trim();
+      const role = document.getElementById("newRole").value;
+
+      if (!username || !password) {
+        alert("Isi semua field user!");
+        return;
+      }
+
+      document.getElementById("loadingUser").classList.remove("hidden");
+      const { error } = await supabase.from("users").insert([{ username, password, role }]);
+      document.getElementById("loadingUser").classList.add("hidden");
+
+      if (error) {
+        alert("Gagal menambahkan user");
+      } else {
+        document.getElementById("newUsername").value = "";
+        document.getElementById("newPassword").value = "";
+        loadUsers();
+      }
+    }
+
+    // Load Barang
+    async function loadBarang() {
+      const { data, error } = await supabase.from("barang").select("*");
+      if (!error) {
+        const tbody = document.getElementById("barangTable");
+        tbody.innerHTML = "";
+        data.forEach(b => {
+          tbody.innerHTML += `<tr><td class="border px-2 py-1">${b.nama}</td><td class="border px-2 py-1">${b.harga}</td><td class="border px-2 py-1">${b.stok}</td></tr>`;
+        });
+      }
+    }
+
+    // Add Barang
+    async function addBarang() {
+      const nama = document.getElementById("newBarang").value.trim();
+      const harga = document.getElementById("newHarga").value;
+      const stok = document.getElementById("newStok").value;
+
+      if (!nama || !harga || !stok) {
+        alert("Isi semua field barang!");
+        return;
+      }
+
+      document.getElementById("loadingBarang").classList.remove("hidden");
+      const { error } = await supabase.from("barang").insert([{ nama, harga, stok }]);
+      document.getElementById("loadingBarang").classList.add("hidden");
+
+      if (error) {
+        alert("Gagal menambahkan barang");
+      } else {
+        document.getElementById("newBarang").value = "";
+        document.getElementById("newHarga").value = "";
+        document.getElementById("newStok").value = "";
+        loadBarang();
+      }
+    }
+
+    // Event Listeners
     document.addEventListener("DOMContentLoaded", () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || user.role !== "admin") {
         document.getElementById("loginModal").classList.remove("hidden");
       } else {
         document.getElementById("loginModal").classList.add("hidden");
+        loadUsers();
+        loadBarang();
       }
 
       document.getElementById("loginBtn").addEventListener("click", handleLogin);
+      document.getElementById("addUserBtn").addEventListener("click", addUser);
+      document.getElementById("addBarangBtn").addEventListener("click", addBarang);
     });
   </script>
 </body>
