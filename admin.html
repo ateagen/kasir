@@ -5,246 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <!-- Login Section -->
-  <div id="loginSection" class="w-full max-w-sm bg-white p-6 rounded-xl shadow-lg">
-    <h2 class="text-2xl font-bold mb-4 text-center">Login Admin</h2>
-    <form onsubmit="loginUser(event)" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium">Username</label>
-        <input id="username" type="text" class="w-full p-2 border rounded-lg" required>
-      </div>
-      <div>
-        <label class="block text-sm font-medium">Password</label>
-        <input id="password" type="password" class="w-full p-2 border rounded-lg" required>
-      </div>
-      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
-    </form>
-  </div>
+<body class="bg-gray-100 min-h-screen">
 
-  <!-- Dashboard Section -->
-  <div id="dashboardSection" class="hidden w-full p-6">
-    <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+  <!-- Container -->
+  <div class="max-w-6xl mx-auto p-6">
 
-    <!-- Tabs -->
-    <div class="flex space-x-4 mb-6">
-      <button onclick="showTab('usersTab')" class="px-4 py-2 bg-gray-200 rounded-lg">Users</button>
-      <button onclick="showTab('barangTab')" class="px-4 py-2 bg-gray-200 rounded-lg">Barang</button>
-      <button onclick="showTab('laporanTab')" class="px-4 py-2 bg-gray-200 rounded-lg">Laporan</button>
-    </div>
+    <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
-    <!-- Users CRUD -->
-    <div id="usersTab" class="tab">
-      <h2 class="text-xl font-semibold mb-4">CRUD Users</h2>
-      <form id="userForm" onsubmit="saveUser(event)" class="space-y-4 mb-6">
-        <input type="hidden" id="userId">
-        <div>
-          <label class="block text-sm font-medium">Username</label>
-          <input id="userUsername" type="text" class="w-full p-2 border rounded-lg" required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Password</label>
-          <input id="userPassword" type="text" class="w-full p-2 border rounded-lg" required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Role</label>
-          <select id="userRole" class="w-full p-2 border rounded-lg">
-            <option value="admin">Admin</option>
-            <option value="kasir">Kasir</option>
-          </select>
-        </div>
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">Simpan</button>
+    <!-- USERS -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-4">Manajemen Users</h2>
+
+      <!-- Form Tambah User -->
+      <form id="userForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <input type="text" id="username" placeholder="Username" class="border p-2 rounded w-full" required>
+        <input type="password" id="password" placeholder="Password" class="border p-2 rounded w-full" required>
+        <select id="role" class="border p-2 rounded w-full">
+          <option value="admin">Admin</option>
+          <option value="kasir">Kasir</option>
+        </select>
+        <button type="submit" class="bg-blue-500 text-white rounded p-2">Tambah</button>
       </form>
+
+      <!-- Tabel Users -->
       <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
+        <thead class="bg-gray-200">
+          <tr>
             <th class="p-2 border">ID</th>
             <th class="p-2 border">Username</th>
             <th class="p-2 border">Role</th>
             <th class="p-2 border">Aksi</th>
           </tr>
         </thead>
-        <tbody id="usersTable"></tbody>
+        <tbody id="userTable"></tbody>
       </table>
     </div>
 
-    <!-- Barang CRUD -->
-    <div id="barangTab" class="tab hidden">
-      <h2 class="text-xl font-semibold mb-4">CRUD Barang</h2>
-      <form id="barangForm" onsubmit="saveBarang(event)" class="space-y-4 mb-6">
-        <input type="hidden" id="barangId">
-        <div>
-          <label class="block text-sm font-medium">Nama Barang</label>
-          <input id="barangNama" type="text" class="w-full p-2 border rounded-lg" required>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Harga</label>
-          <input id="barangHarga" type="number" class="w-full p-2 border rounded-lg" required>
-        </div>
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg">Simpan</button>
+    <!-- BARANG -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Manajemen Barang</h2>
+
+      <!-- Form Tambah Barang -->
+      <form id="barangForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <input type="text" id="namaBarang" placeholder="Nama Barang" class="border p-2 rounded w-full" required>
+        <input type="number" id="hargaBarang" placeholder="Harga" class="border p-2 rounded w-full" required>
+        <input type="number" id="stokBarang" placeholder="Stok" class="border p-2 rounded w-full" required>
+        <button type="submit" class="bg-green-500 text-white rounded p-2">Tambah</button>
       </form>
+
+      <!-- Tabel Barang -->
       <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
+        <thead class="bg-gray-200">
+          <tr>
             <th class="p-2 border">ID</th>
             <th class="p-2 border">Nama</th>
             <th class="p-2 border">Harga</th>
+            <th class="p-2 border">Stok</th>
             <th class="p-2 border">Aksi</th>
           </tr>
         </thead>
         <tbody id="barangTable"></tbody>
       </table>
     </div>
-
-    <!-- Laporan -->
-    <div id="laporanTab" class="tab hidden">
-      <h2 class="text-xl font-semibold mb-4">Laporan Transaksi & Kas</h2>
-      <p class="text-gray-600">(Contoh: nanti dihubungkan ke tabel transaksi dan kas)</p>
-    </div>
   </div>
 
   <script>
+    // Ganti dengan punya kamu
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loginUser(event) {
-      event.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("username", username)
-        .eq("password", password);
-
-      if (error) {
-        console.error("Error:", error.message);
-        alert("Terjadi error koneksi ke database");
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        alert("Username atau Password salah");
-        return;
-      }
-
-      const user = data[0];
-      localStorage.setItem("user", JSON.stringify(user));
-
-      if (user.role === "admin") {
-        document.getElementById("loginSection").classList.add("hidden");
-        document.getElementById("dashboardSection").classList.remove("hidden");
-        loadUsers();
-        loadBarang();
-      } else {
-        alert("Akses ditolak: hanya admin");
-      }
-    }
-
-    function showTab(tabId) {
-      document.querySelectorAll(".tab").forEach(tab => tab.classList.add("hidden"));
-      document.getElementById(tabId).classList.remove("hidden");
-    }
-
-    // CRUD USERS
+    // ================= USERS =================
     async function loadUsers() {
-      const { data, error } = await supabase.from("users").select("*");
-      if (error) return console.error(error);
-      const tbody = document.getElementById("usersTable");
+      const { data, error } = await supabase.from("users").select("id, username, role");
+      if (error) {
+        console.error(error);
+        return;
+      }
+      const tbody = document.getElementById("userTable");
       tbody.innerHTML = "";
       data.forEach(u => {
         tbody.innerHTML += `
           <tr>
-            <td class="p-2 border">${u.id}</td>
-            <td class="p-2 border">${u.username}</td>
-            <td class="p-2 border">${u.role}</td>
-            <td class="p-2 border">
-              <button onclick="editUser(${u.id}, '${u.username}', '${u.password}', '${u.role}')" class="px-2 py-1 bg-yellow-500 text-white rounded">Edit</button>
-              <button onclick="deleteUser(${u.id})" class="px-2 py-1 bg-red-600 text-white rounded">Hapus</button>
+            <td class="border p-2">${u.id}</td>
+            <td class="border p-2">${u.username}</td>
+            <td class="border p-2">${u.role}</td>
+            <td class="border p-2 text-center">
+              <button onclick="deleteUser(${u.id})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
             </td>
-          </tr>`;
+          </tr>
+        `;
       });
     }
 
-    async function saveUser(event) {
-      event.preventDefault();
-      const id = document.getElementById("userId").value;
-      const username = document.getElementById("userUsername").value;
-      const password = document.getElementById("userPassword").value;
-      const role = document.getElementById("userRole").value;
-
-      if (id) {
-        await supabase.from("users").update({ username, password, role }).eq("id", id);
+    document.getElementById("userForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const { error } = await supabase.from("users").insert([{ username, password, role }]);
+      if (error) {
+        alert("Gagal tambah user: " + error.message);
       } else {
-        await supabase.from("users").insert([{ username, password, role }]);
+        e.target.reset();
+        loadUsers();
       }
-      document.getElementById("userForm").reset();
-      document.getElementById("userId").value = "";
-      loadUsers();
-    }
-
-    function editUser(id, username, password, role) {
-      document.getElementById("userId").value = id;
-      document.getElementById("userUsername").value = username;
-      document.getElementById("userPassword").value = password;
-      document.getElementById("userRole").value = role;
-    }
+    });
 
     async function deleteUser(id) {
-      await supabase.from("users").delete().eq("id", id);
-      loadUsers();
+      if (!confirm("Hapus user ini?")) return;
+      const { error } = await supabase.from("users").delete().eq("id", id);
+      if (error) alert("Gagal hapus user: " + error.message);
+      else loadUsers();
     }
 
-    // CRUD BARANG
+    // ================= BARANG =================
     async function loadBarang() {
       const { data, error } = await supabase.from("barang").select("*");
-      if (error) return console.error(error);
+      if (error) {
+        console.error(error);
+        return;
+      }
       const tbody = document.getElementById("barangTable");
       tbody.innerHTML = "";
       data.forEach(b => {
         tbody.innerHTML += `
           <tr>
-            <td class="p-2 border">${b.id}</td>
-            <td class="p-2 border">${b.nama}</td>
-            <td class="p-2 border">${b.harga}</td>
-            <td class="p-2 border">
-              <button onclick="editBarang(${b.id}, '${b.nama}', ${b.harga})" class="px-2 py-1 bg-yellow-500 text-white rounded">Edit</button>
-              <button onclick="deleteBarang(${b.id})" class="px-2 py-1 bg-red-600 text-white rounded">Hapus</button>
+            <td class="border p-2">${b.id}</td>
+            <td class="border p-2">${b.nama}</td>
+            <td class="border p-2">Rp ${b.harga}</td>
+            <td class="border p-2">${b.stok}</td>
+            <td class="border p-2 text-center">
+              <button onclick="deleteBarang(${b.id})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
             </td>
-          </tr>`;
+          </tr>
+        `;
       });
     }
 
-    async function saveBarang(event) {
-      event.preventDefault();
-      const id = document.getElementById("barangId").value;
-      const nama = document.getElementById("barangNama").value;
-      const harga = document.getElementById("barangHarga").value;
-
-      if (id) {
-        await supabase.from("barang").update({ nama, harga }).eq("id", id);
+    document.getElementById("barangForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nama = document.getElementById("namaBarang").value;
+      const harga = document.getElementById("hargaBarang").value;
+      const stok = document.getElementById("stokBarang").value;
+      const { error } = await supabase.from("barang").insert([{ nama, harga, stok }]);
+      if (error) {
+        alert("Gagal tambah barang: " + error.message);
       } else {
-        await supabase.from("barang").insert([{ nama, harga }]);
+        e.target.reset();
+        loadBarang();
       }
-      document.getElementById("barangForm").reset();
-      document.getElementById("barangId").value = "";
-      loadBarang();
-    }
-
-    function editBarang(id, nama, harga) {
-      document.getElementById("barangId").value = id;
-      document.getElementById("barangNama").value = nama;
-      document.getElementById("barangHarga").value = harga;
-    }
+    });
 
     async function deleteBarang(id) {
-      await supabase.from("barang").delete().eq("id", id);
-      loadBarang();
+      if (!confirm("Hapus barang ini?")) return;
+      const { error } = await supabase.from("barang").delete().eq("id", id);
+      if (error) alert("Gagal hapus barang: " + error.message);
+      else loadBarang();
     }
+
+    // Load data awal
+    loadUsers();
+    loadBarang();
   </script>
 </body>
 </html>
