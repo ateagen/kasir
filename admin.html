@@ -1,205 +1,240 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Panel</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
   <!-- Navbar -->
-  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">Logout</button>
+  <nav class="bg-blue-600 text-white px-4 py-3 flex justify-between items-center">
+    <h1 class="text-xl font-bold">Admin Dashboard</h1>
+    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Logout</button>
   </nav>
 
-  <div class="p-6 space-y-6">
-
-    <!-- Users Section -->
-    <section class="bg-white p-6 rounded shadow">
-      <h2 class="text-lg font-bold mb-4">CRUD Users</h2>
-      <form id="userForm" class="space-y-3">
-        <input type="hidden" id="userId" />
-        <input id="username" placeholder="Username" class="w-full border p-2 rounded"/>
-        <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded"/>
-        <select id="role" class="w-full border p-2 rounded">
+  <main class="flex-1 p-6 space-y-10">
+    <!-- CRUD User -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-4">Kelola User</h2>
+      <form id="userForm" class="flex flex-wrap gap-2 mb-4">
+        <input type="hidden" id="userId">
+        <input type="text" id="username" placeholder="Username" class="border p-2 rounded flex-1" required>
+        <input type="password" id="password" placeholder="Password" class="border p-2 rounded flex-1" required>
+        <select id="role" class="border p-2 rounded">
           <option value="admin">Admin</option>
           <option value="kasir">Kasir</option>
         </select>
-        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Save</button>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Simpan</button>
       </form>
-      <table class="w-full mt-4 border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border p-2">ID</th>
-            <th class="border p-2">Username</th>
-            <th class="border p-2">Role</th>
-            <th class="border p-2">Actions</th>
+      <table class="w-full bg-white shadow rounded overflow-hidden">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2">ID</th>
+            <th class="p-2">Username</th>
+            <th class="p-2">Role</th>
+            <th class="p-2">Aksi</th>
           </tr>
         </thead>
-        <tbody id="usersTable"></tbody>
+        <tbody id="userTable"></tbody>
       </table>
     </section>
 
-    <!-- Barang Section -->
-    <section class="bg-white p-6 rounded shadow">
-      <h2 class="text-lg font-bold mb-4">CRUD Barang</h2>
-      <form id="barangForm" class="space-y-3">
-        <input type="hidden" id="barangId" />
-        <input id="nama" placeholder="Nama Barang" class="w-full border p-2 rounded"/>
-        <input id="harga" type="number" placeholder="Harga" class="w-full border p-2 rounded"/>
-        <input id="stok" type="number" placeholder="Stok" class="w-full border p-2 rounded"/>
-        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Save</button>
+    <!-- CRUD Barang -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-4">Kelola Barang</h2>
+      <form id="barangForm" class="flex flex-wrap gap-2 mb-4">
+        <input type="hidden" id="barangId">
+        <input type="text" id="namaBarang" placeholder="Nama Barang" class="border p-2 rounded flex-1" required>
+        <input type="number" id="hargaBarang" placeholder="Harga" class="border p-2 rounded flex-1" required>
+        <input type="number" id="stokBarang" placeholder="Stok" class="border p-2 rounded flex-1" required>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Simpan</button>
       </form>
-      <table class="w-full mt-4 border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border p-2">ID</th>
-            <th class="border p-2">Nama</th>
-            <th class="border p-2">Harga</th>
-            <th class="border p-2">Stok</th>
-            <th class="border p-2">Actions</th>
+      <table class="w-full bg-white shadow rounded overflow-hidden">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2">ID</th>
+            <th class="p-2">Nama</th>
+            <th class="p-2">Harga</th>
+            <th class="p-2">Stok</th>
+            <th class="p-2">Aksi</th>
           </tr>
         </thead>
         <tbody id="barangTable"></tbody>
       </table>
     </section>
-  </div>
 
-<script>
-  // Konfigurasi Supabase
-  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co"; 
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY"; // ganti dengan anon key kamu
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Transaksi -->
+    <section>
+      <h2 class="text-2xl font-semibold mb-4">Transaksi</h2>
+      <div class="mb-4">
+        <input type="date" id="filterTanggal" class="border p-2 rounded">
+        <button id="filterBtn" class="bg-purple-500 text-white px-4 py-2 rounded">Filter</button>
+      </div>
+      <table class="w-full bg-white shadow rounded overflow-hidden">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="p-2">ID</th>
+            <th class="p-2">Tanggal</th>
+            <th class="p-2">Jenis</th>
+            <th class="p-2">Deskripsi</th>
+            <th class="p-2">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody id="transaksiTable"></tbody>
+      </table>
+    </section>
+  </main>
 
-  // 🔐 Proteksi Login
-  const userSession = JSON.parse(localStorage.getItem("user"));
-  if (!userSession) {
-    alert("Silakan login terlebih dahulu!");
-    window.location.href = "index.html";
-  } else if (userSession.role !== "admin") {
-    alert("Akses ditolak! Halaman ini hanya untuk Admin.");
-    window.location.href = "index.html";
-  }
+  <script>
+    // Supabase init
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // 🚪 Logout
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    localStorage.removeItem("user");
-    window.location.href = "index.html";
-  });
-
-  // ================= CRUD USERS =================
-  const userForm = document.getElementById("userForm");
-  const usersTable = document.getElementById("usersTable");
-
-  async function loadUsers() {
-    const { data, error } = await supabase.from("users").select("*");
-    if (error) {
-      console.error(error);
-      return;
-    }
-    usersTable.innerHTML = data.map(u => `
-      <tr>
-        <td class="border p-2">${u.id}</td>
-        <td class="border p-2">${u.username}</td>
-        <td class="border p-2">${u.role}</td>
-        <td class="border p-2 space-x-2">
-          <button onclick="editUser(${u.id}, '${u.username}', '${u.role}')" class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
-          <button onclick="deleteUser(${u.id})" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-        </td>
-      </tr>
-    `).join("");
-  }
-
-  userForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("userId").value;
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
-
-    if (id) {
-      await supabase.from("users").update({ username, password, role }).eq("id", id);
-    } else {
-      await supabase.from("users").insert([{ username, password, role }]);
+    // Cek login
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || user.role !== "admin") {
+      alert("Anda harus login sebagai admin!");
+      window.location.href = "index.html";
     }
 
-    userForm.reset();
-    document.getElementById("userId").value = "";
+    // Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("user");
+      window.location.href = "index.html";
+    });
+
+    // CRUD User
+    const userForm = document.getElementById("userForm");
+    const userTable = document.getElementById("userTable");
+
+    async function loadUsers() {
+      const { data } = await supabase.from("users").select("*");
+      userTable.innerHTML = data.map(u => `
+        <tr class="border-t">
+          <td class="p-2">${u.id}</td>
+          <td class="p-2">${u.username}</td>
+          <td class="p-2">${u.role}</td>
+          <td class="p-2">
+            <button onclick="editUser(${u.id}, '${u.username}', '${u.password}', '${u.role}')" class="text-blue-500">Edit</button>
+            <button onclick="deleteUser(${u.id})" class="text-red-500 ml-2">Hapus</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    userForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = document.getElementById("userId").value;
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      if (id) {
+        await supabase.from("users").update({ username, password, role }).eq("id", id);
+      } else {
+        await supabase.from("users").insert([{ username, password, role }]);
+      }
+      userForm.reset();
+      loadUsers();
+    });
+
+    window.editUser = (id, username, password, role) => {
+      document.getElementById("userId").value = id;
+      document.getElementById("username").value = username;
+      document.getElementById("password").value = password;
+      document.getElementById("role").value = role;
+    };
+
+    window.deleteUser = async id => {
+      if (confirm("Hapus user ini?")) {
+        await supabase.from("users").delete().eq("id", id);
+        loadUsers();
+      }
+    };
+
+    // CRUD Barang
+    const barangForm = document.getElementById("barangForm");
+    const barangTable = document.getElementById("barangTable");
+
+    async function loadBarang() {
+      const { data } = await supabase.from("barang").select("*");
+      barangTable.innerHTML = data.map(b => `
+        <tr class="border-t">
+          <td class="p-2">${b.id}</td>
+          <td class="p-2">${b.nama}</td>
+          <td class="p-2">${b.harga}</td>
+          <td class="p-2">${b.stok}</td>
+          <td class="p-2">
+            <button onclick="editBarang(${b.id}, '${b.nama}', ${b.harga}, ${b.stok})" class="text-blue-500">Edit</button>
+            <button onclick="deleteBarang(${b.id})" class="text-red-500 ml-2">Hapus</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    barangForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = document.getElementById("barangId").value;
+      const nama = document.getElementById("namaBarang").value;
+      const harga = document.getElementById("hargaBarang").value;
+      const stok = document.getElementById("stokBarang").value;
+
+      if (id) {
+        await supabase.from("barang").update({ nama, harga, stok }).eq("id", id);
+      } else {
+        await supabase.from("barang").insert([{ nama, harga, stok }]);
+      }
+      barangForm.reset();
+      loadBarang();
+    });
+
+    window.editBarang = (id, nama, harga, stok) => {
+      document.getElementById("barangId").value = id;
+      document.getElementById("namaBarang").value = nama;
+      document.getElementById("hargaBarang").value = harga;
+      document.getElementById("stokBarang").value = stok;
+    };
+
+    window.deleteBarang = async id => {
+      if (confirm("Hapus barang ini?")) {
+        await supabase.from("barang").delete().eq("id", id);
+        loadBarang();
+      }
+    };
+
+    // Transaksi
+    const transaksiTable = document.getElementById("transaksiTable");
+    const filterTanggal = document.getElementById("filterTanggal");
+
+    async function loadTransaksi(tanggal = null) {
+      let query = supabase.from("transaksi").select("*");
+      if (tanggal) {
+        query = query.eq("tanggal", tanggal);
+      }
+      const { data } = await query.order("tanggal", { ascending: false });
+      transaksiTable.innerHTML = data.map(t => `
+        <tr class="border-t">
+          <td class="p-2">${t.id}</td>
+          <td class="p-2">${t.tanggal}</td>
+          <td class="p-2">${t.jenis}</td>
+          <td class="p-2">${t.deskripsi}</td>
+          <td class="p-2">${t.jumlah}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("filterBtn").addEventListener("click", () => {
+      loadTransaksi(filterTanggal.value);
+    });
+
+    // Load data awal
     loadUsers();
-  });
-
-  async function editUser(id, username, role) {
-    document.getElementById("userId").value = id;
-    document.getElementById("username").value = username;
-    document.getElementById("role").value = role;
-  }
-
-  async function deleteUser(id) {
-    await supabase.from("users").delete().eq("id", id);
-    loadUsers();
-  }
-
-  // ================= CRUD BARANG =================
-  const barangForm = document.getElementById("barangForm");
-  const barangTable = document.getElementById("barangTable");
-
-  async function loadBarang() {
-    const { data, error } = await supabase.from("barang").select("*");
-    if (error) {
-      console.error(error);
-      return;
-    }
-    barangTable.innerHTML = data.map(b => `
-      <tr>
-        <td class="border p-2">${b.id}</td>
-        <td class="border p-2">${b.nama}</td>
-        <td class="border p-2">${b.harga}</td>
-        <td class="border p-2">${b.stok}</td>
-        <td class="border p-2 space-x-2">
-          <button onclick="editBarang(${b.id}, '${b.nama}', ${b.harga}, ${b.stok})" class="bg-yellow-500 text-white px-2 py-1 rounded">Edit</button>
-          <button onclick="deleteBarang(${b.id})" class="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-        </td>
-      </tr>
-    `).join("");
-  }
-
-  barangForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("barangId").value;
-    const nama = document.getElementById("nama").value;
-    const harga = document.getElementById("harga").value;
-    const stok = document.getElementById("stok").value;
-
-    if (id) {
-      await supabase.from("barang").update({ nama, harga, stok }).eq("id", id);
-    } else {
-      await supabase.from("barang").insert([{ nama, harga, stok }]);
-    }
-
-    barangForm.reset();
-    document.getElementById("barangId").value = "";
     loadBarang();
-  });
-
-  async function editBarang(id, nama, harga, stok) {
-    document.getElementById("barangId").value = id;
-    document.getElementById("nama").value = nama;
-    document.getElementById("harga").value = harga;
-    document.getElementById("stok").value = stok;
-  }
-
-  async function deleteBarang(id) {
-    await supabase.from("barang").delete().eq("id", id);
-    loadBarang();
-  }
-
-  // Load awal
-  loadUsers();
-  loadBarang();
-
-</script>
+    loadTransaksi(new Date().toISOString().split("T")[0]);
+  </script>
 </body>
 </html>
