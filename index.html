@@ -1,51 +1,62 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menu Utama</title>
-  <!-- Tailwind CDN -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gray-100">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <div class="max-w-4xl w-full px-4">
-    <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
-      Aplikasi Kasir
-    </h1>
-
-    <!-- Grid menu -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      
-      <!-- Admin -->
-      <a href="admin.html"
-         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
-        <div class="w-16 h-16 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-4 text-2xl font-bold">
-          A
-        </div>
-        <h2 class="text-lg font-semibold text-gray-700">Admin</h2>
-      </a>
-
-      <!-- Kasir -->
-      <a href="kasir.html"
-         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
-        <div class="w-16 h-16 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-4 text-2xl font-bold">
-          K
-        </div>
-        <h2 class="text-lg font-semibold text-gray-700">Kasir</h2>
-      </a>
-
-      <!-- Kas -->
-      <a href="kas.html"
-         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
-        <div class="w-16 h-16 flex items-center justify-center bg-yellow-100 text-yellow-600 rounded-full mb-4 text-2xl font-bold">
-          $
-        </div>
-        <h2 class="text-lg font-semibold text-gray-700">Kas</h2>
-      </a>
-
-    </div>
+  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-center mb-6">Login</h1>
+    <form id="loginForm" class="space-y-4">
+      <input id="username" type="text" placeholder="Username" required class="w-full border p-3 rounded focus:ring focus:ring-blue-300"/>
+      <input id="password" type="password" placeholder="Password" required class="w-full border p-3 rounded focus:ring focus:ring-blue-300"/>
+      <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700">Login</button>
+    </form>
   </div>
 
+<script>
+  // Konfigurasi Supabase
+  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co"; 
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY"; // ganti dengan anon key kamu
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const loginForm = document.getElementById("loginForm");
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    // Cari user di Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", username)
+      .eq("password", password)
+      .single();
+
+    if (error || !data) {
+      alert("Username atau password salah!");
+      return;
+    }
+
+    // Simpan session
+    localStorage.setItem("user", JSON.stringify(data));
+
+    // Redirect sesuai role
+    if (data.role === "admin") {
+      window.location.href = "admin.html";
+    } else if (data.role === "kasir") {
+      // default ke kasir.html, tapi dia juga boleh akses kas.html
+      window.location.href = "kasir.html";
+    } else {
+      alert("Role tidak dikenal!");
+    }
+  });
+</script>
 </body>
 </html>
