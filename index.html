@@ -2,43 +2,48 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POS System - Halaman Utama</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Login Kasir</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+<body>
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Username"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
 
-  <div class="w-full max-w-3xl bg-white/90 shadow-2xl rounded-2xl p-8 text-center">
-    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-8">Selamat Datang di POS System</h1>
+  <script>
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co"; // ganti
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY"; // ganti
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <!-- Grid Card -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      
-      <!-- Kasir -->
-      <a href="kasir.html" class="group block bg-gradient-to-br from-green-400 to-green-600 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:scale-105 p-6 text-white">
-        <div class="text-5xl mb-3">💵</div>
-        <h2 class="text-xl font-semibold">Kasir</h2>
-        <p class="text-sm opacity-80 group-hover:opacity-100">Transaksi & Cetak Struk</p>
-      </a>
+    async function login() {
+      let user = document.getElementById("username").value;
+      let pass = document.getElementById("password").value;
 
-      <!-- Kas -->
-      <a href="kas.html" class="group block bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:scale-105 p-6 text-white">
-        <div class="text-5xl mb-3">📊</div>
-        <h2 class="text-xl font-semibold">Kas</h2>
-        <p class="text-sm opacity-80 group-hover:opacity-100">Pendapatan & Pengeluaran</p>
-      </a>
+      const { data, error } = await db
+        .from("users")
+        .select("*")
+        .eq("username", user)
+        .eq("password", pass);
 
-      <!-- Admin -->
-      <a href="admin.html" class="group block bg-gradient-to-br from-red-400 to-red-600 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:scale-105 p-6 text-white">
-        <div class="text-5xl mb-3">⚙️</div>
-        <h2 class="text-xl font-semibold">Admin</h2>
-        <p class="text-sm opacity-80 group-hover:opacity-100">Kelola User & Laporan</p>
-      </a>
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
 
-    </div>
+      if (data.length > 0) {
+        let role = data[0].role;
+        alert("Login berhasil sebagai " + role);
 
-    <!-- Footer -->
-    <p class="mt-8 text-gray-700 text-sm">© 2025 POS System</p>
-  </div>
+        if (role === "admin") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "kasir.html";
+        }
+      } else {
+        alert("Username / Password salah!");
+      }
+    }
+  </script>
 </body>
 </html>
