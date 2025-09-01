@@ -1,49 +1,51 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Login Kasir</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menu Utama</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h2>Login</h2>
-  <input type="text" id="username" placeholder="Username"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
 
-  <script>
-    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co"; // ganti
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY"; // ganti
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <div class="max-w-4xl w-full px-4">
+    <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+      Aplikasi Kasir
+    </h1>
 
-    async function login() {
-      let user = document.getElementById("username").value;
-      let pass = document.getElementById("password").value;
+    <!-- Grid menu -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      
+      <!-- Admin -->
+      <a href="admin.html"
+         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
+        <div class="w-16 h-16 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full mb-4 text-2xl font-bold">
+          A
+        </div>
+        <h2 class="text-lg font-semibold text-gray-700">Admin</h2>
+      </a>
 
-      const { data, error } = await db
-        .from("users")
-        .select("*")
-        .eq("username", user)
-        .eq("password", pass);
+      <!-- Kasir -->
+      <a href="kasir.html"
+         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
+        <div class="w-16 h-16 flex items-center justify-center bg-green-100 text-green-600 rounded-full mb-4 text-2xl font-bold">
+          K
+        </div>
+        <h2 class="text-lg font-semibold text-gray-700">Kasir</h2>
+      </a>
 
-      if (error) {
-        alert("Error: " + error.message);
-        return;
-      }
+      <!-- Kas -->
+      <a href="kas.html"
+         class="flex flex-col items-center justify-center bg-white shadow-lg rounded-2xl p-8 hover:shadow-2xl transition duration-300">
+        <div class="w-16 h-16 flex items-center justify-center bg-yellow-100 text-yellow-600 rounded-full mb-4 text-2xl font-bold">
+          $
+        </div>
+        <h2 class="text-lg font-semibold text-gray-700">Kas</h2>
+      </a>
 
-      if (data.length > 0) {
-        let role = data[0].role;
-        alert("Login berhasil sebagai " + role);
+    </div>
+  </div>
 
-        if (role === "admin") {
-          window.location.href = "admin.html";
-        } else {
-          window.location.href = "kasir.html";
-        }
-      } else {
-        alert("Username / Password salah!");
-      }
-    }
-  </script>
 </body>
 </html>
