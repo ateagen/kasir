@@ -1,203 +1,172 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin POS Kasir</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <div class="max-w-6xl mx-auto py-10 px-4">
-    <h1 class="text-3xl font-bold mb-6 text-center">Admin Dashboard</h1>
+<body class="bg-gray-100 min-h-screen p-6">
+  <h1 class="text-2xl font-bold mb-6">Halaman Admin</h1>
 
-    <!-- Loading Popup -->
-    <div id="loadingPopup" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-xl shadow-lg">
-        <p class="text-lg font-semibold">Loading...</p>
-      </div>
-    </div>
+  <!-- Tombol Kembali -->
+  <div class="mb-6">
+    <button onclick="goHome()" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700">
+      ⬅️ Kembali ke Layar Utama
+    </button>
+  </div>
 
-    <!-- Akun -->
-    <div class="bg-white shadow rounded-xl p-6 mb-8">
-      <h2 class="text-xl font-bold mb-4">Kelola Akun</h2>
-      <form id="formAkun" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="username" placeholder="Username" class="border p-2 rounded flex-1" required />
-        <input type="text" id="password" placeholder="Password" class="border p-2 rounded flex-1" required />
-        <select id="role" class="border p-2 rounded flex-1" required>
-          <option value="admin">Admin</option>
-          <option value="kasir">Kasir</option>
-        </select>
-        <button class="bg-blue-500 text-white px-4 py-2 rounded">Tambah</button>
-      </form>
-      <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">Username</th>
-            <th class="p-2 border">Role</th>
-            <th class="p-2 border">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="akunTable"></tbody>
-      </table>
+  <!-- Grid Data -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Akun Kasir -->
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-xl font-semibold mb-4">Kelola Akun</h2>
+      <input id="username" type="text" placeholder="Username" class="border rounded p-2 w-full mb-2">
+      <input id="password" type="password" placeholder="Password" class="border rounded p-2 w-full mb-2">
+      <select id="role" class="border rounded p-2 w-full mb-2">
+        <option value="kasir">Kasir</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button onclick="tambahAkun()" class="bg-blue-600 text-white px-4 py-2 rounded mb-4">Tambah Akun</button>
+      <ul id="akunList" class="list-disc pl-6"></ul>
     </div>
 
     <!-- Menu -->
-    <div class="bg-white shadow rounded-xl p-6 mb-8">
-      <h2 class="text-xl font-bold mb-4">Kelola Menu</h2>
-      <form id="formMenu" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="namaMenu" placeholder="Nama Menu" class="border p-2 rounded flex-1" required />
-        <input type="number" id="hargaMenu" placeholder="Harga" class="border p-2 rounded flex-1" required />
-        <button class="bg-blue-500 text-white px-4 py-2 rounded">Tambah</button>
-      </form>
-      <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">Nama</th>
-            <th class="p-2 border">Harga</th>
-            <th class="p-2 border">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="menuTable"></tbody>
-      </table>
-    </div>
-
-    <!-- Transaksi -->
-    <div class="bg-white shadow rounded-xl p-6">
-      <h2 class="text-xl font-bold mb-4">Transaksi</h2>
-      <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">Tanggal</th>
-            <th class="p-2 border">Kasir</th>
-            <th class="p-2 border">Menu</th>
-            <th class="p-2 border">Jumlah</th>
-            <th class="p-2 border">Total</th>
-          </tr>
-        </thead>
-        <tbody id="transaksiTable"></tbody>
-      </table>
+    <div class="bg-white p-6 rounded-2xl shadow">
+      <h2 class="text-xl font-semibold mb-4">Kelola Menu</h2>
+      <input id="menuNama" type="text" placeholder="Nama Menu" class="border rounded p-2 w-full mb-2">
+      <input id="menuHarga" type="number" placeholder="Harga" class="border rounded p-2 w-full mb-2">
+      <button onclick="tambahMenu()" class="bg-green-600 text-white px-4 py-2 rounded mb-4">Tambah Menu</button>
+      <ul id="menuList" class="list-disc pl-6"></ul>
     </div>
   </div>
 
+  <!-- Loading -->
+  <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow">Loading...</div>
+  </div>
+
   <script>
-    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseUrl = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const loadingPopup = document.getElementById("loadingPopup");
-
-    function showLoading() { loadingPopup.classList.remove("hidden"); }
-    function hideLoading() { loadingPopup.classList.add("hidden"); }
-
-    // ========================================
-    // Akun
-    // ========================================
-    async function loadAkun() {
-      const { data, error } = await supabase.from("users").select("id, username, role").order("created_at", { ascending: false });
-      if (error) { alert("Gagal load akun: " + error.message); return; }
-      const tbody = document.getElementById("akunTable");
-      tbody.innerHTML = "";
-      data.forEach(a => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="border p-2">${a.username}</td>
-            <td class="border p-2">${a.role}</td>
-            <td class="border p-2 text-center">
-              <button onclick="hapusAkun('${a.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
-            </td>
-          </tr>`;
-      });
+    function showLoading() {
+      document.getElementById("loading").classList.remove("hidden");
+    }
+    function hideLoading() {
+      document.getElementById("loading").classList.add("hidden");
     }
 
-    document.getElementById("formAkun").addEventListener("submit", async e => {
-      e.preventDefault();
-      showLoading();
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
+    // Fungsi kembali ke index
+    function goHome() {
+      window.location.replace("index.html");
+    }
+
+    async function loadAkun() {
+      let { data, error } = await supabaseClient.from("users").select("*").order("id", { ascending: false });
+      if (!error) {
+        const list = document.getElementById("akunList");
+        list.innerHTML = "";
+        data.forEach(user => {
+          const li = document.createElement("li");
+          li.textContent = `${user.username} (${user.role})`;
+          const del = document.createElement("button");
+          del.textContent = "❌";
+          del.className = "ml-2 text-red-600";
+          del.onclick = () => hapusAkun(user.id);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+      }
+    }
+
+    async function loadMenu() {
+      let { data, error } = await supabaseClient.from("menu").select("*").order("created_at", { ascending: false });
+      if (!error) {
+        const list = document.getElementById("menuList");
+        list.innerHTML = "";
+        data.forEach(m => {
+          const li = document.createElement("li");
+          li.textContent = `${m.nama} - Rp${m.harga}`;
+          const del = document.createElement("button");
+          del.textContent = "❌";
+          del.className = "ml-2 text-red-600";
+          del.onclick = () => hapusMenu(m.id);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+      }
+    }
+
+    async function tambahAkun() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
       const role = document.getElementById("role").value;
-      const { error } = await supabase.from("users").insert([{ username, password, role }]);
+
+      if (!username || !password) {
+        alert("Isi semua data!");
+        return;
+      }
+
+      showLoading();
+      let { error } = await supabaseClient.from("users").insert([{ username, password, role }]);
       hideLoading();
-      if (error) alert("Gagal tambah akun: " + error.message);
-      else { e.target.reset(); loadAkun(); }
-    });
+      if (error) {
+        alert("Gagal tambah akun: " + error.message);
+      } else {
+        loadAkun();
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+      }
+    }
 
     async function hapusAkun(id) {
       showLoading();
-      const { error } = await supabase.from("users").delete().eq("id", id);
+      let { error } = await supabaseClient.from("users").delete().eq("id", id);
       hideLoading();
-      if (error) alert("Gagal hapus akun: " + error.message);
-      else loadAkun();
+      if (error) {
+        alert("Gagal hapus akun: " + error.message);
+      } else {
+        loadAkun();
+      }
     }
 
-    // ========================================
-    // Menu
-    // ========================================
-    async function loadMenu() {
-      const { data, error } = await supabase.from("menu").select("id, nama, harga").order("created_at", { ascending: false });
-      if (error) { alert("Gagal load menu: " + error.message); return; }
-      const tbody = document.getElementById("menuTable");
-      tbody.innerHTML = "";
-      data.forEach(m => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="border p-2">${m.nama}</td>
-            <td class="border p-2">Rp ${m.harga}</td>
-            <td class="border p-2 text-center">
-              <button onclick="hapusMenu('${m.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
-            </td>
-          </tr>`;
-      });
-    }
+    async function tambahMenu() {
+      const nama = document.getElementById("menuNama").value.trim();
+      const harga = parseFloat(document.getElementById("menuHarga").value);
 
-    document.getElementById("formMenu").addEventListener("submit", async e => {
-      e.preventDefault();
+      if (!nama || isNaN(harga)) {
+        alert("Isi semua data menu!");
+        return;
+      }
+
       showLoading();
-      const nama = document.getElementById("namaMenu").value;
-      const harga = parseFloat(document.getElementById("hargaMenu").value);
-      const { error } = await supabase.from("menu").insert([{ nama, harga }]);
+      let { error } = await supabaseClient.from("menu").insert([{ nama, harga }]);
       hideLoading();
-      if (error) alert("Gagal tambah menu: " + error.message);
-      else { e.target.reset(); loadMenu(); }
-    });
+      if (error) {
+        alert("Gagal tambah menu: " + error.message);
+      } else {
+        loadMenu();
+        document.getElementById("menuNama").value = "";
+        document.getElementById("menuHarga").value = "";
+      }
+    }
 
     async function hapusMenu(id) {
       showLoading();
-      const { error } = await supabase.from("menu").delete().eq("id", id);
+      let { error } = await supabaseClient.from("menu").delete().eq("id", id);
       hideLoading();
-      if (error) alert("Gagal hapus menu: " + error.message);
-      else loadMenu();
+      if (error) {
+        alert("Gagal hapus menu: " + error.message);
+      } else {
+        loadMenu();
+      }
     }
 
-    // ========================================
-    // Transaksi
-    // ========================================
-    async function loadTransaksi() {
-      const { data, error } = await supabase
-        .from("transaksi")
-        .select(`id, tanggal, jumlah, total_harga, users(username), menu(nama)`)
-        .order("tanggal", { ascending: false });
-      if (error) { alert("Gagal load transaksi: " + error.message); return; }
-      const tbody = document.getElementById("transaksiTable");
-      tbody.innerHTML = "";
-      data.forEach(t => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="border p-2">${t.tanggal}</td>
-            <td class="border p-2">${t.users?.username || "-"}</td>
-            <td class="border p-2">${t.menu?.nama || "-"}</td>
-            <td class="border p-2">${t.jumlah}</td>
-            <td class="border p-2">Rp ${t.total_harga}</td>
-          </tr>`;
-      });
-    }
-
-    // ========================================
-    // Init load
-    // ========================================
     loadAkun();
     loadMenu();
-    loadTransaksi();
   </script>
 </body>
 </html>
