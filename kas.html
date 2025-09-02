@@ -1,160 +1,205 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kas - POS Kasir</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Halaman Kas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
-  <h1 class="text-2xl font-bold mb-6">Halaman Kas</h1>
+<body class="bg-gray-100 min-h-screen p-4">
+  <div class="max-w-4xl mx-auto bg-white shadow rounded-xl p-6 space-y-6">
+    <h1 class="text-2xl font-bold text-center">Halaman Kas</h1>
 
-  <!-- Loading Popup -->
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-4 rounded-lg shadow-lg">
-      <p class="text-lg">Loading...</p>
-    </div>
-  </div>
-
-  <!-- Kas Info -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-    <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-2">Kas Awal</h2>
-      <p id="kasAwal" class="text-2xl font-bold text-green-600">Rp 0</p>
+    <!-- Tombol kembali -->
+    <div class="text-center">
+      <button onclick="kembaliKeIndex()" 
+        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+        Kembali ke Layar Utama
+      </button>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6">
+    <!-- Kas Awal & Akhir -->
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Informasi Kas</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 border rounded bg-gray-50">
+          <p class="font-medium">Kas Awal:</p>
+          <p id="kasAwal" class="text-lg font-bold">Rp 0</p>
+        </div>
+        <div class="p-4 border rounded bg-gray-50">
+          <p class="font-medium">Kas Akhir:</p>
+          <p id="kasAkhir" class="text-lg font-bold">Rp 0</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Input Pengeluaran -->
+    <section>
+      <h2 class="text-xl font-semibold mb-2">Input Pengeluaran</h2>
+      <div class="flex flex-col md:flex-row gap-2">
+        <input id="ketPengeluaran" type="text" placeholder="Keterangan"
+          class="border rounded p-2 flex-1" />
+        <input id="biayaPengeluaran" type="number" placeholder="Jumlah"
+          class="border rounded p-2 flex-1" />
+        <button onclick="tambahPengeluaran()" 
+          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+          Simpan
+        </button>
+      </div>
+      <table class="w-full mt-4 border text-sm">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border p-2">Tanggal</th>
+            <th class="border p-2">Keterangan</th>
+            <th class="border p-2">Jumlah</th>
+          </tr>
+        </thead>
+        <tbody id="pengeluaranTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Total Penjualan Hari Ini -->
+    <section>
       <h2 class="text-xl font-semibold mb-2">Total Penjualan Hari Ini</h2>
-      <p id="totalPenjualan" class="text-2xl font-bold text-blue-600">Rp 0</p>
-    </div>
-
-    <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-2">Total Pengeluaran Hari Ini</h2>
-      <p id="totalPengeluaran" class="text-2xl font-bold text-red-600">Rp 0</p>
-    </div>
-
-    <div class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-2">Kas Akhir</h2>
-      <p id="kasAkhir" class="text-2xl font-bold text-purple-600">Rp 0</p>
-    </div>
-  </div>
-
-  <!-- Input Pengeluaran -->
-  <div class="bg-white shadow rounded-lg p-6 mt-8 w-full max-w-2xl">
-    <h2 class="text-xl font-semibold mb-4">Input Pengeluaran</h2>
-    <form id="pengeluaranForm" class="space-y-4">
-      <div>
-        <label class="block text-gray-700">Keterangan</label>
-        <input type="text" id="ketPengeluaran" required
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring">
+      <div class="p-4 border rounded bg-green-50">
+        <p id="totalPenjualan" class="text-lg font-bold text-green-700">Rp 0</p>
       </div>
-      <div>
-        <label class="block text-gray-700">Jumlah (Rp)</label>
-        <input type="number" id="jumlahPengeluaran" required min="0"
-               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring">
-      </div>
-      <button type="submit" 
-              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Tambah Pengeluaran</button>
-    </form>
+    </section>
   </div>
 
   <script>
-    // Supabase Init
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const kasAwalEl = document.getElementById("kasAwal");
-    const totalPenjualanEl = document.getElementById("totalPenjualan");
-    const totalPengeluaranEl = document.getElementById("totalPengeluaran");
-    const kasAkhirEl = document.getElementById("kasAkhir");
-    const loadingPopup = document.getElementById("loadingPopup");
-
-    function showLoading() {
-      loadingPopup.classList.remove("hidden");
-    }
-    function hideLoading() {
-      loadingPopup.classList.add("hidden");
+    function kembaliKeIndex() {
+      window.location.href = "index.html";
     }
 
-    async function fetchKasData() {
-      showLoading();
-      const today = new Date().toISOString().split("T")[0];
+    async function loadKas() {
+      // Ambil kas akhir terakhir sebagai kas awal hari ini
+      const { data: kasData } = await supabase
+        .from("kas")
+        .select("*")
+        .order("tanggal", { ascending: false })
+        .limit(1);
 
-      try {
-        // Ambil kas akhir kemarin
-        const { data: kasData, error: kasError } = await supabaseClient
-          .from("kas")
-          .select("kas_akhir, tanggal")
-          .lt("tanggal", today)
-          .order("tanggal", { ascending: false })
-          .limit(1);
-
-        let kasAwal = 0;
-        if (kasData && kasData.length > 0) {
-          kasAwal = kasData[0].kas_akhir;
-        }
-        kasAwalEl.textContent = "Rp " + kasAwal.toLocaleString();
-
-        // Ambil total penjualan hari ini
-        const { data: penjualanData, error: penjualanError } = await supabaseClient
-          .from("transaksi")
-          .select("total")
-          .eq("tanggal", today);
-
-        let totalPenjualan = 0;
-        if (penjualanData) {
-          totalPenjualan = penjualanData.reduce((sum, row) => sum + Number(row.total), 0);
-        }
-        totalPenjualanEl.textContent = "Rp " + totalPenjualan.toLocaleString();
-
-        // Ambil total pengeluaran hari ini
-        const { data: pengeluaranData, error: pengeluaranError } = await supabaseClient
-          .from("pengeluaran")
-          .select("jumlah")
-          .eq("tanggal", today);
-
-        let totalPengeluaran = 0;
-        if (pengeluaranData) {
-          totalPengeluaran = pengeluaranData.reduce((sum, row) => sum + Number(row.jumlah), 0);
-        }
-        totalPengeluaranEl.textContent = "Rp " + totalPengeluaran.toLocaleString();
-
-        // Hitung kas akhir
-        const kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
-        kasAkhirEl.textContent = "Rp " + kasAkhir.toLocaleString();
-
-      } catch (err) {
-        alert("Gagal memuat data kas: " + err.message);
-      } finally {
-        hideLoading();
+      let kasAwal = 0;
+      if (kasData && kasData.length > 0) {
+        kasAwal = kasData[0].kas_akhir;
       }
+      document.getElementById("kasAwal").textContent = "Rp " + kasAwal;
+
+      // Hitung kas akhir: kas awal + total penjualan - total pengeluaran
+      const totalPenjualan = await getTotalPenjualanHariIni();
+      const totalPengeluaran = await getTotalPengeluaranHariIni();
+      const kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
+
+      document.getElementById("kasAkhir").textContent = "Rp " + kasAkhir;
+
+      // Simpan kas hari ini
+      await supabase.from("kas").upsert([
+        {
+          tanggal: new Date().toISOString().split("T")[0],
+          kas_awal: kasAwal,
+          kas_akhir: kasAkhir,
+        },
+      ]);
     }
 
-    // Input pengeluaran
-    document.getElementById("pengeluaranForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showLoading();
-      const ket = document.getElementById("ketPengeluaran").value;
-      const jumlah = Number(document.getElementById("jumlahPengeluaran").value);
-      const today = new Date().toISOString().split("T")[0];
+    async function tambahPengeluaran() {
+      const keterangan = document.getElementById("ketPengeluaran").value.trim();
+      const jumlah = parseFloat(document.getElementById("biayaPengeluaran").value);
 
-      const { error } = await supabaseClient
+      if (!keterangan || isNaN(jumlah)) return alert("Lengkapi data pengeluaran!");
+
+      const { error } = await supabase.from("pengeluaran").insert([
+        { tanggal: new Date().toISOString(), keterangan, jumlah },
+      ]);
+
+      if (error) return alert("Gagal simpan pengeluaran: " + error.message);
+
+      document.getElementById("ketPengeluaran").value = "";
+      document.getElementById("biayaPengeluaran").value = "";
+      loadPengeluaran();
+      loadKas();
+    }
+
+    async function loadPengeluaran() {
+      const { data, error } = await supabase
         .from("pengeluaran")
-        .insert([{ keterangan: ket, jumlah: jumlah, tanggal: today }]);
+        .select("*")
+        .order("tanggal", { ascending: false });
 
-      hideLoading();
       if (error) {
-        alert("Gagal tambah pengeluaran: " + error.message);
-      } else {
-        document.getElementById("pengeluaranForm").reset();
-        fetchKasData();
+        alert("Gagal load pengeluaran: " + error.message);
+        return;
       }
-    });
 
-    // Load data pertama kali
-    fetchKasData();
+      const tbody = document.getElementById("pengeluaranTable");
+      tbody.innerHTML = "";
+      data.forEach((p) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border p-2">${new Date(p.tanggal).toLocaleString()}</td>
+          <td class="border p-2">${p.keterangan}</td>
+          <td class="border p-2">Rp ${p.jumlah}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function getTotalPenjualanHariIni() {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("transaksi")
+        .select("total, tanggal")
+        .gte("tanggal", today + "T00:00:00")
+        .lte("tanggal", today + "T23:59:59");
+
+      if (error) {
+        alert("Gagal load penjualan: " + error.message);
+        return 0;
+      }
+
+      let total = 0;
+      data.forEach((trx) => {
+        total += trx.total;
+      });
+
+      document.getElementById("totalPenjualan").textContent = "Rp " + total;
+      return total;
+    }
+
+    async function getTotalPengeluaranHariIni() {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("pengeluaran")
+        .select("jumlah, tanggal")
+        .gte("tanggal", today + "T00:00:00")
+        .lte("tanggal", today + "T23:59:59");
+
+      if (error) {
+        alert("Gagal load pengeluaran: " + error.message);
+        return 0;
+      }
+
+      let total = 0;
+      data.forEach((p) => {
+        total += p.jumlah;
+      });
+      return total;
+    }
+
+    async function init() {
+      await loadPengeluaran();
+      await getTotalPenjualanHariIni();
+      await loadKas();
+    }
+
+    init();
   </script>
 </body>
 </html>
