@@ -4,197 +4,191 @@
   <meta charset="UTF-8">
   <title>Kasir - Bunda Ana</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-  <!-- Total Penjualan Hari Ini -->
-  <header class="p-4 bg-blue-600 text-white text-center text-xl font-bold">
-    Total Penjualan Hari Ini: Rp <span id="total-hari-ini">0</span>
-  </header>
+  <!-- Total penjualan hari ini -->
+  <div class="bg-green-600 text-white p-4 text-center text-xl font-bold">
+    Total Penjualan Hari Ini: Rp <span id="totalHariIni">0</span>
+  </div>
 
-  <main class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-    <!-- Grid Menu -->
-    <section class="md:col-span-2">
-      <h2 class="text-lg font-semibold mb-2">Menu</h2>
-      <div id="menu-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
-    </section>
+  <!-- Grid Menu -->
+  <div class="flex-1 p-4">
+    <h2 class="text-lg font-bold mb-2">Pilih Menu</h2>
+    <div id="menuGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+  </div>
 
-    <!-- Daftar Pesanan -->
-    <section class="bg-white rounded-xl shadow p-4 flex flex-col">
-      <h2 class="text-lg font-semibold mb-2">Pesanan</h2>
-      <ul id="daftar-pesanan" class="flex-1 overflow-y-auto mb-2"></ul>
-      <div class="mb-2">Total: Rp <span id="total-belanja">0</span></div>
-      <input id="input-bayar" type="number" placeholder="Bayar"
-             class="w-full border p-2 rounded mb-2">
-      <div class="mb-2">Kembalian: Rp <span id="kembalian">0</span></div>
-      <button id="btn-bayar" class="w-full bg-green-500 text-white py-2 rounded mb-2">Bayar</button>
-      <button id="btn-batal" class="w-full bg-red-500 text-white py-2 rounded mb-2">Batal</button>
-      <a href="index.html" class="w-full block bg-gray-500 text-white py-2 rounded text-center">Kembali</a>
-    </section>
-  </main>
+  <!-- Daftar Pesanan -->
+  <div class="bg-white shadow-lg p-4">
+    <h2 class="text-lg font-bold mb-2">Daftar Pesanan</h2>
+    <ul id="daftarPesanan" class="mb-2"></ul>
+    <div class="font-bold">Total: Rp <span id="totalBelanja">0</span></div>
+
+    <div class="mt-2">
+      <label class="block">Bayar:</label>
+      <input id="bayarInput" type="number" class="border p-2 w-full" placeholder="Masukkan jumlah bayar">
+    </div>
+    <div class="mt-2 font-bold">Kembali: Rp <span id="kembaliBelanja">0</span></div>
+
+    <div class="flex gap-2 mt-4">
+      <button id="batalBtn" class="bg-red-500 text-white px-4 py-2 rounded">Batal</button>
+      <button id="bayarBtn" class="bg-blue-500 text-white px-4 py-2 rounded">Bayar</button>
+      <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded">Kembali</a>
+    </div>
+  </div>
 
   <script>
-    // Supabase config
+    // Supabase init
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let pesanan = [];
+    let total = 0;
 
-    // Load total penjualan hari ini
+    const menuGrid = document.getElementById("menuGrid");
+    const daftarPesanan = document.getElementById("daftarPesanan");
+    const totalBelanja = document.getElementById("totalBelanja");
+    const bayarInput = document.getElementById("bayarInput");
+    const kembaliBelanja = document.getElementById("kembaliBelanja");
+    const totalHariIni = document.getElementById("totalHariIni");
+
+    const kasirNama = localStorage.getItem("kasir") || "Kasir";
+
+    // Load menu
+    async function loadMenu() {
+      let { data, error } = await supabase.from("menu").select("*");
+      console.log("=== DEBUG MENU ===", data, error);
+      if (error) return alert("Gagal ambil menu");
+
+      menuGrid.innerHTML = "";
+      data.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "bg-white shadow p-4 rounded cursor-pointer hover:bg-green-100";
+        div.innerHTML = `<div class="font-bold">${item.nama}</div><div>Rp ${item.harga}</div>`;
+        div.onclick = () => tambahPesanan(item);
+        menuGrid.appendChild(div);
+      });
+    }
+
+    // Tambah pesanan
+    function tambahPesanan(item) {
+      const existing = pesanan.find(p => p.id === item.id);
+      if (existing) {
+        existing.jumlah++;
+        existing.subtotal = existing.jumlah * item.harga;
+      } else {
+        pesanan.push({
+          id: item.id,
+          nama: item.nama,
+          harga: item.harga,
+          jumlah: 1,
+          subtotal: item.harga
+        });
+      }
+      renderPesanan();
+    }
+
+    // Render pesanan
+    function renderPesanan() {
+      daftarPesanan.innerHTML = "";
+      total = 0;
+      pesanan.forEach(p => {
+        total += p.subtotal;
+        const li = document.createElement("li");
+        li.textContent = `${p.nama} x${p.jumlah} = Rp ${p.subtotal}`;
+        daftarPesanan.appendChild(li);
+      });
+      totalBelanja.textContent = total;
+      hitungKembali();
+    }
+
+    // Hitung kembalian
+    function hitungKembali() {
+      const bayar = parseInt(bayarInput.value) || 0;
+      const kembali = bayar - total;
+      kembaliBelanja.textContent = kembali >= 0 ? kembali : 0;
+    }
+    bayarInput.addEventListener("input", hitungKembali);
+
+    // Batal pesanan
+    document.getElementById("batalBtn").onclick = () => {
+      pesanan = [];
+      renderPesanan();
+      bayarInput.value = "";
+      kembaliBelanja.textContent = 0;
+    };
+
+    // Simpan transaksi + cetak
+    document.getElementById("bayarBtn").onclick = async () => {
+      const bayar = parseInt(bayarInput.value) || 0;
+      const kembali = bayar - total;
+      if (total === 0) return alert("Belum ada pesanan");
+      if (bayar < total) return alert("Uang bayar kurang");
+
+      const transaksi = {
+        tanggal: new Date().toISOString(),
+        total,
+        bayar,
+        kembali,
+        kasir: kasirNama
+      };
+
+      let { data, error } = await supabase.from("transaksi").insert([transaksi]);
+      console.log("=== DEBUG TRANSAKSI ===", data, error);
+
+      if (error) {
+        alert("Gagal simpan transaksi");
+        return;
+      }
+
+      cetakStruk(transaksi);
+      pesanan = [];
+      renderPesanan();
+      bayarInput.value = "";
+      loadTotalHariIni();
+    };
+
+    // Cetak struk
+    function cetakStruk(trx) {
+      const win = window.open("", "Print", "width=300,height=600");
+      win.document.write(`<pre>
+       Bunda Ana
+Tanggal : ${new Date(trx.tanggal).toLocaleString()}
+Kasir   : ${trx.kasir}
+
+Pesanan :
+${pesanan.map(p => `${p.nama} x${p.jumlah} = Rp ${p.subtotal}`).join("\n")}
+
+Total   : Rp ${trx.total}
+Bayar   : Rp ${trx.bayar}
+Kembali : Rp ${trx.kembali}
+
+Terima kasih
+</pre>`);
+      win.document.close();
+      win.print();
+    }
+
+    // Total hari ini
     async function loadTotalHariIni() {
-      const today = new Date().toISOString().split("T")[0];
-      const { data, error } = await supabase
+      const today = new Date();
+      const start = new Date(today.setHours(0,0,0,0)).toISOString();
+      const end = new Date(today.setHours(23,59,59,999)).toISOString();
+
+      let { data, error } = await supabase
         .from("transaksi")
         .select("total")
-        .gte("tanggal", today + "T00:00:00")
-        .lte("tanggal", today + "T23:59:59");
+        .gte("tanggal", start)
+        .lte("tanggal", end);
 
       if (error) {
         console.error("Error total hari ini:", error);
         return;
       }
-
-      const total = data.reduce((sum, t) => sum + t.total, 0);
-      document.getElementById("total-hari-ini").textContent = total.toLocaleString();
-    }
-
-    // Load menu
-    async function loadMenu() {
-      const { data, error } = await supabase
-        .from("menu")
-        .select("id, nama, harga");
-
-      console.log("=== DEBUG MENU ===");
-      console.log("Data:", data);
-      console.log("Error:", error);
-
-      const menuGrid = document.getElementById("menu-grid");
-      menuGrid.innerHTML = "";
-
-      if (error) {
-        menuGrid.innerHTML = `<p class="col-span-full text-center text-red-500">Gagal ambil menu: ${error.message}</p>`;
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        menuGrid.innerHTML = `<p class="col-span-full text-center text-gray-500">Belum ada menu</p>`;
-        return;
-      }
-
-      data.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "p-4 bg-white rounded-xl shadow cursor-pointer hover:bg-gray-100";
-        card.innerHTML = `
-          <h3 class="font-semibold">${item.nama}</h3>
-          <p>Rp ${item.harga.toLocaleString()}</p>
-        `;
-        card.onclick = () => tambahPesanan(item);
-        menuGrid.appendChild(card);
-      });
-    }
-
-    function tambahPesanan(item) {
-      const existing = pesanan.find(p => p.id === item.id);
-      if (existing) {
-        existing.qty++;
-      } else {
-        pesanan.push({ ...item, qty: 1 });
-      }
-      renderPesanan();
-    }
-
-    function renderPesanan() {
-      const list = document.getElementById("daftar-pesanan");
-      list.innerHTML = "";
-      let total = 0;
-      pesanan.forEach(p => {
-        const li = document.createElement("li");
-        const subtotal = p.qty * p.harga;
-        total += subtotal;
-        li.textContent = `${p.nama} x${p.qty} = Rp ${subtotal.toLocaleString()}`;
-        list.appendChild(li);
-      });
-      document.getElementById("total-belanja").textContent = total.toLocaleString();
-      hitungKembalian();
-    }
-
-    function hitungKembalian() {
-      const bayar = parseInt(document.getElementById("input-bayar").value) || 0;
-      const total = pesanan.reduce((sum, p) => sum + p.qty * p.harga, 0);
-      const kembali = bayar - total;
-      document.getElementById("kembalian").textContent = kembali >= 0 ? kembali.toLocaleString() : 0;
-    }
-
-    document.getElementById("input-bayar").addEventListener("input", hitungKembalian);
-
-    // Tombol batal
-    document.getElementById("btn-batal").onclick = () => {
-      pesanan = [];
-      renderPesanan();
-      document.getElementById("input-bayar").value = "";
-      document.getElementById("kembalian").textContent = "0";
-    };
-
-    // Tombol bayar
-    document.getElementById("btn-bayar").onclick = async () => {
-      if (pesanan.length === 0) return alert("Belum ada pesanan");
-
-      const total = pesanan.reduce((sum, p) => sum + p.qty * p.harga, 0);
-      const bayar = parseInt(document.getElementById("input-bayar").value) || 0;
-      if (bayar < total) return alert("Uang bayar kurang");
-
-      const kembali = bayar - total;
-      const kasir = localStorage.getItem("kasir") || "Kasir";
-      const tanggal = new Date().toISOString();
-
-      // Simpan transaksi
-      const { data: trx, error } = await supabase
-        .from("transaksi")
-        .insert([{ tanggal, total, bayar, kembali, kasir }])
-        .select()
-        .single();
-
-      console.log("=== DEBUG TRANSAKSI ===");
-      console.log("Transaksi:", trx, "Error:", error);
-
-      if (error) return alert("Gagal simpan transaksi: " + error.message);
-
-      for (let p of pesanan) {
-        await supabase.from("detail_transaksi").insert([{
-          transaksi_id: trx.id,
-          menu_id: p.id,
-          qty: p.qty,
-          harga: p.harga
-        }]);
-      }
-
-      cetakStruk({ kasir, tanggal, pesanan, total, bayar, kembali });
-      document.getElementById("btn-batal").click();
-      loadTotalHariIni();
-    };
-
-    // Cetak struk
-    function cetakStruk({ kasir, tanggal, pesanan, total, bayar, kembali }) {
-      const w = window.open("", "Print", "width=300,height=600");
-      w.document.write(`
-        <pre>
-Bunda Ana
-${new Date(tanggal).toLocaleString()}
-Kasir: ${kasir}
-
-${pesanan.map(p => `${p.nama} x${p.qty} = Rp ${(p.qty * p.harga).toLocaleString()}`).join("\n")}
-
-Total: Rp ${total.toLocaleString()}
-Bayar: Rp ${bayar.toLocaleString()}
-Kembali: Rp ${kembali.toLocaleString()}
-
-Terima kasih
-        </pre>
-      `);
-      w.document.close();
-      w.print();
+      const sum = data.reduce((a,b) => a + b.total, 0);
+      totalHariIni.textContent = sum;
     }
 
     // Init
