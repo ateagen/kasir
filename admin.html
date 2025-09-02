@@ -119,10 +119,22 @@
           <td class="p-2 border">${a.username}</td>
           <td class="p-2 border">${a.role}</td>
           <td class="p-2 border">
-            <button onclick="hapusAkun(${a.id})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
+            <button data-id="${a.id}" class="hapus-akun bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
           </td>
         </tr>
       `).join("");
+      // pasang event listener setelah render
+      document.querySelectorAll(".hapus-akun").forEach(btn => {
+        btn.addEventListener("click", () => hapusAkun(btn.dataset.id));
+      });
+    }
+
+    async function hapusAkun(id) {
+      showLoading(true);
+      const { error } = await supabaseClient.from("akun").delete().eq("id", id);
+      showLoading(false);
+      if (error) return alert("Gagal hapus akun: " + error.message);
+      loadAkun();
     }
 
     // ===== Menu =====
@@ -151,10 +163,22 @@
           <td class="p-2 border">${m.nama_menu}</td>
           <td class="p-2 border">Rp ${m.harga}</td>
           <td class="p-2 border">
-            <button onclick="hapusMenu(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
+            <button data-id="${m.id}" class="hapus-menu bg-red-500 text-white px-2 py-1 rounded">Hapus</button>
           </td>
         </tr>
       `).join("");
+      // pasang event listener setelah render
+      document.querySelectorAll(".hapus-menu").forEach(btn => {
+        btn.addEventListener("click", () => hapusMenu(btn.dataset.id));
+      });
+    }
+
+    async function hapusMenu(id) {
+      showLoading(true);
+      const { error } = await supabaseClient.from("menu").delete().eq("id", id);
+      showLoading(false);
+      if (error) return alert("Gagal hapus menu: " + error.message);
+      loadMenu();
     }
 
     // ===== Transaksi =====
@@ -176,23 +200,6 @@
           <td class="p-2 border">Rp ${t.total}</td>
         </tr>
       `).join("");
-    }
-
-    // ===== Hapus functions (ekspor ke global) =====
-    window.hapusAkun = async function(id) {
-      showLoading(true);
-      const { error } = await supabaseClient.from("akun").delete().eq("id", id);
-      showLoading(false);
-      if (error) return alert("Gagal hapus akun: " + error.message);
-      loadAkun();
-    }
-
-    window.hapusMenu = async function(id) {
-      showLoading(true);
-      const { error } = await supabaseClient.from("menu").delete().eq("id", id);
-      showLoading(false);
-      if (error) return alert("Gagal hapus menu: " + error.message);
-      loadMenu();
     }
 
     // Load semua data saat halaman dibuka
