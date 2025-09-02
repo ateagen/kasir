@@ -1,112 +1,91 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>POS Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center">
-
-  <!-- Title -->
-  <h1 class="text-3xl font-bold mb-8">Selamat Datang di POS Kasir</h1>
-
-  <!-- Grid Menu -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-3/4 max-w-3xl">
-    <div onclick="openLogin('admin')" class="cursor-pointer bg-white shadow-md rounded-xl p-6 text-center hover:bg-blue-100">
-      <h2 class="text-xl font-semibold">Admin</h2>
-    </div>
-    <div onclick="openLogin('kas')" class="cursor-pointer bg-white shadow-md rounded-xl p-6 text-center hover:bg-green-100">
-      <h2 class="text-xl font-semibold">Kas</h2>
-    </div>
-    <div onclick="openLogin('kasir')" class="cursor-pointer bg-white shadow-md rounded-xl p-6 text-center hover:bg-yellow-100">
-      <h2 class="text-xl font-semibold">Kasir</h2>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold mb-8">Selamat Datang di POS Kasir</h1>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <button onclick="openLogin('admin.html')" class="p-6 bg-white rounded-2xl shadow hover:bg-gray-50">Admin</button>
+      <button onclick="openLogin('kas.html')" class="p-6 bg-white rounded-2xl shadow hover:bg-gray-50">Kas</button>
+      <button onclick="openLogin('kasir.html')" class="p-6 bg-white rounded-2xl shadow hover:bg-gray-50">Kasir</button>
     </div>
   </div>
 
   <!-- Modal Login -->
   <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-xl p-6 w-80 shadow-lg relative">
-      <h3 class="text-lg font-bold mb-4 text-center">Login</h3>
-      <input id="username" type="text" placeholder="Username" class="w-full border rounded px-3 py-2 mb-3">
-      <input id="password" type="password" placeholder="Password" class="w-full border rounded px-3 py-2 mb-3">
-      <p id="errorMsg" class="text-red-500 text-sm mb-2 hidden">Username atau password salah</p>
-      <div class="flex justify-between">
-        <button onclick="closeLogin()" class="bg-gray-400 text-white px-3 py-2 rounded hover:bg-gray-500">Batal</button>
-        <button onclick="handleLogin()" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">Login</button>
+    <div class="bg-white p-6 rounded-2xl shadow w-80">
+      <h2 class="text-xl font-bold mb-4">Login</h2>
+      <input id="username" type="text" placeholder="Username" class="w-full border p-2 rounded mb-3">
+      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded mb-3">
+      <div class="flex justify-end space-x-2">
+        <button onclick="closeLogin()" class="px-4 py-2 bg-gray-300 rounded">Batal</button>
+        <button onclick="login()" class="px-4 py-2 bg-blue-500 text-white rounded">Login</button>
       </div>
     </div>
   </div>
 
   <script>
-    // Supabase init
     const supabaseUrl = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    let targetPage = null; // grid yang diklik
+    let targetPage = "";
 
     function openLogin(page) {
       targetPage = page;
-      document.getElementById('loginModal').classList.remove('hidden');
-      document.getElementById('errorMsg').classList.add('hidden');
-      document.getElementById('username').value = "";
-      document.getElementById('password').value = "";
+      document.getElementById("loginModal").classList.remove("hidden");
     }
 
     function closeLogin() {
-      document.getElementById('loginModal').classList.add('hidden');
+      document.getElementById("loginModal").classList.add("hidden");
     }
 
-    async function handleLogin() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
       if (!username || !password) {
-        showError("Isi semua field");
+        alert("Username dan password harus diisi!");
         return;
       }
 
-      // cek akun di supabase
       const { data, error } = await supabase
-        .from('akun')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .single();
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .limit(1)
+        .maybeSingle();
 
-      if (error || !data) {
-        showError("Username atau password salah");
+      if (error) {
+        alert("Login error: " + error.message);
         return;
       }
 
-      // cek role
-      if (data.role === "admin") {
-        // admin bebas semua
-        redirectPage(targetPage);
-      } else if (data.role === "kasir") {
-        if (targetPage === "kas" || targetPage === "kasir") {
-          redirectPage(targetPage);
-        } else {
-          showError("Akun kasir tidak bisa akses halaman ini");
-        }
+      if (!data) {
+        alert("Username atau password salah!");
+        return;
       }
-    }
 
-    function showError(msg) {
-      const el = document.getElementById('errorMsg');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
+      // Normalisasi role agar tidak case sensitive
+      const role = (data.role || "").toLowerCase();
 
-    function redirectPage(page) {
-      closeLogin();
-      if (page === "admin") {
-        window.location.href = "admin.html";
-      } else if (page === "kas") {
-        window.location.href = "kas.html";
-      } else if (page === "kasir") {
-        window.location.href = "kasir.html";
+      if (role === "admin") {
+        window.location.href = targetPage;
+      } else if (role === "kasir") {
+        if (targetPage === "kas.html" || targetPage === "kasir.html") {
+          window.location.href = targetPage;
+        } else {
+          alert("Kasir tidak punya akses ke halaman ini!");
+        }
+      } else {
+        alert("Role tidak dikenali!");
       }
     }
   </script>
