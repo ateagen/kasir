@@ -1,116 +1,131 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Kasir App - Index</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kasir App • Index</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center">
 
-  <!-- Container Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-11/12 md:w-8/12">
+  <!-- Grid Utama -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full px-6">
     <!-- Admin -->
-    <div onclick="openLogin('admin')"
-      class="bg-white rounded-2xl shadow-md p-8 text-center cursor-pointer hover:shadow-xl transition">
-      <h2 class="text-2xl font-bold mb-4">Admin</h2>
-      <p>Kelola akun, menu & lihat transaksi</p>
+    <div id="grid-admin" class="p-8 bg-white rounded-2xl shadow hover:shadow-lg cursor-pointer text-center">
+      <h2 class="text-xl font-semibold mb-2">Admin</h2>
+      <p class="text-slate-500 text-sm">Kelola akun, menu, dan transaksi</p>
     </div>
 
     <!-- Kasir -->
-    <div onclick="openLogin('kasir')"
-      class="bg-white rounded-2xl shadow-md p-8 text-center cursor-pointer hover:shadow-xl transition">
-      <h2 class="text-2xl font-bold mb-4">Kasir</h2>
-      <p>Input penjualan harian</p>
+    <div id="grid-kasir" class="p-8 bg-white rounded-2xl shadow hover:shadow-lg cursor-pointer text-center">
+      <h2 class="text-xl font-semibold mb-2">Kasir</h2>
+      <p class="text-slate-500 text-sm">Input penjualan & cetak transaksi</p>
     </div>
 
-    <!-- Kas -->
-    <div onclick="openLogin('kas')"
-      class="bg-white rounded-2xl shadow-md p-8 text-center cursor-pointer hover:shadow-xl transition">
-      <h2 class="text-2xl font-bold mb-4">Kas</h2>
-      <p>Kelola kas awal & akhir</p>
+    <!-- Laporan -->
+    <div id="grid-laporan" class="p-8 bg-white rounded-2xl shadow hover:shadow-lg cursor-pointer text-center">
+      <h2 class="text-xl font-semibold mb-2">Laporan</h2>
+      <p class="text-slate-500 text-sm">Ringkasan penjualan & laporan</p>
     </div>
   </div>
 
   <!-- Popup Login -->
-  <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-lg w-96 p-6 relative">
-      <h2 class="text-xl font-bold mb-4 text-center">Login</h2>
-      <input id="username" type="text" placeholder="Username"
-        class="w-full border rounded-lg px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-      <input id="password" type="password" placeholder="Password"
-        class="w-full border rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
-      <p id="errorMsg" class="text-red-500 text-sm mb-3 hidden"></p>
-      <button onclick="handleLogin()"
-        class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
-        Login
-      </button>
-      <button onclick="closeLogin()"
-        class="mt-3 w-full bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition">
-        Batal
-      </button>
+  <div id="loginModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 relative">
+      <h3 class="text-lg font-semibold mb-4 text-center">Login</h3>
+      <form id="loginForm" class="space-y-4">
+        <input type="text" id="username" placeholder="Username"
+          class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring" required />
+        <input type="password" id="password" placeholder="Password"
+          class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring" required />
+        <button type="submit"
+          class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700">Login</button>
+      </form>
+      <button id="closeModal" class="absolute top-2 right-2 text-slate-500 hover:text-slate-700">✖</button>
     </div>
   </div>
 
-  <script>
-    // Supabase config
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // 🔑 Supabase config (sudah sesuai project kamu)
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let selectedGrid = null;
+    let selectedPage = null;
 
-    function openLogin(grid) {
-      selectedGrid = grid;
-      document.getElementById("loginModal").classList.remove("hidden");
-      document.getElementById("errorMsg").classList.add("hidden");
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
-    }
+    // Elemen
+    const loginModal = document.getElementById("loginModal");
+    const closeModal = document.getElementById("closeModal");
+    const loginForm = document.getElementById("loginForm");
 
-    function closeLogin() {
-      document.getElementById("loginModal").classList.add("hidden");
-    }
+    // Klik Grid → buka login
+    document.getElementById("grid-admin").addEventListener("click", () => {
+      selectedPage = "admin";
+      loginModal.classList.remove("hidden");
+    });
 
-    async function handleLogin() {
+    document.getElementById("grid-kasir").addEventListener("click", () => {
+      selectedPage = "kasir";
+      loginModal.classList.remove("hidden");
+    });
+
+    document.getElementById("grid-laporan").addEventListener("click", () => {
+      selectedPage = "laporan";
+      loginModal.classList.remove("hidden");
+    });
+
+    // Tutup modal
+    closeModal.addEventListener("click", () => {
+      loginModal.classList.add("hidden");
+      loginForm.reset();
+    });
+
+    // Proses login
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
-      const errorMsg = document.getElementById("errorMsg");
 
-      if (!username || !password) {
-        errorMsg.textContent = "Harap isi username dan password.";
-        errorMsg.classList.remove("hidden");
-        return;
-      }
-
-      // Cek user di Supabase
       const { data, error } = await supabase
         .from("users")
-        .select("*")
+        .select("id, username, password, jenis")
         .eq("username", username)
         .eq("password", password)
         .single();
 
       if (error || !data) {
-        errorMsg.textContent = "Username atau password salah.";
-        errorMsg.classList.remove("hidden");
+        alert("❌ Username atau password salah!");
         return;
       }
 
-      const role = data.role;
-
-      // Rule akses
-      if (selectedGrid === "admin" && role === "admin") {
-        window.location.href = "admin.html";
-      } else if (selectedGrid === "kasir" && (role === "kasir" || role === "admin")) {
-        window.location.href = "kasir.html";
-      } else if (selectedGrid === "kas" && (role === "kasir" || role === "admin")) {
-        window.location.href = "kas.html";
-      } else {
-        errorMsg.textContent = "Akses ditolak untuk role: " + role;
-        errorMsg.classList.remove("hidden");
+      // Validasi jenis user sesuai grid
+      if (selectedPage === "admin" && data.jenis !== "admin") {
+        alert("❌ Akses ditolak! Hanya admin yang bisa masuk.");
+        return;
       }
-    }
+
+      if (selectedPage === "kasir" && data.jenis !== "kasir") {
+        alert("❌ Akses ditolak! Hanya kasir yang bisa masuk.");
+        return;
+      }
+
+      if (selectedPage === "laporan" && data.jenis !== "admin") {
+        alert("❌ Akses ditolak! Laporan hanya bisa diakses admin.");
+        return;
+      }
+
+      // ✅ Redirect sesuai grid
+      if (selectedPage === "admin") {
+        window.location.href = "admin.html";
+      } else if (selectedPage === "kasir") {
+        window.location.href = "kasir.html";
+      } else if (selectedPage === "laporan") {
+        window.location.href = "laporan.html";
+      }
+    });
   </script>
 </body>
 </html>
