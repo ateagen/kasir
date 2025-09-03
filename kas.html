@@ -1,205 +1,129 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Halaman Kas</title>
+  <meta charset="UTF-8">
+  <title>Kas - Bunda Ana</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
-  <div class="max-w-4xl mx-auto bg-white shadow rounded-xl p-6 space-y-6">
-    <h1 class="text-2xl font-bold text-center">Halaman Kas</h1>
+<body class="bg-gray-100 p-4">
 
-    <!-- Tombol kembali -->
-    <div class="text-center">
-      <button onclick="kembaliKeIndex()" 
-        class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-        Kembali ke Layar Utama
-      </button>
-    </div>
-
-    <!-- Kas Awal & Akhir -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2">Informasi Kas</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="p-4 border rounded bg-gray-50">
-          <p class="font-medium">Kas Awal:</p>
-          <p id="kasAwal" class="text-lg font-bold">Rp 0</p>
-        </div>
-        <div class="p-4 border rounded bg-gray-50">
-          <p class="font-medium">Kas Akhir:</p>
-          <p id="kasAkhir" class="text-lg font-bold">Rp 0</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Input Pengeluaran -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2">Input Pengeluaran</h2>
-      <div class="flex flex-col md:flex-row gap-2">
-        <input id="ketPengeluaran" type="text" placeholder="Keterangan"
-          class="border rounded p-2 flex-1" />
-        <input id="biayaPengeluaran" type="number" placeholder="Jumlah"
-          class="border rounded p-2 flex-1" />
-        <button onclick="tambahPengeluaran()" 
-          class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-          Simpan
-        </button>
-      </div>
-      <table class="w-full mt-4 border text-sm">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border p-2">Tanggal</th>
-            <th class="border p-2">Keterangan</th>
-            <th class="border p-2">Jumlah</th>
-          </tr>
-        </thead>
-        <tbody id="pengeluaranTable"></tbody>
-      </table>
-    </section>
-
-    <!-- Total Penjualan Hari Ini -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2">Total Penjualan Hari Ini</h2>
-      <div class="p-4 border rounded bg-green-50">
-        <p id="totalPenjualan" class="text-lg font-bold text-green-700">Rp 0</p>
-      </div>
-    </section>
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-xl font-bold">Kas - Bunda Ana</h1>
+    <a href="index.html" class="bg-gray-500 text-white px-3 py-1 rounded">Kembali</a>
   </div>
 
-  <script>
-    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- Info kas -->
+  <div class="bg-white p-4 rounded shadow mb-4">
+    <p>Kas Awal: Rp <span id="kasAwal">0</span></p>
+    <p>Total Penjualan Hari Ini: Rp <span id="penjualanHariIni">0</span></p>
+    <p>Total Pengeluaran Hari Ini: Rp <span id="pengeluaranHariIni">0</span></p>
+    <p>Kas Akhir: Rp <span id="kasAkhir">0</span></p>
+  </div>
 
-    function kembaliKeIndex() {
-      window.location.href = "index.html";
+  <!-- Tambah Pengeluaran -->
+  <div class="bg-white p-4 rounded shadow mb-4">
+    <h2 class="font-semibold mb-2">Tambah Pengeluaran</h2>
+    <input id="keteranganPengeluaran" placeholder="Keterangan" class="border p-1 mb-2 w-full">
+    <input id="jumlahPengeluaran" type="number" placeholder="Jumlah" class="border p-1 mb-2 w-full">
+    <button onclick="tambahPengeluaran()" class="bg-red-500 text-white px-3 py-1 rounded">Tambah</button>
+  </div>
+
+  <!-- Daftar Transaksi -->
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">Transaksi Hari Ini</h2>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-1">Tanggal</th>
+          <th class="border p-1">Kasir</th>
+          <th class="border p-1">Total</th>
+        </tr>
+      </thead>
+      <tbody id="tabelTransaksi"></tbody>
+    </table>
+  </div>
+
+<script>
+  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function loadKas() {
+    let today = new Date().toISOString().split("T")[0];
+
+    // total penjualan
+    let { data: penjualan, error } = await supabaseClient
+      .from("transaksi")
+      .select("total")
+      .gte("created_at", today + "T00:00:00")
+      .lte("created_at", today + "T23:59:59");
+
+    let totalPenjualan = 0;
+    if (!error && penjualan) {
+      totalPenjualan = penjualan.reduce((sum, t) => sum + parseFloat(t.total), 0);
     }
 
-    async function loadKas() {
-      // Ambil kas akhir terakhir sebagai kas awal hari ini
-      const { data: kasData } = await supabase
-        .from("kas")
-        .select("*")
-        .order("tanggal", { ascending: false })
-        .limit(1);
+    // total pengeluaran
+    let { data: pengeluaran, error: err2 } = await supabaseClient
+      .from("kas")
+      .select("jumlah")
+      .eq("tipe", "keluar")
+      .gte("created_at", today + "T00:00:00")
+      .lte("created_at", today + "T23:59:59");
 
-      let kasAwal = 0;
-      if (kasData && kasData.length > 0) {
-        kasAwal = kasData[0].kas_akhir;
-      }
-      document.getElementById("kasAwal").textContent = "Rp " + kasAwal;
-
-      // Hitung kas akhir: kas awal + total penjualan - total pengeluaran
-      const totalPenjualan = await getTotalPenjualanHariIni();
-      const totalPengeluaran = await getTotalPengeluaranHariIni();
-      const kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
-
-      document.getElementById("kasAkhir").textContent = "Rp " + kasAkhir;
-
-      // Simpan kas hari ini
-      await supabase.from("kas").upsert([
-        {
-          tanggal: new Date().toISOString().split("T")[0],
-          kas_awal: kasAwal,
-          kas_akhir: kasAkhir,
-        },
-      ]);
+    let totalPengeluaran = 0;
+    if (!err2 && pengeluaran) {
+      totalPengeluaran = pengeluaran.reduce((sum, k) => sum + parseFloat(k.jumlah), 0);
     }
 
-    async function tambahPengeluaran() {
-      const keterangan = document.getElementById("ketPengeluaran").value.trim();
-      const jumlah = parseFloat(document.getElementById("biayaPengeluaran").value);
+    document.getElementById("kasAwal").innerText = "0"; // bisa diisi dari kas akhir kemarin
+    document.getElementById("penjualanHariIni").innerText = totalPenjualan;
+    document.getElementById("pengeluaranHariIni").innerText = totalPengeluaran;
+    document.getElementById("kasAkhir").innerText = totalPenjualan - totalPengeluaran;
+  }
 
-      if (!keterangan || isNaN(jumlah)) return alert("Lengkapi data pengeluaran!");
+  async function tambahPengeluaran() {
+    const ket = document.getElementById("keteranganPengeluaran").value;
+    const jumlah = parseInt(document.getElementById("jumlahPengeluaran").value);
+    if (!ket || !jumlah) return alert("Lengkapi data!");
 
-      const { error } = await supabase.from("pengeluaran").insert([
-        { tanggal: new Date().toISOString(), keterangan, jumlah },
-      ]);
+    let { error } = await supabaseClient.from("kas").insert([{ tipe: "keluar", keterangan: ket, jumlah }]);
+    if (error) alert("Gagal tambah pengeluaran");
+    loadKas();
+  }
 
-      if (error) return alert("Gagal simpan pengeluaran: " + error.message);
+  async function loadTransaksi() {
+    let today = new Date().toISOString().split("T")[0];
 
-      document.getElementById("ketPengeluaran").value = "";
-      document.getElementById("biayaPengeluaran").value = "";
-      loadPengeluaran();
-      loadKas();
+    let { data, error } = await supabaseClient
+      .from("transaksi")
+      .select("id, total, created_at, akun(nama)")
+      .gte("created_at", today + "T00:00:00")
+      .lte("created_at", today + "T23:59:59")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
     }
 
-    async function loadPengeluaran() {
-      const { data, error } = await supabase
-        .from("pengeluaran")
-        .select("*")
-        .order("tanggal", { ascending: false });
+    const tbody = document.getElementById("tabelTransaksi");
+    tbody.innerHTML = "";
+    data.forEach(t => {
+      let tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="border p-1">${new Date(t.created_at).toLocaleTimeString()}</td>
+        <td class="border p-1">${t.akun ? t.akun.nama : "-"}</td>
+        <td class="border p-1">Rp ${t.total}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-      if (error) {
-        alert("Gagal load pengeluaran: " + error.message);
-        return;
-      }
+  loadKas();
+  loadTransaksi();
+</script>
 
-      const tbody = document.getElementById("pengeluaranTable");
-      tbody.innerHTML = "";
-      data.forEach((p) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="border p-2">${new Date(p.tanggal).toLocaleString()}</td>
-          <td class="border p-2">${p.keterangan}</td>
-          <td class="border p-2">Rp ${p.jumlah}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function getTotalPenjualanHariIni() {
-      const today = new Date().toISOString().split("T")[0];
-      const { data, error } = await supabase
-        .from("transaksi")
-        .select("total, tanggal")
-        .gte("tanggal", today + "T00:00:00")
-        .lte("tanggal", today + "T23:59:59");
-
-      if (error) {
-        alert("Gagal load penjualan: " + error.message);
-        return 0;
-      }
-
-      let total = 0;
-      data.forEach((trx) => {
-        total += trx.total;
-      });
-
-      document.getElementById("totalPenjualan").textContent = "Rp " + total;
-      return total;
-    }
-
-    async function getTotalPengeluaranHariIni() {
-      const today = new Date().toISOString().split("T")[0];
-      const { data, error } = await supabase
-        .from("pengeluaran")
-        .select("jumlah, tanggal")
-        .gte("tanggal", today + "T00:00:00")
-        .lte("tanggal", today + "T23:59:59");
-
-      if (error) {
-        alert("Gagal load pengeluaran: " + error.message);
-        return 0;
-      }
-
-      let total = 0;
-      data.forEach((p) => {
-        total += p.jumlah;
-      });
-      return total;
-    }
-
-    async function init() {
-      await loadPengeluaran();
-      await getTotalPenjualanHariIni();
-      await loadKas();
-    }
-
-    init();
-  </script>
 </body>
 </html>
