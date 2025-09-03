@@ -2,19 +2,18 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir Resto Bunda Ana</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
+      background: #f4f4f9;
       margin: 0;
+      padding: 0;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
     h1 {
       margin-bottom: 30px;
@@ -22,156 +21,134 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 150px);
       gap: 20px;
     }
     .card {
       background: white;
       padding: 30px;
       text-align: center;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       cursor: pointer;
-      transition: 0.3s;
+      transition: transform 0.2s;
     }
     .card:hover {
-      background: #007bff;
-      color: white;
+      transform: scale(1.05);
+      background: #f0f0ff;
     }
     /* Popup */
     .popup {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
       display: none;
-      justify-content: center;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
       align-items: center;
+      justify-content: center;
     }
     .popup-content {
-      background: white;
-      padding: 25px;
-      border-radius: 10px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
       width: 300px;
       text-align: center;
     }
     .popup input {
-      width: 100%;
-      padding: 10px;
+      width: 90%;
+      padding: 8px;
       margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
     }
     .popup button {
-      width: 100%;
-      padding: 10px;
+      padding: 8px 15px;
       margin-top: 10px;
-      border: none;
-      background: #007bff;
+      background: #333;
       color: white;
-      border-radius: 6px;
+      border: none;
       cursor: pointer;
+      border-radius: 5px;
     }
     .popup button:hover {
-      background: #0056b3;
-    }
-    .error {
-      color: red;
-      font-size: 0.9em;
-      margin-top: 8px;
+      background: #555;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
   <h1>Selamat Datang di Kasir Resto Bunda Ana</h1>
-
   <div class="grid">
     <div class="card" onclick="openLogin('admin')">Admin</div>
     <div class="card" onclick="openLogin('kasir')">Kasir</div>
     <div class="card" onclick="openLogin('kas')">Kas</div>
   </div>
 
-  <!-- Popup Login -->
+  <!-- Popup -->
   <div id="loginPopup" class="popup">
     <div class="popup-content">
-      <h3 id="loginTitle">Login</h3>
+      <h3 id="popupTitle">Login</h3>
       <input type="text" id="username" placeholder="Username">
       <input type="password" id="password" placeholder="Password">
+      <br>
       <button onclick="login()">Login</button>
-      <p id="errorMsg" class="error"></p>
-      <button style="background:#ccc;color:#000;" onclick="closeLogin()">Batal</button>
+      <button onclick="closeLogin()">Batal</button>
+      <p id="errorMsg" style="color:red;"></p>
     </div>
   </div>
 
   <script>
-    // 🔗 Supabase init
+    // Konfigurasi Supabase
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let selectedRole = null;
-    const loginPopup = document.getElementById("loginPopup");
-    const errorMsg = document.getElementById("errorMsg");
+    let selectedRole = "";
 
     function openLogin(role) {
       selectedRole = role;
-      document.getElementById("loginTitle").innerText = "Login " + role.toUpperCase();
-      loginPopup.style.display = "flex";
+      document.getElementById("popupTitle").innerText = "Login " + role.toUpperCase();
+      document.getElementById("loginPopup").style.display = "flex";
     }
 
     function closeLogin() {
-      loginPopup.style.display = "none";
-      errorMsg.textContent = "";
+      document.getElementById("loginPopup").style.display = "none";
+      document.getElementById("errorMsg").innerText = "";
       document.getElementById("username").value = "";
       document.getElementById("password").value = "";
     }
 
     async function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
-      if (!username || !password) {
-        errorMsg.textContent = "Username dan password wajib diisi!";
-        return;
-      }
-
-      // 🔍 Cek user di Supabase
       const { data, error } = await supabase
         .from("akun")
-        .select("id, username, role, nama")
+        .select("id, username, role")
         .eq("username", username)
         .eq("password", password)
-        .eq("aktif", true)
-        .maybeSingle();
+        .single();
 
       if (error || !data) {
-        errorMsg.textContent = "Login gagal! Cek username/password.";
+        document.getElementById("errorMsg").innerText = "Username atau password salah!";
         return;
       }
 
-      // 🔒 Validasi role
-      if (selectedRole === "admin" && data.role !== "admin") {
-        errorMsg.textContent = "Akses ditolak! Bukan admin.";
-        return;
-      }
-      if ((selectedRole === "kasir" || selectedRole === "kas") && data.role !== "kasir") {
-        errorMsg.textContent = "Akses ditolak! Bukan kasir.";
-        return;
-      }
+      // Simpan session
+      localStorage.setItem("user", JSON.stringify(data));
 
-      // 💾 Simpan session
-      localStorage.setItem("session", JSON.stringify(data));
-
-      // 🚀 Redirect
-      if (selectedRole === "admin") {
+      // Redirect sesuai role
+      if (data.role === "admin" && selectedRole === "admin") {
         window.location.href = "admin.html";
-      } else if (selectedRole === "kasir") {
+      } else if (data.role === "kasir" && selectedRole === "kasir") {
         window.location.href = "kasir.html";
-      } else if (selectedRole === "kas") {
+      } else if (data.role === "kasir" && selectedRole === "kas") {
         window.location.href = "kas.html";
+      } else {
+        document.getElementById("errorMsg").innerText = "Tidak punya akses ke menu ini!";
+        localStorage.removeItem("user");
       }
     }
   </script>
 </body>
 </html>
+
