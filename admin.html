@@ -2,146 +2,201 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - Bunda Ana</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <title>Admin - Kasir Resto Bunda Ana</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h2 { margin-top: 40px; color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #eee; }
+    input, select { padding: 6px; margin: 4px; }
+    button { padding: 6px 12px; margin: 4px; cursor: pointer; }
+    .logout { float: right; background: #c00; color: #fff; border: none; }
+    .logout:hover { background: #900; }
+    .section { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 p-4">
+<body>
+  <h1>Admin Panel - Resto Bunda Ana</h1>
+  <button class="logout" onclick="logout()">Logout</button>
 
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-xl font-bold">Admin - Bunda Ana</h1>
-    <a href="index.html" class="bg-gray-500 text-white px-3 py-1 rounded">Kembali</a>
-  </div>
-
-  <!-- Tambah Akun -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Tambah Akun Kasir</h2>
-    <input id="namaAkun" placeholder="Nama" class="border p-1 mb-2 w-full">
-    <input id="passwordAkun" placeholder="Password" type="password" class="border p-1 mb-2 w-full">
-    <button onclick="tambahAkun()" class="bg-blue-500 text-white px-3 py-1 rounded">Tambah</button>
-  </div>
-
-  <!-- Daftar Akun -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Daftar Akun</h2>
-    <ul id="daftarAkun"></ul>
-  </div>
-
-  <!-- Tambah Menu -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Tambah Menu</h2>
-    <input id="namaMenu" placeholder="Nama Menu" class="border p-1 mb-2 w-full">
-    <input id="hargaMenu" placeholder="Harga" type="number" class="border p-1 mb-2 w-full">
-    <button onclick="tambahMenu()" class="bg-green-500 text-white px-3 py-1 rounded">Tambah</button>
-  </div>
-
-  <!-- Daftar Menu -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Daftar Menu</h2>
-    <ul id="daftarMenu"></ul>
-  </div>
-
-  <!-- Transaksi -->
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="font-semibold mb-2">Transaksi</h2>
-    <table class="w-full border">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border p-1">Tanggal</th>
-          <th class="border p-1">Kasir</th>
-          <th class="border p-1">Total</th>
-          <th class="border p-1">Bayar</th>
-          <th class="border p-1">Kembalian</th>
-        </tr>
-      </thead>
-      <tbody id="tabelTransaksi"></tbody>
+  <!-- Manajemen Akun -->
+  <div class="section">
+    <h2>Manajemen Akun</h2>
+    <input type="text" id="newUser" placeholder="Username">
+    <input type="password" id="newPass" placeholder="Password">
+    <button onclick="addUser()">Tambah Kasir</button>
+    <table>
+      <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Aksi</th></tr></thead>
+      <tbody id="akunTable"></tbody>
     </table>
   </div>
 
-<script>
-  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- Manajemen Menu -->
+  <div class="section">
+    <h2>Manajemen Menu</h2>
+    <input type="text" id="menuNama" placeholder="Nama Menu">
+    <input type="number" id="menuHarga" placeholder="Harga">
+    <button onclick="addMenu()">Tambah Menu</button>
+    <table>
+      <thead><tr><th>ID</th><th>Nama</th><th>Harga</th><th>Aksi</th></tr></thead>
+      <tbody id="menuTable"></tbody>
+    </table>
+  </div>
 
-  // Akun
-  async function loadAkun() {
-    let { data, error } = await supabaseClient.from("akun").select("*");
-    if (error) return console.error(error);
-    const daftar = document.getElementById("daftarAkun");
-    daftar.innerHTML = "";
-    data.forEach(a => {
-      let li = document.createElement("li");
-      li.className = "flex justify-between border p-1 mb-1";
-      li.innerHTML = `${a.nama} <button onclick="hapusAkun('${a.id}')" class="bg-red-500 text-white px-2 rounded">Hapus</button>`;
-      daftar.appendChild(li);
-    });
-  }
-  async function tambahAkun() {
-    const nama = document.getElementById("namaAkun").value;
-    const password = document.getElementById("passwordAkun").value;
-    let { error } = await supabaseClient.from("akun").insert([{ nama, password }]);
-    if (error) alert("Gagal tambah akun"); else loadAkun();
-  }
-  async function hapusAkun(id) {
-    await supabaseClient.from("akun").delete().eq("id", id);
-    loadAkun();
-  }
+  <!-- Transaksi -->
+  <div class="section">
+    <h2>Transaksi</h2>
+    <input type="date" id="filterTanggal" onchange="loadTransaksi()">
+    <table>
+      <thead><tr><th>ID</th><th>Waktu</th><th>Total</th><th>Kasir</th><th>Detail</th></tr></thead>
+      <tbody id="trxTable"></tbody>
+    </table>
+  </div>
 
-  // Menu
-  async function loadMenu() {
-    let { data, error } = await supabaseClient.from("menu").select("*");
-    if (error) return console.error(error);
-    const daftar = document.getElementById("daftarMenu");
-    daftar.innerHTML = "";
-    data.forEach(m => {
-      let li = document.createElement("li");
-      li.className = "flex justify-between border p-1 mb-1";
-      li.innerHTML = `${m.nama} - Rp ${m.harga} <button onclick="hapusMenu('${m.id}')" class="bg-red-500 text-white px-2 rounded">Hapus</button>`;
-      daftar.appendChild(li);
-    });
-  }
-  async function tambahMenu() {
-    const nama = document.getElementById("namaMenu").value;
-    const harga = parseInt(document.getElementById("hargaMenu").value);
-    let { error } = await supabaseClient.from("menu").insert([{ nama, harga }]);
-    if (error) alert("Gagal tambah menu"); else loadMenu();
-  }
-  async function hapusMenu(id) {
-    await supabaseClient.from("menu").delete().eq("id", id);
-    loadMenu();
-  }
+  <!-- Kas Harian -->
+  <div class="section">
+    <h2>Kas Harian</h2>
+    <input type="date" id="kasTanggal" onchange="loadKas()">
+    <table>
+      <thead><tr><th>Tanggal</th><th>Kas Awal</th><th>Total Penjualan</th><th>Total Pengeluaran</th><th>Kas Akhir</th></tr></thead>
+      <tbody id="kasTable"></tbody>
+    </table>
+  </div>
 
-  // Transaksi
-  async function loadTransaksi() {
-    let { data, error } = await supabaseClient
-      .from("transaksi")
-      .select("id, total, bayar, kembalian, created_at, akun(nama)")
-      .order("created_at", { ascending: false });
+  <script>
+    // Konfigurasi Supabase
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    if (error) {
-      alert("Gagal load transaksi: " + error.message);
-      return;
+    // Cek session
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || user.role !== "admin") {
+      window.location.href = "index.html";
     }
 
-    const tbody = document.getElementById("tabelTransaksi");
-    tbody.innerHTML = "";
-    data.forEach(t => {
-      let tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="border p-1">${new Date(t.created_at).toLocaleString()}</td>
-        <td class="border p-1">${t.akun ? t.akun.nama : "-"}</td>
-        <td class="border p-1">Rp ${t.total}</td>
-        <td class="border p-1">Rp ${t.bayar}</td>
-        <td class="border p-1">Rp ${t.kembalian}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
+    async function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "index.html";
+    }
 
-  loadAkun();
-  loadMenu();
-  loadTransaksi();
-</script>
+    // ========================
+    // Manajemen Akun
+    // ========================
+    async function loadAkun() {
+      const { data, error } = await supabase.from("akun").select("id, username, role");
+      if (error) return;
+      const tbody = document.getElementById("akunTable");
+      tbody.innerHTML = "";
+      data.forEach(a => {
+        tbody.innerHTML += `<tr>
+          <td>${a.id}</td>
+          <td>${a.username}</td>
+          <td>${a.role}</td>
+          <td><button onclick="deleteUser(${a.id})">Hapus</button></td>
+        </tr>`;
+      });
+    }
 
+    async function addUser() {
+      const username = document.getElementById("newUser").value;
+      const password = document.getElementById("newPass").value;
+      if (!username || !password) return alert("Isi semua field!");
+      await supabase.from("akun").insert([{ username, password, role: "kasir" }]);
+      document.getElementById("newUser").value = "";
+      document.getElementById("newPass").value = "";
+      loadAkun();
+    }
+
+    async function deleteUser(id) {
+      await supabase.from("akun").delete().eq("id", id);
+      loadAkun();
+    }
+
+    // ========================
+    // Manajemen Menu
+    // ========================
+    async function loadMenu() {
+      const { data, error } = await supabase.from("menu").select("id, nama, harga");
+      if (error) return;
+      const tbody = document.getElementById("menuTable");
+      tbody.innerHTML = "";
+      data.forEach(m => {
+        tbody.innerHTML += `<tr>
+          <td>${m.id}</td>
+          <td>${m.nama}</td>
+          <td>${m.harga}</td>
+          <td><button onclick="deleteMenu(${m.id})">Hapus</button></td>
+        </tr>`;
+      });
+    }
+
+    async function addMenu() {
+      const nama = document.getElementById("menuNama").value;
+      const harga = document.getElementById("menuHarga").value;
+      if (!nama || !harga) return alert("Isi semua field!");
+      await supabase.from("menu").insert([{ nama, harga }]);
+      document.getElementById("menuNama").value = "";
+      document.getElementById("menuHarga").value = "";
+      loadMenu();
+    }
+
+    async function deleteMenu(id) {
+      await supabase.from("menu").delete().eq("id", id);
+      loadMenu();
+    }
+
+    // ========================
+    // Transaksi
+    // ========================
+    async function loadTransaksi() {
+      let tanggal = document.getElementById("filterTanggal").value;
+      let query = supabase.from("v_transaksi_detail").select("*").order("waktu", { ascending: false });
+      if (tanggal) query = query.eq("waktu", tanggal);
+      const { data, error } = await query;
+      if (error) return;
+      const tbody = document.getElementById("trxTable");
+      tbody.innerHTML = "";
+      data.forEach(t => {
+        tbody.innerHTML += `<tr>
+          <td>${t.id}</td>
+          <td>${new Date(t.waktu).toLocaleString()}</td>
+          <td>${t.total}</td>
+          <td>${t.kasir}</td>
+          <td>${t.detail}</td>
+        </tr>`;
+      });
+    }
+
+    // ========================
+    // Kas Harian
+    // ========================
+    async function loadKas() {
+      let tanggal = document.getElementById("kasTanggal").value;
+      let query = supabase.from("v_kas_harian").select("*");
+      if (tanggal) query = query.eq("tanggal", tanggal);
+      const { data, error } = await query;
+      if (error) return;
+      const tbody = document.getElementById("kasTable");
+      tbody.innerHTML = "";
+      data.forEach(k => {
+        tbody.innerHTML += `<tr>
+          <td>${k.tanggal}</td>
+          <td>${k.kas_awal}</td>
+          <td>${k.total_penjualan}</td>
+          <td>${k.total_pengeluaran}</td>
+          <td>${k.kas_akhir}</td>
+        </tr>`;
+      });
+    }
+
+    // Load awal
+    loadAkun();
+    loadMenu();
+    loadTransaksi();
+    loadKas();
+  </script>
 </body>
 </html>
