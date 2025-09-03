@@ -3,89 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POS Kasir</title>
+  <title>Login Kasir</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen">
-  <h1 class="text-3xl font-bold mb-8">Selamat Datang di POS Kasir</h1>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
 
-  <!-- Grid Menu -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 w-11/12 sm:w-3/4">
-    <div onclick="openLoginModal('admin.html')" class="cursor-pointer bg-white p-8 rounded-2xl shadow hover:shadow-lg text-center font-semibold">Admin</div>
-    <div onclick="openLoginModal('kas.html')" class="cursor-pointer bg-white p-8 rounded-2xl shadow hover:shadow-lg text-center font-semibold">Kas</div>
-    <div onclick="openLoginModal('kasir.html')" class="cursor-pointer bg-white p-8 rounded-2xl shadow hover:shadow-lg text-center font-semibold">Kasir</div>
-  </div>
+  <!-- Popup Login -->
+  <div id="loginPopup" class="bg-white p-8 rounded-2xl shadow-lg w-96">
+    <h2 class="text-2xl font-bold text-center mb-6">🔑 Login</h2>
 
-  <!-- Modal Login -->
-  <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl p-6 w-96 shadow-lg">
-      <h2 class="text-xl font-bold mb-4">Login</h2>
-      <input id="username" type="text" placeholder="Username" class="w-full border rounded p-2 mb-3">
-      <input id="password" type="password" placeholder="Password" class="w-full border rounded p-2 mb-3">
-      <div class="flex justify-end space-x-2">
-        <button onclick="closeLoginModal()" class="bg-gray-400 text-white px-4 py-2 rounded">Batal</button>
-        <button onclick="handleLogin()" class="bg-blue-600 text-white px-4 py-2 rounded">Login</button>
-      </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">Username</label>
+      <input type="text" id="username" class="mt-1 w-full p-2 border rounded-lg focus:ring focus:ring-blue-300" placeholder="Masukkan username">
     </div>
+
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700">Password</label>
+      <input type="password" id="password" class="mt-1 w-full p-2 border rounded-lg focus:ring focus:ring-blue-300" placeholder="Masukkan password">
+    </div>
+
+    <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+      Login
+    </button>
+
+    <p id="errorMsg" class="text-red-500 text-sm mt-4 hidden"></p>
   </div>
 
   <script>
-    const supabaseUrl = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    // 🔗 Supabase init
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNTk3MDY4OCwiZXhwIjoyMDUxNTQ2Njg4fQ.yhZZFZa_FqHFgr4i7qBpbbDJjL37vaxASm1KlfNNRQA";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let targetPage = null;
+    // 🚪 Cek session sebelumnya
+    document.addEventListener("DOMContentLoaded", () => {
+      const session = JSON.parse(localStorage.getItem("session"));
+      if (session) {
+        if (session.role === "admin") {
+          window.location.href = "admin.html";
+        } else if (session.role === "kasir") {
+          window.location.href = "kasir.html";
+        }
+      }
+    });
 
-    function openLoginModal(page) {
-      targetPage = page;
-      document.getElementById("loginModal").classList.remove("hidden");
-    }
-
-    function closeLoginModal() {
-      document.getElementById("loginModal").classList.add("hidden");
-    }
-
-    async function handleLogin() {
+    // 🔑 Fungsi login
+    async function login() {
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
+      const errorMsg = document.getElementById("errorMsg");
 
       if (!username || !password) {
-        alert("Masukkan username dan password!");
+        errorMsg.textContent = "Username dan password wajib diisi!";
+        errorMsg.classList.remove("hidden");
         return;
       }
 
-      let { data: users, error } = await supabaseClient
-        .from("users")
-        .select("*")
+      // Cek user di Supabase
+      const { data, error } = await supabase
+        .from("akun")
+        .select("id, username, role, nama")
         .eq("username", username)
         .eq("password", password)
+        .eq("aktif", true)
         .single();
 
-      if (error || !users) {
-        alert("Username atau password salah!");
+      if (error || !data) {
+        errorMsg.textContent = "Login gagal! Periksa username/password.";
+        errorMsg.classList.remove("hidden");
         return;
       }
 
-      const role = users.role;
+      // Simpan session
+      localStorage.setItem("session", JSON.stringify(data));
 
-      if (targetPage === "admin.html" && role !== "admin") {
-        alert("Hanya admin yang bisa mengakses halaman ini!");
-        return;
+      // Redirect sesuai role
+      if (data.role === "admin") {
+        window.location.href = "admin.html";
+      } else if (data.role === "kasir") {
+        window.location.href = "kasir.html";
+      } else {
+        errorMsg.textContent = "Role tidak dikenali.";
+        errorMsg.classList.remove("hidden");
       }
-
-      if (targetPage === "kas.html" && !(role === "admin" || role === "kasir")) {
-        alert("Hanya admin atau kasir yang bisa mengakses halaman ini!");
-        return;
-      }
-
-      if (targetPage === "kasir.html" && role !== "kasir") {
-        alert("Hanya kasir yang bisa mengakses halaman ini!");
-        return;
-      }
-
-      // Gunakan replace agar tidak bisa kembali ke index tanpa login
-      window.location.replace(targetPage);
     }
   </script>
 </body>
