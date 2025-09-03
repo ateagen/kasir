@@ -2,128 +2,194 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kas - Bunda Ana</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <title>Kasir - Resto Bunda Ana</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #1e90ff;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    h2 {
+      margin-bottom: 15px;
+      color: #1e90ff;
+    }
+    .card {
+      background: #e6f3ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, button, textarea {
+      padding: 8px;
+      margin-bottom: 10px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #1e90ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background: #187bcd;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #1e90ff;
+      color: white;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 15px 0;
+      color: #1e90ff;
+      font-weight: bold;
+    }
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 p-4">
+<body>
+  <header>
+    <h1>Kasir - Resto Bunda Ana</h1>
+  </header>
 
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-xl font-bold">Kas - Bunda Ana</h1>
-    <a href="index.html" class="bg-gray-500 text-white px-3 py-1 rounded">Kembali</a>
-  </div>
-
-  <!-- Info kas -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <p>Kas Awal: Rp <span id="kasAwal">0</span></p>
-    <p>Total Penjualan Hari Ini: Rp <span id="penjualanHariIni">0</span></p>
-    <p>Total Pengeluaran Hari Ini: Rp <span id="pengeluaranHariIni">0</span></p>
-    <p>Kas Akhir: Rp <span id="kasAkhir">0</span></p>
-  </div>
-
-  <!-- Tambah Pengeluaran -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Tambah Pengeluaran</h2>
-    <input id="keteranganPengeluaran" placeholder="Keterangan" class="border p-1 mb-2 w-full">
-    <input id="jumlahPengeluaran" type="number" placeholder="Jumlah" class="border p-1 mb-2 w-full">
-    <button onclick="tambahPengeluaran()" class="bg-red-500 text-white px-3 py-1 rounded">Tambah</button>
-  </div>
-
-  <!-- Daftar Transaksi -->
-  <div class="bg-white p-4 rounded shadow">
-    <h2 class="font-semibold mb-2">Transaksi Hari Ini</h2>
-    <table class="w-full border">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border p-1">Tanggal</th>
-          <th class="border p-1">Kasir</th>
-          <th class="border p-1">Total</th>
+  <div class="container">
+    <h2>Ringkasan Kas Hari Ini</h2>
+    <div id="loading" class="loading">⏳ Loading...</div>
+    <div class="card">
+      <table>
+        <tr>
+          <th>Kas Awal</th>
+          <th>Total Penjualan</th>
+          <th>Total Pengeluaran</th>
+          <th>Kas Akhir</th>
         </tr>
-      </thead>
-      <tbody id="tabelTransaksi"></tbody>
-    </table>
+        <tr>
+          <td id="kasAwal">Rp 0</td>
+          <td id="penjualan">Rp 0</td>
+          <td id="pengeluaran">Rp 0</td>
+          <td id="kasAkhir">Rp 0</td>
+        </tr>
+      </table>
+    </div>
+
+    <h2>Tambah Pengeluaran</h2>
+    <div class="card">
+      <form id="formPengeluaran">
+        <label>Deskripsi</label>
+        <input type="text" id="deskripsi" required>
+        <label>Jumlah</label>
+        <input type="number" id="jumlah" required>
+        <button type="submit">Simpan Pengeluaran</button>
+      </form>
+    </div>
   </div>
 
-<script>
-  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script>
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  async function loadKas() {
-    let today = new Date().toISOString().split("T")[0];
+    const loading = document.getElementById("loading");
+    const kasAwalEl = document.getElementById("kasAwal");
+    const penjualanEl = document.getElementById("penjualan");
+    const pengeluaranEl = document.getElementById("pengeluaran");
+    const kasAkhirEl = document.getElementById("kasAkhir");
 
-    // total penjualan
-    let { data: penjualan, error } = await supabaseClient
-      .from("transaksi")
-      .select("total")
-      .gte("created_at", today + "T00:00:00")
-      .lte("created_at", today + "T23:59:59");
+    async function loadKas() {
+      loading.style.display = "block";
+      const today = new Date().toISOString().split("T")[0];
 
-    let totalPenjualan = 0;
-    if (!error && penjualan) {
-      totalPenjualan = penjualan.reduce((sum, t) => sum + parseFloat(t.total), 0);
+      // === Ambil Kas Awal dari kas akhir kemarin ===
+      const { data: kasKemarin } = await supabase
+        .from("v_kas_harian")
+        .select("*")
+        .lt("tanggal", today)
+        .order("tanggal", { ascending: false })
+        .limit(1);
+
+      let kasAwal = kasKemarin && kasKemarin.length > 0 ? kasKemarin[0].kas_akhir : 0;
+
+      // === Hitung total penjualan hari ini ===
+      const { data: penjualan } = await supabase
+        .from("transaksi")
+        .select("total")
+        .gte("waktu", today)
+        .lt("waktu", today + "T23:59:59");
+
+      let totalPenjualan = penjualan ? penjualan.reduce((sum, row) => sum + parseFloat(row.total), 0) : 0;
+
+      // === Hitung total pengeluaran hari ini ===
+      const { data: pengeluaran } = await supabase
+        .from("pengeluaran")
+        .select("jumlah")
+        .gte("waktu", today)
+        .lt("waktu", today + "T23:59:59");
+
+      let totalPengeluaran = pengeluaran ? pengeluaran.reduce((sum, row) => sum + parseFloat(row.jumlah), 0) : 0;
+
+      // === Hitung kas akhir ===
+      let kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
+
+      // === Tampilkan ke HTML ===
+      kasAwalEl.textContent = "Rp " + kasAwal.toLocaleString();
+      penjualanEl.textContent = "Rp " + totalPenjualan.toLocaleString();
+      pengeluaranEl.textContent = "Rp " + totalPengeluaran.toLocaleString();
+      kasAkhirEl.textContent = "Rp " + kasAkhir.toLocaleString();
+
+      loading.style.display = "none";
     }
 
-    // total pengeluaran
-    let { data: pengeluaran, error: err2 } = await supabaseClient
-      .from("kas")
-      .select("jumlah")
-      .eq("tipe", "keluar")
-      .gte("created_at", today + "T00:00:00")
-      .lte("created_at", today + "T23:59:59");
+    // Simpan pengeluaran baru
+    document.getElementById("formPengeluaran").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loading.style.display = "block";
 
-    let totalPengeluaran = 0;
-    if (!err2 && pengeluaran) {
-      totalPengeluaran = pengeluaran.reduce((sum, k) => sum + parseFloat(k.jumlah), 0);
-    }
+      const deskripsi = document.getElementById("deskripsi").value;
+      const jumlah = parseFloat(document.getElementById("jumlah").value);
 
-    document.getElementById("kasAwal").innerText = "0"; // bisa diisi dari kas akhir kemarin
-    document.getElementById("penjualanHariIni").innerText = totalPenjualan;
-    document.getElementById("pengeluaranHariIni").innerText = totalPengeluaran;
-    document.getElementById("kasAkhir").innerText = totalPenjualan - totalPengeluaran;
-  }
+      await supabase.from("pengeluaran").insert([
+        { deskripsi, jumlah }
+      ]);
 
-  async function tambahPengeluaran() {
-    const ket = document.getElementById("keteranganPengeluaran").value;
-    const jumlah = parseInt(document.getElementById("jumlahPengeluaran").value);
-    if (!ket || !jumlah) return alert("Lengkapi data!");
-
-    let { error } = await supabaseClient.from("kas").insert([{ tipe: "keluar", keterangan: ket, jumlah }]);
-    if (error) alert("Gagal tambah pengeluaran");
-    loadKas();
-  }
-
-  async function loadTransaksi() {
-    let today = new Date().toISOString().split("T")[0];
-
-    let { data, error } = await supabaseClient
-      .from("transaksi")
-      .select("id, total, created_at, akun(nama)")
-      .gte("created_at", today + "T00:00:00")
-      .lte("created_at", today + "T23:59:59")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    const tbody = document.getElementById("tabelTransaksi");
-    tbody.innerHTML = "";
-    data.forEach(t => {
-      let tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="border p-1">${new Date(t.created_at).toLocaleTimeString()}</td>
-        <td class="border p-1">${t.akun ? t.akun.nama : "-"}</td>
-        <td class="border p-1">Rp ${t.total}</td>
-      `;
-      tbody.appendChild(tr);
+      document.getElementById("formPengeluaran").reset();
+      await loadKas();
     });
-  }
 
-  loadKas();
-  loadTransaksi();
-</script>
-
+    loadKas();
+  </script>
 </body>
 </html>
