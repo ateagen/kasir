@@ -143,7 +143,7 @@
         .eq("username", username)
         .eq("password", password)
         .eq("aktif", true)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         errorMsg.textContent = "Login gagal! Cek username/password.";
