@@ -136,6 +136,7 @@
         return;
       }
 
+      // 🔍 Cek user di Supabase
       const { data, error } = await supabase
         .from("akun")
         .select("id, username, role, nama")
@@ -149,7 +150,7 @@
         return;
       }
 
-      // Cek role
+      // 🔒 Validasi role
       if (selectedRole === "admin" && data.role !== "admin") {
         errorMsg.textContent = "Akses ditolak! Bukan admin.";
         return;
@@ -159,10 +160,10 @@
         return;
       }
 
-      // Simpan session
+      // 💾 Simpan session
       localStorage.setItem("session", JSON.stringify(data));
 
-      // Redirect
+      // 🚀 Redirect
       if (selectedRole === "admin") {
         window.location.href = "admin.html";
       } else if (selectedRole === "kasir") {
