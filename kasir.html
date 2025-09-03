@@ -6,6 +6,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
+    /* default: struk tidak tampil di layar */
+    #struk {
+      display: none;
+    }
     @media print {
       body * { visibility: hidden; }
       #struk, #struk * { visibility: visible; }
@@ -14,6 +18,7 @@
         left: 0;
         top: 0;
         width: 80mm;
+        display: block; /* supaya muncul saat print */
       }
     }
   </style>
@@ -62,7 +67,7 @@
   </div>
 
   <!-- Struk -->
-  <div id="struk" class="hidden">
+  <div id="struk">
     <h2 class="text-center font-bold">Bunda Ana</h2>
     <p>Tanggal: <span id="tanggalStruk"></span></p>
     <hr>
