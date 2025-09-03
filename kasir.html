@@ -7,12 +7,8 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     @media print {
-      body * {
-        visibility: hidden;
-      }
-      #struk, #struk * {
-        visibility: visible;
-      }
+      body * { visibility: hidden; }
+      #struk, #struk * { visibility: visible; }
       #struk {
         position: absolute;
         left: 0;
@@ -65,7 +61,7 @@
     </div>
   </div>
 
-  <!-- Struk (hanya tampil saat print) -->
+  <!-- Struk -->
   <div id="struk" class="hidden">
     <h2 class="text-center font-bold">Bunda Ana</h2>
     <p>Kasir: <span id="kasirNama">-</span></p>
@@ -88,10 +84,10 @@
   let pesanan = [];
   let total = 0;
   let kasirLogin = localStorage.getItem("username") || "Kasir";
+  let kasirId = localStorage.getItem("kasir_id"); // uuid user login
 
   document.getElementById("kasirNama").innerText = kasirLogin;
 
-  // Tanggal untuk struk
   function updateTanggal() {
     const now = new Date();
     document.getElementById("tanggalStruk").innerText = now.toLocaleString();
@@ -99,7 +95,11 @@
 
   // Ambil menu dari Supabase
   async function loadMenu() {
-    let { data } = await supabaseClient.from("menu").select("*");
+    let { data, error } = await supabaseClient.from("menu").select("*");
+    if (error) {
+      console.error(error);
+      return;
+    }
     const menuGrid = document.getElementById("menuGrid");
     menuGrid.innerHTML = "";
     data.forEach(m => {
@@ -148,35 +148,46 @@
       alert("Belum ada pesanan!");
       return;
     }
-    let bayar = parseInt(document.getElementById("inputBayar").value) || 0;
-    if (bayar < total) {
+    let bayarVal = parseInt(document.getElementById("inputBayar").value) || 0;
+    if (bayarVal < total) {
       alert("Uang bayar kurang!");
       return;
     }
+    if (!kasirId) {
+      alert("Kasir ID tidak ditemukan. Pastikan login menyimpan kasir_id di localStorage.");
+      return;
+    }
 
-    // Simpan ke Supabase
     let { error } = await supabaseClient.from("transaksi").insert([
       {
-        kasir: kasirLogin,
+        kasir_id: kasirId,
         total: total,
+        bayar: bayarVal,
+        kembalian: bayarVal - total,
         detail: pesanan
       }
     ]);
+
     if (error) {
       alert("Gagal simpan transaksi!");
       console.error(error);
       return;
     }
 
-    // Isi struk
+    // update struk
     updateTanggal();
-    document.getElementById("strukPesanan").innerHTML = pesanan.map(p => `<li>${p.nama} x${p.qty} = Rp ${p.qty*p.harga}</li>`).join("");
+    document.getElementById("strukPesanan").innerHTML = pesanan.map(
+      p => `<li>${p.nama} x${p.qty} = Rp ${p.qty*p.harga}</li>`
+    ).join("");
     document.getElementById("strukTotal").innerText = total;
-    document.getElementById("strukBayar").innerText = bayar;
-    document.getElementById("strukKembalian").innerText = bayar - total;
+    document.getElementById("strukBayar").innerText = bayarVal;
+    document.getElementById("strukKembalian").innerText = bayarVal - total;
 
-    // Tampilkan popup
+    // popup konfirmasi
     document.getElementById("popupCetak").classList.remove("hidden");
+
+    // refresh total hari ini
+    loadTotalHariIni();
   }
 
   function cetakStruk() {
@@ -199,9 +210,28 @@
     document.getElementById("kembalian").innerText = "0";
   }
 
+  // Hitung total penjualan hari ini
+  async function loadTotalHariIni() {
+    let today = new Date().toISOString().split("T")[0];
+    let { data, error } = await supabaseClient
+      .from("transaksi")
+      .select("total")
+      .gte("created_at", today + "T00:00:00")
+      .lte("created_at", today + "T23:59:59");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    let totalHariIni = data.reduce((sum, t) => sum + parseFloat(t.total), 0);
+    document.getElementById("totalHariIni").innerText = totalHariIni;
+  }
+
+  // load saat halaman dibuka
   loadMenu();
+  loadTotalHariIni();
 </script>
+
 </body>
 </html>
-
 
