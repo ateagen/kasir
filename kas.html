@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Kasir - Resto Bunda Ana</title>
+  <title>Kas Harian - Resto Bunda Ana</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,7 +18,7 @@
       text-align: center;
     }
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 20px auto;
       background: white;
       padding: 20px;
@@ -83,7 +83,7 @@
 </head>
 <body>
   <header>
-    <h1>Kasir - Resto Bunda Ana</h1>
+    <h1>Kas Harian - Resto Bunda Ana</h1>
   </header>
 
   <div class="container">
@@ -116,6 +116,23 @@
         <button type="submit">Simpan Pengeluaran</button>
       </form>
     </div>
+
+    <h2>Rincian Pengeluaran Hari Ini</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu</th>
+            <th>Deskripsi</th>
+            <th>Jumlah</th>
+            <th>Kasir</th>
+          </tr>
+        </thead>
+        <tbody id="tabelPengeluaran">
+          <tr><td colspan="4">Belum ada data</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script>
@@ -123,11 +140,16 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // kasir login disimpan di sessionStorage dari index.html
+    const kasirId = sessionStorage.getItem("kasir_id");
+    const kasirNama = sessionStorage.getItem("kasir_nama");
+
     const loading = document.getElementById("loading");
     const kasAwalEl = document.getElementById("kasAwal");
     const penjualanEl = document.getElementById("penjualan");
     const pengeluaranEl = document.getElementById("pengeluaran");
     const kasAkhirEl = document.getElementById("kasAkhir");
+    const tabelPengeluaran = document.getElementById("tabelPengeluaran");
 
     async function loadKas() {
       loading.style.display = "block";
@@ -170,6 +192,30 @@
       pengeluaranEl.textContent = "Rp " + totalPengeluaran.toLocaleString();
       kasAkhirEl.textContent = "Rp " + kasAkhir.toLocaleString();
 
+      // === Load rincian pengeluaran hari ini ===
+      const { data: detail } = await supabase
+        .from("pengeluaran")
+        .select("waktu, deskripsi, jumlah, akun(username)")
+        .gte("waktu", today)
+        .lt("waktu", today + "T23:59:59")
+        .order("waktu", { ascending: true });
+
+      tabelPengeluaran.innerHTML = "";
+      if (detail && detail.length > 0) {
+        detail.forEach(d => {
+          let tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${new Date(d.waktu).toLocaleTimeString()}</td>
+            <td>${d.deskripsi}</td>
+            <td>Rp ${parseFloat(d.jumlah).toLocaleString()}</td>
+            <td>${d.akun?.username || "-"}</td>
+          `;
+          tabelPengeluaran.appendChild(tr);
+        });
+      } else {
+        tabelPengeluaran.innerHTML = `<tr><td colspan="4">Belum ada data</td></tr>`;
+      }
+
       loading.style.display = "none";
     }
 
@@ -182,7 +228,7 @@
       const jumlah = parseFloat(document.getElementById("jumlah").value);
 
       await supabase.from("pengeluaran").insert([
-        { deskripsi, jumlah }
+        { deskripsi, jumlah, kasir_id: kasirId }
       ]);
 
       document.getElementById("formPengeluaran").reset();
