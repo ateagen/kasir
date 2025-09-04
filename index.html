@@ -8,23 +8,20 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #e6f4f9;
+      background: linear-gradient(to bottom right, #b3e5fc, #e1f5fe);
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       text-align: center;
+      color: #01579b;
     }
 
-    header {
+    h1 {
       margin-bottom: 30px;
-    }
-
-    header h1 {
-      color: #0277bd;
-      font-size: 1.8rem;
-      margin: 0;
+      font-size: 2rem;
+      font-weight: bold;
     }
 
     .grid-container {
@@ -36,43 +33,31 @@
     }
 
     .grid-item {
-      background: #4fc3f7;
+      background-color: #4fc3f7;
       color: white;
       padding: 30px 20px;
       border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.3s;
       font-size: 1.1rem;
       font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s;
     }
 
     .grid-item:hover {
-      background: #039be5;
-      transform: scale(1.05);
+      background-color: #0288d1;
+      transform: translateY(-5px);
     }
 
     footer {
       margin-top: 40px;
-      color: #555;
       font-size: 0.9rem;
-    }
-
-    @media (max-width: 500px) {
-      header h1 {
-        font-size: 1.4rem;
-      }
-
-      .grid-item {
-        font-size: 1rem;
-        padding: 20px;
-      }
+      color: #0277bd;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Selamat Datang di POS Kasir<br>Resto Bunda Ana</h1>
-  </header>
+  <h1>Selamat Datang di POS Kasir<br>Resto Bunda Ana</h1>
 
   <div class="grid-container">
     <div class="grid-item" onclick="location.href='admin.html'">Admin</div>
