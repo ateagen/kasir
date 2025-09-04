@@ -2,222 +2,242 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-blue-50 min-h-screen">
+<body class="bg-blue-50 min-h-screen flex flex-col">
   <!-- Header -->
-  <header class="bg-blue-400 text-white p-4 flex justify-between items-center shadow">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="btnKembali" class="bg-red-500 px-4 py-2 rounded">Kembali</button>
+  <header class="bg-blue-600 text-white p-4 text-center text-xl font-bold shadow-md">
+    Panel Admin
   </header>
 
-  <main class="p-4 space-y-6">
-
-    <!-- Manajemen Akun -->
-    <section class="bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Akun</h2>
-      <form id="formAkun" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="username" placeholder="Username" class="border rounded px-2 py-1 flex-1">
-        <input type="password" id="password" placeholder="Password" class="border rounded px-2 py-1 flex-1">
-        <select id="role" class="border rounded px-2 py-1">
+  <!-- Kontainer utama -->
+  <main class="flex-1 p-6 space-y-6">
+    <!-- Form Tambah Akun -->
+    <section class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">Tambah Akun</h2>
+      <div class="flex flex-col md:flex-row gap-4">
+        <input id="newUsername" type="text" placeholder="Username" class="border p-2 rounded w-full">
+        <input id="newPassword" type="password" placeholder="Password" class="border p-2 rounded w-full">
+        <select id="newRole" class="border p-2 rounded w-full">
           <option value="kasir">Kasir</option>
           <option value="admin">Admin</option>
         </select>
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
-      </form>
-      <table class="w-full border text-sm">
-        <thead class="bg-blue-100">
-          <tr>
-            <th class="border p-2">ID</th>
-            <th class="border p-2">Username</th>
-            <th class="border p-2">Role</th>
-            <th class="border p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="akunTable"></tbody>
-      </table>
+        <button id="addAccountBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
+      </div>
     </section>
 
-    <!-- Manajemen Menu -->
-    <section class="bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Menu</h2>
-      <form id="formMenu" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="menuNama" placeholder="Nama Menu" class="border rounded px-2 py-1 flex-1">
-        <input type="number" id="menuHarga" placeholder="Harga" class="border rounded px-2 py-1 flex-1">
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
-      </form>
-      <table class="w-full border text-sm">
-        <thead class="bg-blue-100">
-          <tr>
-            <th class="border p-2">ID</th>
-            <th class="border p-2">Nama</th>
-            <th class="border p-2">Harga</th>
-            <th class="border p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="menuTable"></tbody>
-      </table>
+    <!-- Tabel Akun -->
+    <section class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">Daftar Akun</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border border-gray-200">
+          <thead class="bg-blue-100">
+            <tr>
+              <th class="p-2 border">ID</th>
+              <th class="p-2 border">Username</th>
+              <th class="p-2 border">Role</th>
+              <th class="p-2 border">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="akunTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Form Tambah Menu -->
+    <section class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">Tambah Menu</h2>
+      <div class="flex flex-col md:flex-row gap-4">
+        <input id="newMenuName" type="text" placeholder="Nama Menu" class="border p-2 rounded w-full">
+        <input id="newMenuPrice" type="number" placeholder="Harga" class="border p-2 rounded w-full">
+        <button id="addMenuBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Submit</button>
+      </div>
+    </section>
+
+    <!-- Tabel Menu -->
+    <section class="bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">Daftar Menu</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full border border-gray-200">
+          <thead class="bg-blue-100">
+            <tr>
+              <th class="p-2 border">ID</th>
+              <th class="p-2 border">Nama</th>
+              <th class="p-2 border">Harga</th>
+              <th class="p-2 border">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="menuTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Card Manajemen Kas (khusus admin) -->
+    <section id="kasManagement" class="hidden bg-white p-6 rounded-2xl shadow-md">
+      <h2 class="text-lg font-semibold text-blue-700 mb-4">Manajemen Kas</h2>
+      <div class="flex flex-col md:flex-row gap-4">
+        <button id="resetKasBtn" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Reset Kas Awal</button>
+        <button id="hapusTransaksiBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Hapus Semua Transaksi</button>
+      </div>
     </section>
   </main>
 
   <!-- Login Popup -->
-  <div id="loginPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded shadow w-80">
-      <h2 class="text-lg font-semibold mb-4 text-center">Login Admin</h2>
-      <input type="text" id="loginUsername" placeholder="Username" class="border rounded px-2 py-1 w-full mb-2">
-      <input type="password" id="loginPassword" placeholder="Password" class="border rounded px-2 py-1 w-full mb-4">
-      <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Login</button>
-    </div>
-  </div>
-
-  <!-- Loading Popup -->
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-    <div class="bg-white p-4 rounded shadow text-center">
-      <p class="text-blue-600 font-semibold">Loading...</p>
+  <div id="loginPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-6 rounded-2xl shadow-md w-80">
+      <h2 class="text-xl font-bold text-blue-700 mb-4">Login Admin</h2>
+      <input id="loginUsername" type="text" placeholder="Username" class="border p-2 rounded w-full mb-3">
+      <input id="loginPassword" type="password" placeholder="Password" class="border p-2 rounded w-full mb-3">
+      <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded w-full hover:bg-blue-600">Login</button>
     </div>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabaseUrl = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const loginPopup = document.getElementById("loginPopup");
-    const loginBtn = document.getElementById("loginBtn");
-    const btnKembali = document.getElementById("btnKembali");
+    let currentUser = null;
 
-    function showLoading(show) {
-      document.getElementById("loadingPopup").classList.toggle("hidden", !show);
-    }
+    // Cek session dari localStorage
+    window.onload = () => {
+      const savedUser = localStorage.getItem("adminSession");
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById("loginPopup").classList.add("hidden");
+        if (currentUser.role === "admin") {
+          document.getElementById("kasManagement").classList.remove("hidden");
+        }
+        loadAkun();
+        loadMenu();
+      }
+    };
 
-    // ===== LOGIN =====
-    async function doLogin(username, password) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?username=eq.${username}&password=eq.${password}&role=eq.admin`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-      });
-      const data = await res.json();
-      if (data.length > 0) {
-        localStorage.setItem("role", "admin");
-        localStorage.setItem("username", username);
-        loginPopup.classList.add("hidden");
-        loadAll();
+    // Login
+    document.getElementById("loginBtn").onclick = async () => {
+      const username = document.getElementById("loginUsername").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const { data, error } = await supabase
+        .from("akun")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .eq("role", "admin")
+        .single();
+
+      if (data) {
+        currentUser = data;
+        localStorage.setItem("adminSession", JSON.stringify(currentUser));
+        document.getElementById("loginPopup").classList.add("hidden");
+        if (currentUser.role === "admin") {
+          document.getElementById("kasManagement").classList.remove("hidden");
+        }
+        loadAkun();
+        loadMenu();
       } else {
         alert("Login gagal. Pastikan kredensial admin benar.");
       }
-    }
+    };
 
-    loginBtn.addEventListener("click", () => {
-      const u = document.getElementById("loginUsername").value;
-      const p = document.getElementById("loginPassword").value;
-      doLogin(u, p);
-    });
+    // Tambah Akun
+    document.getElementById("addAccountBtn").onclick = async () => {
+      const username = document.getElementById("newUsername").value;
+      const password = document.getElementById("newPassword").value;
+      const role = document.getElementById("newRole").value;
+      const { error } = await supabase.from("akun").insert([{ username, password, role }]);
+      if (!error) {
+        alert("Akun berhasil ditambahkan");
+        loadAkun();
+      }
+    };
 
-    btnKembali.addEventListener("click", () => {
-      localStorage.clear();
-      window.location.href = "index.html";
-    });
-
-    if (localStorage.getItem("role") === "admin") {
-      loginPopup.classList.add("hidden");
-      loadAll();
-    }
-
-    // ===== DATA AKUN =====
+    // Load Akun
     async function loadAkun() {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=*`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-      });
-      const data = await res.json();
+      const { data } = await supabase.from("akun").select("*").order("id");
       const tbody = document.getElementById("akunTable");
       tbody.innerHTML = "";
-      data.forEach(row => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="border p-2">${row.id}</td>
-            <td class="border p-2">${row.username}</td>
-            <td class="border p-2">${row.role}</td>
-            <td class="border p-2 text-center">
-              <button onclick="hapusAkun(${row.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Hapus</button>
-            </td>
-          </tr>`;
+      data.forEach(acc => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-2 border">${acc.id}</td>
+          <td class="p-2 border">${acc.username}</td>
+          <td class="p-2 border">${acc.role}</td>
+          <td class="p-2 border">
+            <button onclick="deleteAkun(${acc.id})" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
-    document.getElementById("formAkun").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showLoading(true);
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
-      await fetch(`${SUPABASE_URL}/rest/v1/akun`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role })
-      });
-      showLoading(false);
-      loadAkun();
-      e.target.reset();
-    });
-
-    async function hapusAkun(id) {
-      if (!confirm("Yakin hapus akun ini?")) return;
-      await fetch(`${SUPABASE_URL}/rest/v1/akun?id=eq.${id}`, {
-        method: "DELETE",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-      });
-      loadAkun();
+    // Hapus akun
+    async function deleteAkun(id) {
+      if (confirm("Yakin hapus akun ini?")) {
+        await supabase.from("akun").delete().eq("id", id);
+        loadAkun();
+      }
     }
 
-    // ===== DATA MENU =====
+    // Tambah Menu
+    document.getElementById("addMenuBtn").onclick = async () => {
+      const nama = document.getElementById("newMenuName").value;
+      const harga = document.getElementById("newMenuPrice").value;
+      const { error } = await supabase.from("menu").insert([{ nama, harga }]);
+      if (!error) {
+        alert("Menu berhasil ditambahkan");
+        loadMenu();
+      }
+    };
+
+    // Load Menu
     async function loadMenu() {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?select=*`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-      });
-      const data = await res.json();
+      const { data } = await supabase.from("menu").select("*").order("id");
       const tbody = document.getElementById("menuTable");
       tbody.innerHTML = "";
-      data.forEach(row => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="border p-2">${row.id}</td>
-            <td class="border p-2">${row.nama}</td>
-            <td class="border p-2">${row.harga}</td>
-            <td class="border p-2 text-center">
-              <button onclick="hapusMenu(${row.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Hapus</button>
-            </td>
-          </tr>`;
+      data.forEach(menu => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-2 border">${menu.id}</td>
+          <td class="p-2 border">${menu.nama}</td>
+          <td class="p-2 border">${menu.harga}</td>
+          <td class="p-2 border">
+            <button onclick="deleteMenu(${menu.id})" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
-    document.getElementById("formMenu").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      showLoading(true);
-      const nama = document.getElementById("menuNama").value;
-      const harga = document.getElementById("menuHarga").value;
-      await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ nama, harga })
-      });
-      showLoading(false);
-      loadMenu();
-      e.target.reset();
-    });
-
-    async function hapusMenu(id) {
-      if (!confirm("Yakin hapus menu ini?")) return;
-      await fetch(`${SUPABASE_URL}/rest/v1/menu?id=eq.${id}`, {
-        method: "DELETE",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-      });
-      loadMenu();
+    // Hapus menu
+    async function deleteMenu(id) {
+      if (confirm("Yakin hapus menu ini?")) {
+        await supabase.from("menu").delete().eq("id", id);
+        loadMenu();
+      }
     }
 
-    async function loadAll() {
-      await loadAkun();
-      await loadMenu();
-    }
+    // Reset Kas Awal
+    document.getElementById("resetKasBtn").onclick = async () => {
+      if (confirm("Yakin reset kas awal hari ini jadi 0?")) {
+        const { error } = await supabase.from("kas_override").insert([{ tanggal: new Date().toISOString().slice(0,10), kas_awal_override: 0 }]);
+        if (!error) {
+          alert("Kas awal berhasil direset ke 0");
+        }
+      }
+    };
+
+    // Hapus Semua Transaksi
+    document.getElementById("hapusTransaksiBtn").onclick = async () => {
+      if (confirm("Yakin hapus semua transaksi & pengeluaran? Data tidak bisa dikembalikan.")) {
+        const { error } = await supabase.rpc("reset_kas");
+        if (!error) {
+          alert("Semua transaksi & pengeluaran berhasil dihapus");
+        }
+      }
+    };
   </script>
 </body>
 </html>
