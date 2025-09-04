@@ -1,504 +1,331 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .card{ @apply bg-white rounded-xl shadow p-4; }
-    .btn{ @apply px-4 py-2 rounded-lg border; }
-    .btn-primary{ @apply bg-blue-600 text-white border-blue-600; }
-    .btn-ghost{ @apply bg-white text-gray-800 border-gray-300; }
-    .btn-danger{ @apply bg-red-600 text-white border-red-600; }
-    .table th,.table td{ @apply border p-2 text-sm align-top; }
-    .pill{ @apply px-2 py-1 rounded-full text-xs border; }
-  </style>
-  <script>
-    // ========= SUPABASE CONFIG =========
-    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-
-    const baseHeaders = {
-      apikey: SUPABASE_KEY,
-      Authorization: "Bearer " + SUPABASE_KEY
-    };
-
-    async function sbGet(path, paramsObj={}) {
-      const usp = new URLSearchParams(paramsObj);
-      const url = `${SUPABASE_URL}/rest/v1/${path}${usp.toString() ? ("?"+usp.toString()) : ""}`;
-      const res = await fetch(url, { headers: baseHeaders });
-      if(!res.ok) throw new Error(`${path} ${res.status}`);
-      return res.json();
-    }
-    async function sbInsert(path, body) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-        method: "POST",
-        headers: { ...baseHeaders, "Content-Type":"application/json", "Prefer":"return=representation" },
-        body: JSON.stringify(body)
-      });
-      if(!res.ok) throw new Error(`insert ${path} ${res.status}`);
-      return res.json();
-    }
-
-    // ========= HELPERS =========
-    const $ = sel => document.querySelector(sel);
-    const fmtIDR = n => "Rp " + Number(n||0).toLocaleString("id-ID");
-    const todayInput = () => {
-      const d = new Date();
-      const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${dd}`;
-    };
-    const showLoading = (b=true)=> $("#loading").classList.toggle("hidden", !b);
-
-    // PostgREST "and" filter helper for date range on a column
-    const andDateRange = (col, start, end) => `( ${col}.gte.${start} , ${col}.lte.${end} )`;
-
-    // ========= SESSION (ADMIN) =========
-    function hasSession(){
-      try{
-        const s = JSON.parse(localStorage.getItem("admin_session")||"null");
-        return s && s.role==="admin" && s.username;
-      }catch{ return false; }
-    }
-    function setSession(username){
-      localStorage.setItem("admin_session", JSON.stringify({ username, role:"admin", ts:Date.now() }));
-    }
-    function clearSession(){
-      localStorage.removeItem("admin_session");
-    }
-
-    async function doLogin(username, password){
-      const rows = await sbGet("akun", {
-        select: "id,username,role",
-        username: `eq.${username}`,
-        password: `eq.${password}`,
-        role: "eq.admin",
-        limit: 1
-      });
-      if(rows.length) return rows[0];
-      throw new Error("Login gagal");
-    }
-
-    // ========= LOADERS =========
-    async function loadAkun(){
-      const rows = await sbGet("akun", { select:"id,username,role", order:"id.desc" });
-      const thead = `<tr><th class="border p-2">ID</th><th class="border p-2">Username</th><th class="border p-2">Role</th></tr>`;
-      const tbody = rows.map(r=>`
-        <tr>
-          <td class="border p-2">${r.id}</td>
-          <td class="border p-2">${r.username}</td>
-          <td class="border p-2"><span class="pill border-blue-300 text-blue-700">${r.role}</span></td>
-        </tr>
-      `).join("");
-      $("#tblAkun").innerHTML = thead + tbody;
-    }
-
-    async function loadMenu(){
-      const rows = await sbGet("menu", { select:"id,nama,harga", order:"id.desc" });
-      const thead = `<tr><th class="border p-2">ID</th><th class="border p-2">Nama</th><th class="border p-2">Harga</th></tr>`;
-      const tbody = rows.map(r=>`
-        <tr>
-          <td class="border p-2">${r.id}</td>
-          <td class="border p-2">${r.nama}</td>
-          <td class="border p-2">${fmtIDR(r.harga)}</td>
-        </tr>
-      `).join("");
-      $("#tblMenu").innerHTML = thead + tbody;
-    }
-
-    async function loadTransaksi(){
-      const s = $("#tStart").value || todayInput();
-      const e = $("#tEnd").value || todayInput();
-      // v_transaksi_detail: kolom waktu (timestamp), kasir, detail, total
-      // Gunakan 'and' filter agar bisa pakai range di kolom yang sama
-      const rows = await sbGet("v_transaksi_detail", {
-        select:"id,waktu,kasir,detail,total",
-        and: `(waktu.gte.${s}T00:00:00,waktu.lte.${e}T23:59:59)`,
-        order: "waktu.desc"
-      });
-      const thead = `
-        <tr>
-          <th class="border p-2">ID</th>
-          <th class="border p-2">Waktu</th>
-          <th class="border p-2">Kasir</th>
-          <th class="border p-2">Detail</th>
-          <th class="border p-2">Total</th>
-        </tr>`;
-      const tbody = rows.map(r=>{
-        const t = new Date(r.waktu).toLocaleString("id-ID");
-        return `<tr>
-          <td class="border p-2">${r.id}</td>
-          <td class="border p-2">${t}</td>
-          <td class="border p-2">${r.kasir||"-"}</td>
-          <td class="border p-2 text-gray-600">${r.detail||"-"}</td>
-          <td class="border p-2">${fmtIDR(r.total)}</td>
-        </tr>`;
-      }).join("");
-      $("#tblTransaksi").innerHTML = thead + tbody;
-    }
-
-    async function loadKasRekap(){
-      const s = $("#kStart").value || todayInput();
-      const e = $("#kEnd").value || todayInput();
-      // v_kas_harian: tanggal (date), total_penjualan, total_pengeluaran, kas_awal, kas_akhir
-      const rows = await sbGet("v_kas_harian", {
-        select:"tanggal,kas_awal,total_penjualan,total_pengeluaran,kas_akhir",
-        and: `(tanggal.gte.${s},tanggal.lte.${e})`,
-        order: "tanggal.asc"
-      });
-      const thead = `
-        <tr>
-          <th class="border p-2">Tanggal</th>
-          <th class="border p-2">Kas Awal</th>
-          <th class="border p-2">Total Penjualan</th>
-          <th class="border p-2">Total Pengeluaran</th>
-          <th class="border p-2">Kas Akhir</th>
-        </tr>`;
-      const tbody = rows.map(k=>{
-        const t = new Date(k.tanggal).toLocaleDateString("id-ID",{year:"numeric",month:"short",day:"2-digit"});
-        return `<tr>
-          <td class="border p-2">${t}</td>
-          <td class="border p-2">${fmtIDR(k.kas_awal)}</td>
-          <td class="border p-2">${fmtIDR(k.total_penjualan)}</td>
-          <td class="border p-2">${fmtIDR(k.total_pengeluaran)}</td>
-          <td class="border p-2 font-semibold">${fmtIDR(k.kas_akhir)}</td>
-        </tr>`;
-      }).join("");
-      $("#tblKas").innerHTML = thead + tbody;
-    }
-
-    async function loadPengeluaranDetail(){
-      const s = $("#kStart").value || todayInput();
-      const e = $("#kEnd").value || todayInput();
-      // pengeluaran: waktu, deskripsi, jumlah, kasir_id → embed akun(username)
-      // PostgREST supports embedding via FK: akun(username)
-      const rows = await sbGet("pengeluaran", {
-        select: "waktu,deskripsi,jumlah,akun:akun(username)",
-        and: `(waktu.gte.${s}T00:00:00,waktu.lte.${e}T23:59:59)`,
-        order: "waktu.desc"
-      }).catch(async ()=>{
-        // fallback tanpa embed (kalau policy FK tidak terdeteksi). Tampilkan kasir sebagai '-'.
-        const r2 = await sbGet("pengeluaran", {
-          select:"waktu,deskripsi,jumlah,kasir_id",
-          and: `(waktu.gte.${s}T00:00:00,waktu.lte.${e}T23:59:59)`,
-          order:"waktu.desc"
-        });
-        return r2.map(x=>({ ...x, akun: { username: "-" }}));
-      });
-
-      const thead = `
-        <tr>
-          <th class="border p-2">Waktu</th>
-          <th class="border p-2">Deskripsi</th>
-          <th class="border p-2">Jumlah</th>
-          <th class="border p-2">Kasir</th>
-        </tr>`;
-      const tbody = rows.map(p=>{
-        const t = new Date(p.waktu).toLocaleString("id-ID");
-        const who = (p.akun && p.akun.username) ? p.akun.username : "-";
-        return `<tr>
-          <td class="border p-2">${t}</td>
-          <td class="border p-2">${p.deskripsi}</td>
-          <td class="border p-2">${fmtIDR(p.jumlah)}</td>
-          <td class="border p-2">${who}</td>
-        </tr>`;
-      }).join("");
-      $("#tblPengeluaran").innerHTML = thead + tbody;
-    }
-
-    async function loadRekapKasir(){
-      const s = $("#kStart").value || todayInput();
-      const e = $("#kEnd").value || todayInput();
-      // v_penjualan_per_kasir: tanggal (date), kasir, total_penjualan
-      const rows = await sbGet("v_penjualan_per_kasir", {
-        select:"tanggal,kasir,total_penjualan",
-        and: `(tanggal.gte.${s},tanggal.lte.${e})`,
-        order: "tanggal.asc"
-      });
-      const thead = `
-        <tr>
-          <th class="border p-2">Tanggal</th>
-          <th class="border p-2">Kasir</th>
-          <th class="border p-2">Total Penjualan</th>
-        </tr>`;
-      const tbody = rows.map(r=>{
-        const t = new Date(r.tanggal).toLocaleDateString("id-ID",{year:"numeric",month:"short",day:"2-digit"});
-        return `<tr>
-          <td class="border p-2">${t}</td>
-          <td class="border p-2">${r.kasir||"-"}</td>
-          <td class="border p-2">${fmtIDR(r.total_penjualan)}</td>
-        </tr>`;
-      }).join("");
-      $("#tblRekapKasir").innerHTML = thead + tbody;
-    }
-
-    // ========= INSERT ACTIONS =========
-    async function addAkun(){
-      const username = $("#accUser").value.trim();
-      const password = $("#accPass").value;
-      const role = $("#accRole").value;
-      if(!username || !password) return alert("Isi username & password");
-      showLoading(true);
-      try{
-        await sbInsert("akun", { username, password, role });
-        $("#accUser").value = ""; $("#accPass").value = "";
-        await loadAkun();
-        alert("Akun berhasil ditambahkan");
-      }catch(e){
-        alert("Gagal tambah akun");
-      }finally{ showLoading(false); }
-    }
-    async function addMenu(){
-      const nama = $("#menuNama").value.trim();
-      const harga = Number($("#menuHarga").value);
-      if(!nama || !harga) return alert("Isi nama & harga");
-      showLoading(true);
-      try{
-        await sbInsert("menu", { nama, harga });
-        $("#menuNama").value = ""; $("#menuHarga").value = "";
-        await loadMenu();
-        alert("Menu berhasil ditambahkan");
-      }catch(e){
-        alert("Gagal tambah menu");
-      }finally{ showLoading(false); }
-    }
-
-    // ========= FILTER HOOKS =========
-    async function applyTransaksiFilter(){
-      showLoading(true);
-      try{ await loadTransaksi(); } finally{ showLoading(false); }
-    }
-    async function todayTx(){
-      const d = todayInput();
-      $("#tStart").value = d; $("#tEnd").value = d;
-      await applyTransaksiFilter();
-    }
-
-    async function applyKasFilters(){
-      showLoading(true);
-      try{
-        await Promise.all([
-          loadKasRekap(),
-          loadPengeluaranDetail(),
-          loadRekapKasir()
-        ]);
-      }finally{ showLoading(false); }
-    }
-    async function todayKas(){
-      const d = todayInput();
-      $("#kStart").value = d; $("#kEnd").value = d;
-      await applyKasFilters();
-    }
-
-    // ========= INITIALIZE =========
-    async function initialLoad(){
-      // prefill dates
-      const d = todayInput();
-      $("#tStart").value = d; $("#tEnd").value = d;
-      $("#kStart").value = d; $("#kEnd").value = d;
-
-      await Promise.all([
-        loadAkun(),
-        loadMenu(),
-        loadTransaksi(),
-        loadKasRekap(),
-        loadPengeluaranDetail(),
-        loadRekapKasir()
-      ]);
-    }
-
-    // ========= BOOT =========
-    window.addEventListener("DOMContentLoaded", async ()=>{
-      // Back button => logout
-      $("#btnBack").addEventListener("click", ()=>{
-        clearSession();
-        location.href = "index.html";
-      });
-
-      // Login flow
-      $("#btnLogin").addEventListener("click", async ()=>{
-        const u = $("#loginUser").value.trim();
-        const p = $("#loginPass").value;
-        if(!u || !p) return alert("Isi username & password");
-        showLoading(true);
-        try{
-          await doLogin(u,p);
-          setSession(u);
-          $("#loginModal").classList.add("hidden");
-          await initialLoad();
-        }catch(e){
-          alert("Login gagal. Pastikan kredensial admin benar.");
-        }finally{ showLoading(false); }
-      });
-
-      // Insert bindings
-      $("#btnAddAcc").addEventListener("click", addAkun);
-      $("#btnAddMenu").addEventListener("click", addMenu);
-
-      // Filter transaksi
-      $("#btnTxFilter").addEventListener("click", applyTransaksiFilter);
-      $("#btnTxToday").addEventListener("click", todayTx);
-
-      // Filter kas/pengeluaran/rekap-kasir
-      $("#btnKasFilter").addEventListener("click", applyKasFilters);
-      $("#btnKasToday").addEventListener("click", todayKas);
-
-      // Enter key should not submit/reload
-      document.addEventListener("keydown", (e)=>{
-        if(e.key==="Enter") e.preventDefault();
-      });
-
-      if(hasSession()){
-        $("#loginModal").classList.add("hidden");
-        await initialLoad();
-      }else{
-        $("#loginModal").classList.remove("hidden");
-      }
-    });
-  </script>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <!-- Topbar -->
-  <header class="bg-blue-700 text-white">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-      <h1 class="text-xl font-bold">Admin Panel</h1>
-      <span class="pill border-blue-200 text-blue-50">Role: Admin</span>
-      <div class="ml-auto flex items-center gap-2">
-        <button id="btnBack" class="btn btn-danger">Kembali</button>
-      </div>
-    </div>
+<body class="bg-blue-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-blue-400 text-white p-4 flex justify-between items-center shadow">
+    <h1 class="text-xl font-bold">Admin Panel</h1>
+    <button id="btnKembali" class="bg-red-500 px-4 py-2 rounded">Kembali</button>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+  <main class="p-4 space-y-6">
 
-    <!-- Manajemen Akun & Menu -->
-    <div class="grid lg:grid-cols-2 gap-6">
-      <section class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold">Manajemen Akun</h2>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-          <input id="accUser" class="border rounded px-3 py-2" placeholder="Username" />
-          <input id="accPass" class="border rounded px-3 py-2" type="password" placeholder="Password" />
-          <select id="accRole" class="border rounded px-3 py-2">
-            <option value="kasir">kasir</option>
-            <option value="admin">admin</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <button id="btnAddAcc" class="btn btn-primary">Tambah Akun</button>
-        </div>
-        <div class="overflow-auto max-h-72">
-          <table class="table w-full" id="tblAkun"></table>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Catatan: Password disimpan sederhana untuk demo. Pakai hashing untuk produksi.</p>
-      </section>
+    <!-- Manajemen Akun -->
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Akun</h2>
+      <form id="formAkun" class="flex flex-wrap gap-2 mb-4">
+        <input type="text" id="username" placeholder="Username" class="border rounded px-2 py-1 flex-1" required>
+        <input type="password" id="password" placeholder="Password" class="border rounded px-2 py-1 flex-1" required>
+        <select id="role" class="border rounded px-2 py-1">
+          <option value="kasir">Kasir</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+      </form>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">ID</th>
+            <th class="border p-2">Username</th>
+            <th class="border p-2">Role</th>
+          </tr>
+        </thead>
+        <tbody id="akunTable"></tbody>
+      </table>
+    </section>
 
-      <section class="card">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold">Manajemen Menu</h2>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-          <input id="menuNama" class="border rounded px-3 py-2" placeholder="Nama menu" />
-          <input id="menuHarga" class="border rounded px-3 py-2" type="number" inputmode="decimal" placeholder="Harga" />
-          <button id="btnAddMenu" class="btn btn-primary md:col-span-1">Tambah Menu</button>
-        </div>
-        <div class="overflow-auto max-h-72">
-          <table class="table w-full" id="tblMenu"></table>
-        </div>
-      </section>
-    </div>
+    <!-- Manajemen Menu -->
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Menu</h2>
+      <form id="formMenu" class="flex flex-wrap gap-2 mb-4">
+        <input type="text" id="menuNama" placeholder="Nama Menu" class="border rounded px-2 py-1 flex-1" required>
+        <input type="number" id="menuHarga" placeholder="Harga" class="border rounded px-2 py-1 flex-1" required>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
+      </form>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">ID</th>
+            <th class="border p-2">Nama</th>
+            <th class="border p-2">Harga</th>
+          </tr>
+        </thead>
+        <tbody id="menuTable"></tbody>
+      </table>
+    </section>
 
     <!-- Transaksi -->
-    <section class="card">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold">Semua Transaksi</h2>
-        <div class="flex items-end gap-2">
-          <div>
-            <label class="text-xs block">Mulai</label>
-            <input id="tStart" type="date" class="border rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="text-xs block">Selesai</label>
-            <input id="tEnd" type="date" class="border rounded px-3 py-2">
-          </div>
-          <button id="btnTxFilter" class="btn btn-ghost">Terapkan</button>
-          <button id="btnTxToday" class="btn btn-primary">Hari Ini</button>
-        </div>
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Semua Transaksi</h2>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input type="date" id="transaksiMulai" class="border rounded px-2 py-1">
+        <input type="date" id="transaksiAkhir" class="border rounded px-2 py-1">
+        <button id="filterTransaksi" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
+        <button id="hariIniTransaksi" class="bg-green-500 text-white px-4 py-2 rounded">Hari Ini</button>
       </div>
-      <div class="overflow-auto max-h-96">
-        <table class="table w-full" id="tblTransaksi"></table>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">Sumber: <code>v_transaksi_detail</code></p>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">ID</th>
+            <th class="border p-2">Waktu</th>
+            <th class="border p-2">Kasir</th>
+            <th class="border p-2">Detail</th>
+            <th class="border p-2">Total</th>
+          </tr>
+        </thead>
+        <tbody id="transaksiTable"></tbody>
+      </table>
     </section>
 
-    <!-- Kas + Pengeluaran + Rekap Kasir -->
-    <section class="card">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold">Kas & Pengeluaran (Dengan Filter)</h2>
-        <div class="flex items-end gap-2">
-          <div>
-            <label class="text-xs block">Mulai</label>
-            <input id="kStart" type="date" class="border rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="text-xs block">Selesai</label>
-            <input id="kEnd" type="date" class="border rounded px-3 py-2">
-          </div>
-          <button id="btnKasFilter" class="btn btn-ghost">Terapkan</button>
-          <button id="btnKasToday" class="btn btn-primary">Hari Ini</button>
-        </div>
+    <!-- Kas Harian -->
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Kas Harian</h2>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input type="date" id="kasMulai" class="border rounded px-2 py-1">
+        <input type="date" id="kasAkhir" class="border rounded px-2 py-1">
+        <button id="filterKas" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
       </div>
-
-      <!-- Rekap Kas Harian -->
-      <div class="mb-6">
-        <h3 class="font-semibold mb-2">Rekap Kas Harian</h3>
-        <div class="overflow-auto max-h-80">
-          <table class="table w-full" id="tblKas"></table>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Sumber: <code>v_kas_harian</code> (kas_awal otomatis = kas_akhir hari sebelumnya)</p>
-      </div>
-
-      <!-- Detail Pengeluaran -->
-      <div class="mb-6">
-        <h3 class="font-semibold mb-2">Rincian Pengeluaran</h3>
-        <div class="overflow-auto max-h-80">
-          <table class="table w-full" id="tblPengeluaran"></table>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Sumber: <code>pengeluaran</code> (termasuk <em>username</em> kasir yang input)</p>
-      </div>
-
-      <!-- Rekap Penjualan per Kasir -->
-      <div>
-        <h3 class="font-semibold mb-2">Rekap Penjualan per Kasir</h3>
-        <div class="overflow-auto max-h-80">
-          <table class="table w-full" id="tblRekapKasir"></table>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">Sumber: <code>v_penjualan_per_kasir</code></p>
-      </div>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">Tanggal</th>
+            <th class="border p-2">Kas Awal</th>
+            <th class="border p-2">Total Penjualan</th>
+            <th class="border p-2">Pengeluaran</th>
+            <th class="border p-2">Kas Akhir</th>
+          </tr>
+        </thead>
+        <tbody id="kasTable"></tbody>
+      </table>
     </section>
 
+    <!-- Pengeluaran -->
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Pengeluaran</h2>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input type="date" id="pengeluaranMulai" class="border rounded px-2 py-1">
+        <input type="date" id="pengeluaranAkhir" class="border rounded px-2 py-1">
+        <button id="filterPengeluaran" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
+      </div>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">Waktu</th>
+            <th class="border p-2">Deskripsi</th>
+            <th class="border p-2">Jumlah</th>
+            <th class="border p-2">Kasir</th>
+          </tr>
+        </thead>
+        <tbody id="pengeluaranTable"></tbody>
+      </table>
+    </section>
+
+    <!-- Rekap Penjualan per Kasir -->
+    <section class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-4 text-blue-600">Rekap Penjualan per Kasir</h2>
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input type="date" id="rekapMulai" class="border rounded px-2 py-1">
+        <input type="date" id="rekapAkhir" class="border rounded px-2 py-1">
+        <button id="filterRekap" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
+      </div>
+      <table class="w-full border text-sm">
+        <thead class="bg-blue-100">
+          <tr>
+            <th class="border p-2">Kasir</th>
+            <th class="border p-2">Total Penjualan</th>
+          </tr>
+        </thead>
+        <tbody id="rekapTable"></tbody>
+      </table>
+    </section>
   </main>
 
-  <!-- Login Modal -->
-  <div id="loginModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-      <h2 class="text-lg font-bold mb-4">Login Admin</h2>
-      <div class="space-y-3">
-        <input id="loginUser" class="w-full border rounded px-3 py-2" placeholder="Username" />
-        <input id="loginPass" type="password" class="w-full border rounded px-3 py-2" placeholder="Password" />
-        <button id="btnLogin" class="btn btn-primary w-full">Masuk</button>
-      </div>
-      <p class="text-xs text-gray-500 mt-3">Refresh = tetap login. Tombol <b>Kembali</b> akan logout & kembali ke beranda.</p>
+  <!-- Login Popup -->
+  <div id="loginPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded shadow w-80">
+      <h2 class="text-lg font-semibold mb-4 text-center">Login Admin</h2>
+      <input type="text" id="loginUsername" placeholder="Username" class="border rounded px-2 py-1 w-full mb-2">
+      <input type="password" id="loginPassword" placeholder="Password" class="border rounded px-2 py-1 w-full mb-4">
+      <button id="loginBtn" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Login</button>
     </div>
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div class="bg-white px-6 py-4 rounded-xl shadow">
-      <span class="font-semibold">Loading...</span>
+  <!-- Loading Popup -->
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white p-4 rounded shadow text-center">
+      <p class="text-blue-600 font-semibold">Loading...</p>
     </div>
   </div>
+
+  <script>
+    const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const headers = { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY };
+
+    const loginPopup = document.getElementById("loginPopup");
+    const loadingPopup = document.getElementById("loadingPopup");
+
+    function showLoading(show) {
+      loadingPopup.classList.toggle("hidden", !show);
+    }
+
+    // Session check
+    if (sessionStorage.getItem("role") !== "admin") {
+      loginPopup.classList.remove("hidden");
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const u = document.getElementById("loginUsername").value;
+      const p = document.getElementById("loginPassword").value;
+      showLoading(true);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?username=eq.${u}&password=eq.${p}&role=eq.admin`, { headers });
+      const data = await res.json();
+      showLoading(false);
+      if (data.length > 0) {
+        sessionStorage.setItem("role", "admin");
+        loginPopup.classList.add("hidden");
+        loadAll();
+      } else {
+        alert("Login gagal. Pastikan kredensial admin benar.");
+      }
+    });
+
+    document.getElementById("btnKembali").addEventListener("click", () => {
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    });
+
+    // ========== LOAD DATA ==========
+    async function loadAkun() {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=id,username,role`, { headers });
+      const data = await res.json();
+      document.getElementById("akunTable").innerHTML = data.map(a =>
+        `<tr><td class="border p-1">${a.id}</td><td class="border p-1">${a.username}</td><td class="border p-1">${a.role}</td></tr>`
+      ).join("");
+    }
+
+    async function loadMenu() {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?select=id,nama,harga`, { headers });
+      const data = await res.json();
+      document.getElementById("menuTable").innerHTML = data.map(m =>
+        `<tr><td class="border p-1">${m.id}</td><td class="border p-1">${m.nama}</td><td class="border p-1">${m.harga}</td></tr>`
+      ).join("");
+    }
+
+    async function loadTransaksi(filter="") {
+      const url = `${SUPABASE_URL}/rest/v1/v_transaksi_detail?select=*${filter}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      document.getElementById("transaksiTable").innerHTML = data.map(t =>
+        `<tr><td class="border p-1">${t.id}</td><td class="border p-1">${t.waktu}</td><td class="border p-1">${t.kasir}</td><td class="border p-1">${t.detail}</td><td class="border p-1">${t.total}</td></tr>`
+      ).join("");
+    }
+
+    async function loadKas(filter="") {
+      const url = `${SUPABASE_URL}/rest/v1/v_kas_harian?select=*${filter}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      document.getElementById("kasTable").innerHTML = data.map(k =>
+        `<tr><td class="border p-1">${k.tanggal}</td><td class="border p-1">${k.kas_awal}</td><td class="border p-1">${k.total_penjualan}</td><td class="border p-1">${k.total_pengeluaran}</td><td class="border p-1">${k.kas_akhir}</td></tr>`
+      ).join("");
+    }
+
+    async function loadPengeluaran(filter="") {
+      const url = `${SUPABASE_URL}/rest/v1/pengeluaran?select=waktu,deskripsi,jumlah,akun(username)${filter}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      document.getElementById("pengeluaranTable").innerHTML = data.map(p =>
+        `<tr><td class="border p-1">${p.waktu}</td><td class="border p-1">${p.deskripsi}</td><td class="border p-1">${p.jumlah}</td><td class="border p-1">${p.akun?.username||"-"}</td></tr>`
+      ).join("");
+    }
+
+    async function loadRekap(filter="") {
+      const url = `${SUPABASE_URL}/rest/v1/v_transaksi_detail?select=kasir,total${filter}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      const byKasir = {};
+      data.forEach(d => { byKasir[d.kasir] = (byKasir[d.kasir]||0)+Number(d.total) });
+      document.getElementById("rekapTable").innerHTML = Object.entries(byKasir).map(([k,v]) =>
+        `<tr><td class="border p-1">${k}</td><td class="border p-1">${v}</td></tr>`
+      ).join("");
+    }
+
+    // ========== FORM ==========
+    document.getElementById("formAkun").addEventListener("submit", async e => {
+      e.preventDefault();
+      showLoading(true);
+      const body = { username: username.value, password: password.value, role: role.value };
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun`, {
+        method:"POST", headers:{...headers,"Content-Type":"application/json"}, body:JSON.stringify(body)
+      });
+      showLoading(false);
+      if (res.ok) { alert("Akun berhasil ditambahkan"); loadAkun(); }
+      else { alert("Gagal tambah akun"); }
+    });
+
+    document.getElementById("formMenu").addEventListener("submit", async e => {
+      e.preventDefault();
+      showLoading(true);
+      const body = { nama: menuNama.value, harga: Number(menuHarga.value) };
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
+        method:"POST", headers:{...headers,"Content-Type":"application/json"}, body:JSON.stringify(body)
+      });
+      showLoading(false);
+      if (res.ok) { alert("Menu berhasil ditambahkan"); loadMenu(); }
+      else { alert("Gagal tambah menu"); }
+    });
+
+    // ========== FILTER ==========
+    document.getElementById("filterTransaksi").addEventListener("click", () => {
+      const s = transaksiMulai.value, e = transaksiAkhir.value;
+      let f = "";
+      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
+      loadTransaksi(f);
+    });
+    document.getElementById("hariIniTransaksi").addEventListener("click", () => {
+      const today = new Date().toISOString().slice(0,10);
+      loadTransaksi(`&waktu=gte.${today}T00:00:00&waktu=lte.${today}T23:59:59`);
+    });
+
+    document.getElementById("filterKas").addEventListener("click", () => {
+      const s = kasMulai.value, e = kasAkhir.value;
+      let f = "";
+      if (s && e) f = `&tanggal=gte.${s}&tanggal=lte.${e}`;
+      loadKas(f);
+    });
+
+    document.getElementById("filterPengeluaran").addEventListener("click", () => {
+      const s = pengeluaranMulai.value, e = pengeluaranAkhir.value;
+      let f = "";
+      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
+      loadPengeluaran(f);
+    });
+
+    document.getElementById("filterRekap").addEventListener("click", () => {
+      const s = rekapMulai.value, e = rekapAkhir.value;
+      let f = "";
+      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
+      loadRekap(f);
+    });
+
+    // load awal
+    async function loadAll() {
+      await loadAkun();
+      await loadMenu();
+      await loadTransaksi();
+      await loadKas();
+      await loadPengeluaran();
+      await loadRekap();
+    }
+
+    if (sessionStorage.getItem("role") === "admin") {
+      loadAll();
+    }
+  </script>
 </body>
 </html>
