@@ -1,208 +1,347 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Kas Harian</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kas (POS)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-blue-50 min-h-screen flex items-center justify-center">
-  <div class="container mx-auto p-6">
-    <div class="bg-white shadow-xl rounded-2xl p-6">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
+<body class="bg-blue-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-blue-400 text-white p-4 shadow flex items-center justify-between">
+    <h1 class="text-xl font-bold">Kas (POS)</h1>
+    <div class="flex items-center gap-3">
+      <span id="userBadge" class="text-sm bg-blue-500/40 px-3 py-1 rounded-full"></span>
+      <button id="btnKeluar" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Keluar</button>
+    </div>
+  </header>
+
+  <main class="p-4 max-w-6xl mx-auto space-y-6">
+    <!-- CARD: Input Pengeluaran / Pembelian -->
+    <section class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-lg font-semibold text-blue-700 mb-3">Input Pengeluaran / Pembelian</h2>
+      <form id="formPengeluaran" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div>
-          <h1 class="text-2xl font-bold text-blue-700">📊 Kas Harian</h1>
-          <p id="namaKasir" class="text-gray-700">Kasir: -</p>
+          <label class="block text-sm text-gray-600 mb-1">Tanggal</label>
+          <input id="tglPengeluaran" type="date" class="w-full border rounded px-3 py-2" />
         </div>
-        <button onclick="logoutKasir()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
-          Logout
-        </button>
+        <div class="md:col-span-2">
+          <label class="block text-sm text-gray-600 mb-1">Keterangan</label>
+          <input id="ketPengeluaran" type="text" placeholder="cth: Beli gas, beli plastik"
+                 class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">Jumlah Biaya</label>
+          <input id="jmlPengeluaran" type="number" min="0" step="1" placeholder="cth: 15000"
+                 class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div class="md:col-span-4">
+          <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- CARD: Tabel Pengeluaran + Filter -->
+    <section class="bg-white rounded-2xl shadow p-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <h2 class="text-lg font-semibold text-blue-700">Pengeluaran</h2>
+        <div class="flex items-end gap-2">
+          <div>
+            <label class="block text-xs text-gray-600 mb-1">Mulai</label>
+            <input id="fltMulai" type="date" class="border rounded px-3 py-1" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-600 mb-1">Akhir</label>
+            <input id="fltAkhir" type="date" class="border rounded px-3 py-1" />
+          </div>
+          <button id="btnFilterPengeluaran" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded">Filter</button>
+          <button id="btnHariIni" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded">Hari Ini</button>
+        </div>
       </div>
 
-      <!-- Input kasir -->
-      <div class="mb-4">
-        <label class="block text-gray-700">Username Kasir</label>
-        <input id="kasirUsername" type="text" placeholder="contoh: kasir1"
-          class="border p-2 rounded w-full">
-        <button onclick="setKasir()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          Set Kasir
-        </button>
+      <div class="overflow-x-auto mt-3">
+        <table class="w-full text-sm border">
+          <thead class="bg-blue-100">
+            <tr>
+              <th class="border p-2 text-left">Tanggal</th>
+              <th class="border p-2 text-left">Keterangan</th>
+              <th class="border p-2 text-right">Jumlah Biaya</th>
+              <th class="border p-2 text-left">Kasir</th>
+            </tr>
+          </thead>
+          <tbody id="pengeluaranTable"></tbody>
+          <tfoot class="bg-blue-50">
+            <tr>
+              <td class="border p-2 font-semibold" colspan="2">Total Pengeluaran Periode Ini</td>
+              <td id="totalPengeluaranTabel" class="border p-2 text-right font-semibold">0</td>
+              <td class="border p-2"></td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
+    </section>
 
-      <!-- Ringkasan kas -->
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="p-4 bg-blue-100 rounded-lg shadow">
-          <p class="text-gray-600">Kas Awal</p>
-          <p id="kasAwal" class="text-xl font-bold">Rp 0</p>
+    <!-- CARD: Ringkasan Kas -->
+    <section class="bg-white rounded-2xl shadow p-4">
+      <h2 class="text-lg font-semibold text-blue-700 mb-3">Ringkasan Kas</h2>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="rounded-xl border p-4">
+          <div class="text-xs text-gray-500">Kas Awal (dari kas akhir kemarin)</div>
+          <div id="kasAwal" class="text-xl font-bold mt-1">0</div>
         </div>
-        <div class="p-4 bg-green-100 rounded-lg shadow">
-          <p class="text-gray-600">Total Penjualan (Kasir)</p>
-          <p id="totalPenjualan" class="text-xl font-bold">Rp 0</p>
+        <div class="rounded-xl border p-4">
+          <div class="text-xs text-gray-500">Total Penjualan Hari Ini</div>
+          <div id="totalPenjualan" class="text-xl font-bold mt-1">0</div>
+          <div id="penjualanNote" class="text-[11px] text-gray-500 mt-1"></div>
         </div>
-        <div class="p-4 bg-red-100 rounded-lg shadow">
-          <p class="text-gray-600">Total Pengeluaran</p>
-          <p id="totalPengeluaran" class="text-xl font-bold">Rp 0</p>
+        <div class="rounded-xl border p-4">
+          <div class="text-xs text-gray-500">Total Pengeluaran Hari Ini</div>
+          <div id="totalPengeluaran" class="text-xl font-bold mt-1">0</div>
         </div>
-        <div class="p-4 bg-yellow-100 rounded-lg shadow">
-          <p class="text-gray-600">Kas Akhir</p>
-          <p id="kasAkhir" class="text-xl font-bold">Rp 0</p>
+        <div class="rounded-xl border p-4 bg-blue-50">
+          <div class="text-xs text-gray-600">Kas Akhir (otomatis)</div>
+          <div id="kasAkhir" class="text-2xl font-extrabold mt-1">0</div>
         </div>
       </div>
+    </section>
+  </main>
 
-      <!-- Form input pengeluaran -->
-      <h2 class="text-lg font-semibold mb-2">➕ Input Pengeluaran</h2>
-      <div class="mb-4">
-        <input id="deskripsi" type="text" placeholder="Keterangan"
-          class="border p-2 rounded w-full mb-2">
-        <input id="jumlah" type="number" placeholder="Jumlah"
-          class="border p-2 rounded w-full mb-2">
-        <button onclick="tambahPengeluaran()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-          Simpan Pengeluaran
-        </button>
-      </div>
+  <!-- POPUP: Login -->
+  <div id="loginPopup" class="fixed inset-0 bg-black/50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow p-6 w-80">
+      <h3 class="text-lg font-semibold text-center mb-4 text-blue-700">Login (Admin/Kasir)</h3>
+      <input id="loginUser" type="text" placeholder="Username" class="w-full border rounded px-3 py-2 mb-2" />
+      <input id="loginPass" type="password" placeholder="Password" class="w-full border rounded px-3 py-2 mb-3" />
+      <button id="btnLogin" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Masuk</button>
+    </div>
+  </div>
 
-      <!-- Tabel pengeluaran -->
-      <h2 class="text-lg font-semibold mb-2">📋 Daftar Pengeluaran Hari Ini</h2>
-      <table class="w-full border">
-        <thead>
-          <tr class="bg-blue-200">
-            <th class="p-2 border">Waktu</th>
-            <th class="p-2 border">Deskripsi</th>
-            <th class="p-2 border">Jumlah</th>
-            <th class="p-2 border">Kasir</th>
-          </tr>
-        </thead>
-        <tbody id="tabelPengeluaran"></tbody>
-      </table>
+  <!-- POPUP: Loading -->
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow p-4">
+      <div class="text-blue-600 font-semibold">Loading...</div>
     </div>
   </div>
 
   <script>
+    // ====== Supabase REST (PostgREST) ======
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const headers = { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
 
-    let currentKasirId = null;
-    let currentKasirName = null;
+    // ====== Elemen UI ======
+    const loginPopup = document.getElementById("loginPopup");
+    const loadingPopup = document.getElementById("loadingPopup");
+    const userBadge = document.getElementById("userBadge");
+    const btnKeluar = document.getElementById("btnKeluar");
 
-    const formatRupiah = (angka) => {
-      if (!angka) angka = 0;
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
-    };
+    const formPengeluaran = document.getElementById("formPengeluaran");
+    const tglPengeluaran = document.getElementById("tglPengeluaran");
+    const ketPengeluaran = document.getElementById("ketPengeluaran");
+    const jmlPengeluaran = document.getElementById("jmlPengeluaran");
 
-    async function setKasir() {
-      const username = document.getElementById("kasirUsername").value.trim();
-      if (!username) {
-        alert("Masukkan username kasir!");
-        return;
+    const fltMulai = document.getElementById("fltMulai");
+    const fltAkhir = document.getElementById("fltAkhir");
+    const btnFilterPengeluaran = document.getElementById("btnFilterPengeluaran");
+    const btnHariIni = document.getElementById("btnHariIni");
+    const pengeluaranTable = document.getElementById("pengeluaranTable");
+    const totalPengeluaranTabel = document.getElementById("totalPengeluaranTabel");
+
+    const kasAwalEl = document.getElementById("kasAwal");
+    const totalPenjualanEl = document.getElementById("totalPenjualan");
+    const totalPengeluaranEl = document.getElementById("totalPengeluaran");
+    const kasAkhirEl = document.getElementById("kasAkhir");
+    const penjualanNote = document.getElementById("penjualanNote");
+
+    // ====== Helper ======
+    const fmtIDR = (n) => new Intl.NumberFormat("id-ID").format(Math.round(Number(n || 0)));
+    const toISODate = (d) => d.toISOString().slice(0, 10);
+    function showLoading(b) { loadingPopup.classList.toggle("hidden", !b); }
+
+    // Prefill tanggal form & filter dengan hari ini
+    const today = new Date();
+    tglPengeluaran.value = toISODate(today);
+    fltMulai.value = toISODate(today);
+    fltAkhir.value = toISODate(today);
+
+    // ====== Session (localStorage) ======
+    async function login(username, password) {
+      showLoading(true);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=id,username,role&username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}`, { headers });
+      const data = await res.json();
+      showLoading(false);
+      if (Array.isArray(data) && data.length > 0) {
+        const user = data[0];
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("user_id", user.id);
+        loginPopup.classList.add("hidden");
+        initAfterLogin();
+      } else {
+        alert("Login gagal. Pastikan username/password benar.");
       }
-      const { data, error } = await supabase.from("akun").select("id, username").eq("username", username).single();
-      if (error || !data) {
-        alert("Kasir tidak ditemukan!");
-        return;
-      }
-      currentKasirId = data.id;
-      currentKasirName = data.username;
-      document.getElementById("namaKasir").textContent = "Kasir: " + currentKasirName;
-      alert("Kasir berhasil di-set: " + currentKasirName);
-      muatRingkasan();
-      muatPengeluaran();
     }
 
-    function logoutKasir() {
-      currentKasirId = null;
-      currentKasirName = null;
+    document.getElementById("btnLogin").addEventListener("click", () => {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+      login(u, p);
+    });
+
+    // Auto-login jika sudah ada session
+    if (localStorage.getItem("username")) {
+      loginPopup.classList.add("hidden");
+      initAfterLogin();
+    }
+
+    btnKeluar.addEventListener("click", () => {
+      localStorage.clear();
       window.location.href = "index.html";
+    });
+
+    // ====== Data Loading ======
+    async function initAfterLogin() {
+      userBadge.textContent = `${localStorage.getItem("username")} • ${localStorage.getItem("role")}`;
+      await Promise.all([
+        loadKasAwal(),
+        loadTotalPenjualanHariIni(),
+        loadPengeluaranTabel(), // juga mengisi total pengeluaran tabel
+      ]);
+      hitungKasAkhir();
     }
 
-    async function muatRingkasan() {
-      const today = new Date().toISOString().slice(0, 10);
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-
-      // Kas awal = kas akhir kemarin
-      const { data: kasKemarin } = await supabase.from("v_kas_harian")
-        .select("kas_akhir")
-        .eq("tanggal", yesterday)
-        .single();
-      const kasAwal = kasKemarin ? kasKemarin.kas_akhir : 0;
-
-      // Total penjualan kasir hari ini
-      let totalPenjualan = 0;
-      if (currentKasirId) {
-        const { data: transaksiKasir } = await supabase.from("transaksi")
-          .select("total")
-          .eq("kasir_id", currentKasirId)
-          .gte("waktu", today)
-          .lt("waktu", new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-        if (transaksiKasir) {
-          totalPenjualan = transaksiKasir.reduce((sum, t) => sum + t.total, 0);
-        }
-      }
-
-      // Total pengeluaran hari ini
-      let totalPengeluaran = 0;
-      const { data: pengeluaranHariIni } = await supabase.from("pengeluaran")
-        .select("jumlah")
-        .gte("waktu", today)
-        .lt("waktu", new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-      if (pengeluaranHariIni) {
-        totalPengeluaran = pengeluaranHariIni.reduce((sum, p) => sum + p.jumlah, 0);
-      }
-
-      const kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
-
-      document.getElementById("kasAwal").textContent = formatRupiah(kasAwal);
-      document.getElementById("totalPenjualan").textContent = formatRupiah(totalPenjualan);
-      document.getElementById("totalPengeluaran").textContent = formatRupiah(totalPengeluaran);
-      document.getElementById("kasAkhir").textContent = formatRupiah(kasAkhir);
+    // 1) KAS AWAL = kas_akhir kemarin (v_kas_harian)
+    async function loadKasAwal() {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      const yest = toISODate(d);
+      const url = `${SUPABASE_URL}/rest/v1/v_kas_harian?select=tanggal,kas_akhir&tanggal=eq.${yest}`;
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      const kasAwal = data.length ? Number(data[0].kas_akhir || 0) : 0;
+      kasAwalEl.textContent = "Rp " + fmtIDR(kasAwal);
+      kasAwalEl.dataset.val = kasAwal;
     }
 
-    async function muatPengeluaran() {
-      const today = new Date().toISOString().slice(0, 10);
-      const { data } = await supabase.from("pengeluaran")
-        .select("waktu, deskripsi, jumlah, akun(username)")
-        .gte("waktu", today)
-        .lt("waktu", new Date(Date.now() + 86400000).toISOString().slice(0, 10));
-      const tbody = document.getElementById("tabelPengeluaran");
-      tbody.innerHTML = "";
-      if (data) {
-        data.forEach(row => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="border p-2">${new Date(row.waktu).toLocaleTimeString()}</td>
-            <td class="border p-2">${row.deskripsi}</td>
-            <td class="border p-2">${formatRupiah(row.jumlah)}</td>
-            <td class="border p-2">${row.akun?.username || '-'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+    // 2) TOTAL PENJUALAN HARI INI
+    async function loadTotalPenjualanHariIni() {
+      const start = `${toISODate(new Date())}T00:00:00`;
+      const end   = `${toISODate(new Date())}T23:59:59`;
+      const role = localStorage.getItem("role");
+      const userId = localStorage.getItem("user_id");
+
+      let url = `${SUPABASE_URL}/rest/v1/transaksi?select=total&waktu=gte.${start}&waktu=lte.${end}`;
+      if (role === "kasir") {
+        url += `&kasir_id=eq.${encodeURIComponent(userId)}`;
+        penjualanNote.textContent = "Menampilkan penjualan kasir ini (hari ini)";
+      } else {
+        penjualanNote.textContent = "Menampilkan total penjualan semua kasir (hari ini)";
+      }
+      const res = await fetch(url, { headers });
+      const data = await res.json();
+      const total = (data || []).reduce((s, r) => s + Number(r.total || 0), 0);
+      totalPenjualanEl.textContent = "Rp " + fmtIDR(total);
+      totalPenjualanEl.dataset.val = total;
+    }
+
+    // 3) TABEL & TOTAL PENGELUARAN (periode filter)
+    async function loadPengeluaranTabel() {
+      const s = fltMulai.value ? `${fltMulai.value}T00:00:00` : "";
+      const e = fltAkhir.value ? `${fltAkhir.value}T23:59:59` : "";
+      let q = `${SUPABASE_URL}/rest/v1/pengeluaran?select=waktu,deskripsi,jumlah,akun(username)`;
+      if (s) q += `&waktu=gte.${s}`;
+      if (e) q += `&waktu=lte.${e}`;
+      q += `&order=waktu.asc`;
+
+      const res = await fetch(q, { headers });
+      const data = await res.json();
+
+      pengeluaranTable.innerHTML = (data || []).map(p => {
+        const tgl = (p.waktu || "").slice(0,10);
+        const user = p.akun?.username || "-";
+        return `
+          <tr>
+            <td class="border p-2">${tgl}</td>
+            <td class="border p-2">${p.deskripsi}</td>
+            <td class="border p-2 text-right">Rp ${fmtIDR(p.jumlah)}</td>
+            <td class="border p-2">${user}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const total = (data || []).reduce((s, r) => s + Number(r.jumlah || 0), 0);
+      totalPengeluaranTabel.textContent = "Rp " + fmtIDR(total);
+
+      // Jika periode = hari ini, tampilkan juga ke ringkasan "Total Pengeluaran Hari Ini"
+      const todayStr = toISODate(new Date());
+      if (fltMulai.value === todayStr && fltAkhir.value === todayStr) {
+        totalPengeluaranEl.textContent = "Rp " + fmtIDR(total);
+        totalPengeluaranEl.dataset.val = total;
+        hitungKasAkhir();
+      } else if (!totalPengeluaranEl.dataset.val) {
+        // Saat load pertama (default hari ini), set dataset
+        totalPengeluaranEl.dataset.val = total;
       }
     }
 
-    async function tambahPengeluaran() {
-      if (!currentKasirId) {
-        alert("Set kasir terlebih dahulu!");
-        return;
-      }
-      const deskripsi = document.getElementById("deskripsi").value.trim();
-      const jumlah = parseFloat(document.getElementById("jumlah").value);
-      if (!deskripsi || isNaN(jumlah)) {
-        alert("Lengkapi keterangan dan jumlah!");
-        return;
-      }
-      const { error } = await supabase.from("pengeluaran").insert({
-        deskripsi, jumlah, kasir_id: currentKasirId
+    // Hitung kas akhir
+    function hitungKasAkhir() {
+      const awal = Number(kasAwalEl.dataset.val || 0);
+      const jual = Number(totalPenjualanEl.dataset.val || 0);
+      const keluar = Number(totalPengeluaranEl.dataset.val || 0);
+      const akhir = awal + jual - keluar;
+      kasAkhirEl.textContent = "Rp " + fmtIDR(akhir);
+    }
+
+    // ====== Event: Simpan Pengeluaran ======
+    formPengeluaran.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const deskripsi = ketPengeluaran.value.trim();
+      const jumlah = Number(jmlPengeluaran.value || 0);
+      if (!deskripsi || jumlah < 0) return;
+
+      const userId = localStorage.getItem("user_id");
+      const tanggal = tglPengeluaran.value ? `${tglPengeluaran.value}T${new Date().toTimeString().slice(0,8)}` : new Date().toISOString();
+
+      showLoading(true);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/pengeluaran`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          waktu: tanggal,
+          deskripsi,
+          jumlah,
+          kasir_id: Number(userId)
+        })
       });
-      if (error) {
-        alert("Gagal menyimpan: " + error.message);
+      showLoading(false);
+
+      if (!res.ok) {
+        alert("Gagal menyimpan pengeluaran.");
         return;
       }
-      document.getElementById("deskripsi").value = "";
-      document.getElementById("jumlah").value = "";
-      muatRingkasan();
-      muatPengeluaran();
-    }
+
+      // Refresh tabel & total pengeluaran hari ini
+      // Set filter ke hari ini agar konsisten tampilan
+      const todayStr = toISODate(new Date());
+      fltMulai.value = todayStr;
+      fltAkhir.value = todayStr;
+      await loadPengeluaranTabel();
+      // Kosongkan form (kecuali tanggal)
+      ketPengeluaran.value = "";
+      jmlPengeluaran.value = "";
+    });
+
+    // ====== Event: Filter Pengeluaran ======
+    btnFilterPengeluaran.addEventListener("click", async () => {
+      await loadPengeluaranTabel();
+    });
+    btnHariIni.addEventListener("click", async () => {
+      const t = toISODate(new Date());
+      fltMulai.value = t;
+      fltAkhir.value = t;
+      await loadPengeluaranTabel();
+    });
   </script>
 </body>
 </html>
