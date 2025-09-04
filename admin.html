@@ -1,335 +1,639 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin - Kasir Resto Bunda Ana</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • POS Resto Bunda Ana</title>
   <style>
+    /* ===== Reset & base ===== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      background: linear-gradient(135deg, #e0f7fa, #bbdefb);
-      color: #333;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #0f172a;
     }
-    header {
-      background: #2196f3;
-      color: #fff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    header h1 {
-      margin: 0;
-      font-size: 22px;
-    }
-    button.logout {
-      background: #f44336;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      color: #fff;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-    button.logout:hover { background: #d32f2f; }
 
+    /* ===== Layout ===== */
     .container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
-    }
-    .section {
-      background: #fff;
-      padding: 20px;
-      margin-bottom: 25px;
-      border-radius: 10px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    }
-    .section h2 {
-      margin-top: 0;
-      color: #1565c0;
-      border-bottom: 2px solid #90caf9;
-      padding-bottom: 6px;
+      max-width: 1200px; margin: 0 auto; padding: 24px;
     }
 
-    input, select {
-      padding: 8px;
-      margin: 6px 4px;
-      border: 1px solid #90caf9;
-      border-radius: 6px;
-      outline: none;
-      transition: border 0.3s;
-    }
-    input:focus {
-      border: 1px solid #1565c0;
+    .card {
+      background: #fff; border-radius: 16px; box-shadow: 0 10px 20px rgba(2, 6, 23, 0.08);
+      padding: 16px;
     }
 
-    button {
-      padding: 8px 14px;
-      margin: 6px 4px;
-      border: none;
-      border-radius: 6px;
-      background: #2196f3;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s, transform 0.2s;
+    header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
     }
-    button:hover {
-      background: #1976d2;
-      transform: scale(1.05);
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-badge {
+      width: 44px; height: 44px; border-radius: 12px; background: #3b82f6; display: grid; place-items: center; color: #fff;
+      font-weight: 800;
+      box-shadow: 0 6px 12px rgba(59, 130, 246, 0.25);
+    }
+    .brand h1 {
+      font-size: 20px; color: #1e40af; line-height: 1.2;
+    }
+    .muted { color: #475569; font-size: 13px; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .pill {
+      padding: 8px 12px; border-radius: 999px; background: #eff6ff; color: #1e40af; font-weight: 600; font-size: 13px;
+      border: 1px solid #bfdbfe;
+    }
+    .btn {
+      padding: 10px 14px; border-radius: 10px; border: 0; cursor: pointer; font-weight: 600; transition: .2s;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-muted { background: #e5e7eb; color: #111827; }
+    .btn-outline { background: #fff; color:#1e40af; border:1px solid #93c5fd; }
+    .btn-outline:hover { background:#eff6ff; }
+
+    /* ===== Tabs ===== */
+    .tabs { display: flex; gap: 8px; margin: 16px 0 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 10px 14px; border-radius: 12px; border: 1px solid #c7d2fe; background: #eef2ff; color: #1e1b4b; cursor: pointer;
+      font-weight: 600; font-size: 14px;
+    }
+    .tab.active { background: #3b82f6; color: #fff; border-color: #2563eb; }
+
+    .section { display: none; margin-top: 12px; }
+    .section.active { display: block; }
+
+    /* ===== Forms & Tables ===== */
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 768px) {
+      .grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(4, 1fr); }
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 13px; color: #334155; font-weight: 600; }
+    input, select, textarea {
+      padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; outline: none; font-size: 14px; background: #fff;
     }
-    th {
-      background: #2196f3;
-      color: #fff;
-      padding: 10px;
-      text-align: left;
-    }
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    tr:nth-child(even) {
-      background: #f1faff;
-    }
-    tr:hover {
-      background: #e3f2fd;
-    }
+    input:focus, select:focus, textarea:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96, 165, 250, .25); }
 
-    /* Loading overlay */
-    #loading {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(255,255,255,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 12px;
     }
-    .spinner {
-      border: 6px solid #e3f2fd;
-      border-top: 6px solid #2196f3;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
+    .toolbar-left, .toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
+    thead th {
+      text-align: left; font-size: 13px; color: #0f172a; background: #eff6ff; padding: 10px; border-bottom: 1px solid #e5e7eb;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    tbody td { padding: 10px; border-bottom: 1px solid #eef2f7; font-size: 14px; color:#0f172a; }
+    tbody tr:hover { background: #f8fafc; }
+
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;}
+    .badge-admin { background: #dbeafe; color: #1e40af; }
+    .badge-kasir { background: #dcfce7; color: #166534; }
+
+    /* ===== Modal (Login) ===== */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50;
     }
+    .modal { width: 100%; max-width: 420px; background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 20px 40px rgba(2, 6, 23, 0.25); }
+    .modal h3 { font-size: 18px; color: #1e40af; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: #475569; margin-bottom: 10px; }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+    .help { font-size: 12px; color: #64748b; margin-top: 6px; }
+    .sep { height: 1px; background: #e2e8f0; margin: 12px 0; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header>
-    <h1>Admin Panel - Resto Bunda Ana</h1>
-    <button class="logout" onclick="logout()">Logout</button>
-  </header>
-
   <div class="container">
-    <!-- Manajemen Akun -->
-    <div class="section">
-      <h2>Manajemen Akun</h2>
-      <input type="text" id="newUser" placeholder="Username">
-      <input type="password" id="newPass" placeholder="Password">
-      <button onclick="addUser()">Tambah Kasir</button>
-      <table>
-        <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Aksi</th></tr></thead>
-        <tbody id="akunTable"></tbody>
-      </table>
-    </div>
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="brand-badge">RB</div>
+          <div>
+            <h1>Admin • POS Resto Bunda Ana</h1>
+            <div class="muted">Kelola akun, menu, transaksi & kas harian</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span id="adminName" class="pill">Belum login</span>
+          <button class="btn btn-outline" id="btnReLogin">Login</button>
+          <button class="btn btn-muted" id="btnLogout">Logout</button>
+          <a class="btn btn-primary" href="index.html">Ke Beranda</a>
+        </div>
+      </header>
 
-    <!-- Manajemen Menu -->
-    <div class="section">
-      <h2>Manajemen Menu</h2>
-      <input type="text" id="menuNama" placeholder="Nama Menu">
-      <input type="number" id="menuHarga" placeholder="Harga">
-      <button onclick="addMenu()">Tambah Menu</button>
-      <table>
-        <thead><tr><th>ID</th><th>Nama</th><th>Harga</th><th>Aksi</th></tr></thead>
-        <tbody id="menuTable"></tbody>
-      </table>
-    </div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="akun">Akun</button>
+        <button class="tab" data-tab="menu">Menu</button>
+        <button class="tab" data-tab="transaksi">Transaksi</button>
+        <button class="tab" data-tab="kas">Kas Harian</button>
+        <button class="tab" data-tab="pengeluaran">Pengeluaran</button>
+      </div>
 
-    <!-- Transaksi -->
-    <div class="section">
-      <h2>Transaksi</h2>
-      <input type="date" id="filterTanggal" onchange="loadTransaksi()">
-      <table>
-        <thead><tr><th>ID</th><th>Waktu</th><th>Total</th><th>Kasir</th><th>Detail</th></tr></thead>
-        <tbody id="trxTable"></tbody>
-      </table>
-    </div>
+      <!-- ===== Section: Akun ===== -->
+      <section id="section-akun" class="section active">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <strong>Manajemen Akun</strong>
+          </div>
+          <div class="toolbar-right">
+            <button id="btnRefreshAkun" class="btn btn-outline">Refresh</button>
+          </div>
+        </div>
 
-    <!-- Kas Harian -->
-    <div class="section">
-      <h2>Kas Harian</h2>
-      <input type="date" id="kasTanggal" onchange="loadKas()">
-      <table>
-        <thead><tr><th>Tanggal</th><th>Kas Awal</th><th>Total Penjualan</th><th>Total Pengeluaran</th><th>Kas Akhir</th></tr></thead>
-        <tbody id="kasTable"></tbody>
-      </table>
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Username</label>
+            <input id="akun-username" placeholder="mis. kasir2"/>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input id="akun-password" type="password" placeholder="••••••••"/>
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select id="akun-role">
+              <option value="kasir">kasir</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button id="btnTambahAkun" class="btn btn-primary">Tambah Akun</button>
+          <span class="help">Password disimpan sesuai skema saat ini (plaintext).</span>
+        </div>
+
+        <div class="sep"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th style="width:180px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-akun"></tbody>
+        </table>
+      </section>
+
+      <!-- ===== Section: Menu ===== -->
+      <section id="section-menu" class="section">
+        <div class="toolbar">
+          <div class="toolbar-left"><strong>Manajemen Menu</strong></div>
+          <div class="toolbar-right">
+            <button id="btnRefreshMenu" class="btn btn-outline">Refresh</button>
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div class="field">
+            <label>Nama Menu</label>
+            <input id="menu-nama" placeholder="mis. Nasi Goreng Spesial"/>
+          </div>
+          <div class="field">
+            <label>Harga</label>
+            <input id="menu-harga" type="number" placeholder="mis. 25000"/>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <button id="btnTambahMenu" class="btn btn-primary" style="width:100%;">Tambah Menu</button>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nama</th>
+              <th>Harga</th>
+              <th style="width:180px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-menu"></tbody>
+        </table>
+      </section>
+
+      <!-- ===== Section: Transaksi ===== -->
+      <section id="section-transaksi" class="section">
+        <div class="toolbar">
+          <div class="toolbar-left"><strong>Laporan Transaksi</strong></div>
+          <div class="toolbar-right">
+            <input type="date" id="trx-start">
+            <input type="date" id="trx-end">
+            <select id="trx-kasir">
+              <option value="">Semua Kasir</option>
+            </select>
+            <button id="btnFilterTrx" class="btn btn-outline">Filter</button>
+            <button id="btnRefreshTrx" class="btn btn-outline">Refresh</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Waktu</th>
+              <th>Kasir</th>
+              <th>Total</th>
+              <th>Detail Item</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-trx"></tbody>
+        </table>
+      </section>
+
+      <!-- ===== Section: Kas Harian ===== -->
+      <section id="section-kas" class="section">
+        <div class="toolbar">
+          <div class="toolbar-left"><strong>Rekap Kas Harian</strong></div>
+          <div class="toolbar-right">
+            <input type="date" id="kas-date">
+            <button id="btnFilterKas" class="btn btn-outline">Filter Tanggal</button>
+            <button id="btnRefreshKas" class="btn btn-outline">Refresh</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Total Penjualan</th>
+              <th>Total Pengeluaran</th>
+              <th>Kas Awal</th>
+              <th>Kas Akhir</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-kas"></tbody>
+        </table>
+      </section>
+
+      <!-- ===== Section: Pengeluaran ===== -->
+      <section id="section-pengeluaran" class="section">
+        <div class="toolbar">
+          <div class="toolbar-left"><strong>Monitoring Pengeluaran</strong></div>
+          <div class="toolbar-right">
+            <input type="date" id="out-start">
+            <input type="date" id="out-end">
+            <select id="out-kasir">
+              <option value="">Semua Kasir</option>
+            </select>
+            <button id="btnFilterOut" class="btn btn-outline">Filter</button>
+            <button id="btnRefreshOut" class="btn btn-outline">Refresh</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Deskripsi</th>
+              <th>Jumlah</th>
+              <th>Kasir</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-out"></tbody>
+        </table>
+      </section>
     </div>
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading"><div class="spinner"></div></div>
+  <!-- ===== Modal Login ===== -->
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>Login Admin</h3>
+      <p>Silakan login terlebih dahulu untuk mengakses halaman Admin.</p>
+      <div class="grid">
+        <div class="field">
+          <label>Username</label>
+          <input id="login-username" placeholder="mis. admin" />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btnLogin" class="btn btn-primary">Login</button>
+        <button id="btnToIndex" class="btn btn-muted">Batal</button>
+      </div>
+      <div class="help">Hanya akun dengan <strong>role = admin</strong> yang dapat masuk.</div>
+    </div>
+  </div>
 
+  <!-- ===== Scripts ===== -->
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
-    // Konfigurasi Supabase
+    // ---------- Supabase Init ----------
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Cek session
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || user.role !== "admin") {
-      window.location.href = "index.html";
+    // ---------- Helpers ----------
+    const el = (id) => document.getElementById(id);
+    const fmtIDR = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(Number(n || 0));
+    const fmtDateTime = (iso) => new Date(iso).toLocaleString('id-ID');
+    const fmtDate = (iso) => new Date(iso).toISOString().slice(0,10);
+
+    function showModal() { el('loginModal').style.display = 'flex'; }
+    function hideModal() { el('loginModal').style.display = 'none'; }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const key = t.getAttribute('data-tab');
+        el(`section-${key}`).classList.add('active');
+      });
+    });
+
+    // ---------- Auth (modal login, only admin) ----------
+    async function doLogin() {
+      const username = el('login-username').value.trim();
+      const password = el('login-password').value;
+      if (!username || !password) { alert('Isi username & password.'); return; }
+      const { data, error } = await sb.from('akun')
+        .select('id, username, role, password').eq('username', username).single();
+      if (error || !data) { alert('Akun tidak ditemukan.'); return; }
+      if (data.password !== password) { alert('Password salah.'); return; }
+      if (data.role !== 'admin') { alert('Akses ditolak: bukan admin.'); return; }
+
+      // store session locally for this page
+      localStorage.setItem('session_user_id', data.id);
+      localStorage.setItem('session_username', data.username);
+      localStorage.setItem('session_role', data.role);
+
+      el('adminName').textContent = `Admin: ${data.username}`;
+      hideModal();
+
+      // First loads
+      await Promise.all([
+        loadAkun(), loadMenu(), loadKasirOptions(), loadTransaksi(), loadKasHarian(), loadPengeluaran()
+      ]);
     }
 
-    async function logout() {
-      localStorage.removeItem("user");
-      window.location.href = "index.html";
+    function enforceLoggedIn() {
+      const role = localStorage.getItem('session_role');
+      const name = localStorage.getItem('session_username');
+      if (role !== 'admin') {
+        showModal();
+      } else {
+        el('adminName').textContent = `Admin: ${name}`;
+        // initial loads
+        Promise.all([
+          loadAkun(), loadMenu(), loadKasirOptions(), loadTransaksi(), loadKasHarian(), loadPengeluaran()
+        ]);
+      }
     }
 
-    function showLoading() { document.getElementById("loading").style.display = "flex"; }
-    function hideLoading() { document.getElementById("loading").style.display = "none"; }
+    function logout() {
+      localStorage.removeItem('session_user_id');
+      localStorage.removeItem('session_username');
+      localStorage.removeItem('session_role');
+      window.location.href = 'index.html';
+    }
 
-    // ========================
-    // Manajemen Akun
-    // ========================
+    el('btnLogin').addEventListener('click', doLogin);
+    el('btnToIndex').addEventListener('click', () => window.location.href = 'index.html');
+    el('btnReLogin').addEventListener('click', showModal);
+    el('btnLogout').addEventListener('click', logout);
+
+    // ---------- Akun (CRUD) ----------
     async function loadAkun() {
-      const { data, error } = await supabase.from("akun").select("id, username, role");
-      if (error) return;
-      const tbody = document.getElementById("akunTable");
-      tbody.innerHTML = "";
-      data.forEach(a => {
-        tbody.innerHTML += `<tr>
-          <td>${a.id}</td>
-          <td>${a.username}</td>
-          <td>${a.role}</td>
-          <td><button onclick="deleteUser(${a.id})">Hapus</button></td>
-        </tr>`;
+      const { data, error } = await sb.from('akun').select('id, username, role').order('id', { ascending: true });
+      const tbody = el('tbody-akun'); tbody.innerHTML = '';
+      if (error) { console.error(error); return; }
+      data.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.username}</td>
+          <td>
+            <span class="badge ${r.role==='admin'?'badge-admin':'badge-kasir'}">${r.role}</span>
+          </td>
+          <td>
+            <button class="btn btn-outline" data-edit="${r.id}">Edit</button>
+            <button class="btn btn-danger" data-del="${r.id}">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // actions
+      tbody.querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.onclick = async () => {
+          const id = btn.getAttribute('data-edit');
+          const username = prompt('Ubah username ke:', data.find(x=>x.id==id).username);
+          if (username===null) return;
+          const password = prompt('Ubah password (biarkan kosong jika tidak diubah):', '');
+          const role = prompt('Ubah role (admin/kasir):', data.find(x=>x.id==id).role);
+          const payload = { username, role };
+          if (password && password.trim()!=='') payload.password = password;
+          const { error } = await sb.from('akun').update(payload).eq('id', id);
+          if (error) return alert(error.message);
+          loadAkun();
+        };
+      });
+      tbody.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.onclick = async () => {
+          const id = btn.getAttribute('data-del');
+          if (!confirm('Hapus akun ini?')) return;
+          const { error } = await sb.from('akun').delete().eq('id', id);
+          if (error) return alert(error.message);
+          loadAkun();
+        };
       });
     }
 
-    async function addUser() {
-      const username = document.getElementById("newUser").value;
-      const password = document.getElementById("newPass").value;
-      if (!username || !password) return alert("Isi semua field!");
-      showLoading();
-      await supabase.from("akun").insert([{ username, password, role: "kasir" }]);
-      hideLoading();
-      document.getElementById("newUser").value = "";
-      document.getElementById("newPass").value = "";
+    el('btnTambahAkun').addEventListener('click', async ()=>{
+      const username = el('akun-username').value.trim();
+      const password = el('akun-password').value;
+      const role = el('akun-role').value;
+      if (!username || !password) { alert('Lengkapi username & password.'); return; }
+      const { error } = await sb.from('akun').insert({ username, password, role });
+      if (error) return alert(error.message);
+      el('akun-username').value = ''; el('akun-password').value = ''; el('akun-role').value='kasir';
       loadAkun();
-    }
+    });
+    el('btnRefreshAkun').addEventListener('click', loadAkun);
 
-    async function deleteUser(id) {
-      showLoading();
-      await supabase.from("akun").delete().eq("id", id);
-      hideLoading();
-      loadAkun();
-    }
-
-    // ========================
-    // Manajemen Menu
-    // ========================
+    // ---------- Menu (CRUD) ----------
     async function loadMenu() {
-      const { data, error } = await supabase.from("menu").select("id, nama, harga");
-      if (error) return;
-      const tbody = document.getElementById("menuTable");
-      tbody.innerHTML = "";
-      data.forEach(m => {
-        tbody.innerHTML += `<tr>
-          <td>${m.id}</td>
-          <td>${m.nama}</td>
-          <td>${m.harga}</td>
-          <td><button onclick="deleteMenu(${m.id})">Hapus</button></td>
-        </tr>`;
+      const { data, error } = await sb.from('menu').select('id, nama, harga').order('id', { ascending:true });
+      const tbody = el('tbody-menu'); tbody.innerHTML = '';
+      if (error) { console.error(error); return; }
+      data.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.nama}</td>
+          <td>${fmtIDR(r.harga)}</td>
+          <td>
+            <button class="btn btn-outline" data-edit="${r.id}">Edit</button>
+            <button class="btn btn-danger" data-del="${r.id}">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('[data-edit]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const id = btn.getAttribute('data-edit');
+          const rec = (await sb.from('menu').select('nama,harga').eq('id', id).single()).data;
+          const nama = prompt('Ubah nama menu:', rec?.nama ?? '');
+          if (nama===null) return;
+          const hargaStr = prompt('Ubah harga (angka):', rec?.harga ?? 0);
+          if (hargaStr===null) return;
+          const harga = Number(hargaStr);
+          if (Number.isNaN(harga)) return alert('Harga tidak valid.');
+          const { error } = await sb.from('menu').update({ nama, harga }).eq('id', id);
+          if (error) return alert(error.message);
+          loadMenu();
+        };
+      });
+      tbody.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const id = btn.getAttribute('data-del');
+          if (!confirm('Hapus menu ini?')) return;
+          const { error } = await sb.from('menu').delete().eq('id', id);
+          if (error) return alert(error.message);
+          loadMenu();
+        };
+      });
+    }
+    el('btnTambahMenu').addEventListener('click', async ()=>{
+      const nama = el('menu-nama').value.trim();
+      const harga = Number(el('menu-harga').value);
+      if (!nama || Number.isNaN(harga)) { alert('Isi nama & harga dengan benar.'); return; }
+      const { error } = await sb.from('menu').insert({ nama, harga });
+      if (error) return alert(error.message);
+      el('menu-nama').value=''; el('menu-harga').value='';
+      loadMenu();
+    });
+    el('btnRefreshMenu').addEventListener('click', loadMenu);
+
+    // ---------- Shared: load kasir options for filters ----------
+    async function loadKasirOptions() {
+      const { data } = await sb.from('akun').select('id, username').order('username', { ascending: true });
+      const sel1 = el('trx-kasir'); const sel2 = el('out-kasir');
+      [sel1, sel2].forEach(sel=>{
+        const keepFirst = sel.options[0]; sel.innerHTML=''; sel.appendChild(keepFirst);
+        data?.forEach(u=>{
+          const opt = document.createElement('option');
+          opt.value = u.username; opt.textContent = u.username;
+          sel.appendChild(opt);
+        });
       });
     }
 
-    async function addMenu() {
-      const nama = document.getElementById("menuNama").value;
-      const harga = document.getElementById("menuHarga").value;
-      if (!nama || !harga) return alert("Isi semua field!");
-      showLoading();
-      await supabase.from("menu").insert([{ nama, harga }]);
-      hideLoading();
-      document.getElementById("menuNama").value = "";
-      document.getElementById("menuHarga").value = "";
-      loadMenu();
-    }
-
-    async function deleteMenu(id) {
-      showLoading();
-      await supabase.from("menu").delete().eq("id", id);
-      hideLoading();
-      loadMenu();
-    }
-
-    // ========================
-    // Transaksi
-    // ========================
+    // ---------- Transaksi (view v_transaksi_detail) ----------
     async function loadTransaksi() {
-      let tanggal = document.getElementById("filterTanggal").value;
-      let query = supabase.from("v_transaksi_detail").select("*").order("waktu", { ascending: false });
-      if (tanggal) query = query.gte("waktu", tanggal).lt("waktu", tanggal + "T23:59:59");
-      const { data, error } = await query;
-      if (error) return;
-      const tbody = document.getElementById("trxTable");
-      tbody.innerHTML = "";
-      data.forEach(t => {
-        tbody.innerHTML += `<tr>
-          <td>${t.id}</td>
-          <td>${new Date(t.waktu).toLocaleString()}</td>
-          <td>${t.total}</td>
-          <td>${t.kasir}</td>
-          <td>${t.detail}</td>
-        </tr>`;
+      const start = el('trx-start').value;
+      const end = el('trx-end').value;
+      const kasir = el('trx-kasir').value;
+
+      let q = sb.from('v_transaksi_detail').select('id, waktu, total, kasir, detail').order('waktu', { ascending: false }).limit(500);
+      if (start) q = q.gte('waktu', start);
+      if (end)   q = q.lt('waktu', new Date(new Date(end).getTime() + 86400000).toISOString().slice(0,10));
+      if (kasir) q = q.eq('kasir', kasir);
+
+      const { data, error } = await q;
+      if (error) { console.error(error); alert('Gagal memuat transaksi'); return; }
+
+      const tbody = el('tbody-trx'); tbody.innerHTML = '';
+      data?.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${fmtDateTime(r.waktu)}</td>
+          <td>${r.kasir}</td>
+          <td>${fmtIDR(r.total)}</td>
+          <td>${r.detail}</td>
+        `;
+        tbody.appendChild(tr);
       });
     }
+    el('btnFilterTrx').addEventListener('click', loadTransaksi);
+    el('btnRefreshTrx').addEventListener('click', ()=>{
+      el('trx-start').value=''; el('trx-end').value=''; el('trx-kasir').value='';
+      loadTransaksi();
+    });
 
-    // ========================
-    // Kas Harian
-    // ========================
-    async function loadKas() {
-      let tanggal = document.getElementById("kasTanggal").value;
-      let query = supabase.from("v_kas_harian").select("*");
-      if (tanggal) query = query.eq("tanggal", tanggal);
-      const { data, error } = await query;
-      if (error) return;
-      const tbody = document.getElementById("kasTable");
-      tbody.innerHTML = "";
-      data.forEach(k => {
-        tbody.innerHTML += `<tr>
-          <td>${k.tanggal}</td>
-          <td>${k.kas_awal}</td>
-          <td>${k.total_penjualan}</td>
-          <td>${k.total_pengeluaran}</td>
-          <td>${k.kas_akhir}</td>
-        </tr>`;
+    // ---------- Kas Harian (view v_kas_harian) ----------
+    async function loadKasHarian() {
+      const theDate = el('kas-date').value;
+      let q = sb.from('v_kas_harian').select('tanggal, total_penjualan, total_pengeluaran, kas_awal, kas_akhir').order('tanggal', { ascending: false }).limit(365);
+      if (theDate) q = q.eq('tanggal', theDate);
+      const { data, error } = await q;
+      if (error) { console.error(error); alert('Gagal memuat kas harian'); return; }
+      const tbody = el('tbody-kas'); tbody.innerHTML = '';
+      data?.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.tanggal}</td>
+          <td>${fmtIDR(r.total_penjualan)}</td>
+          <td>${fmtIDR(r.total_pengeluaran)}</td>
+          <td>${fmtIDR(r.kas_awal)}</td>
+          <td>${fmtIDR(r.kas_akhir)}</td>
+        `;
+        tbody.appendChild(tr);
       });
     }
+    el('btnFilterKas').addEventListener('click', loadKasHarian);
+    el('btnRefreshKas').addEventListener('click', ()=>{ el('kas-date').value=''; loadKasHarian(); });
 
-    // Load awal
-    loadAkun();
-    loadMenu();
-    loadTransaksi();
-    loadKas();
+    // ---------- Pengeluaran (table pengeluaran + akun join di select) ----------
+    async function loadPengeluaran() {
+      const start = el('out-start').value;
+      const end = el('out-end').value;
+      const kasir = el('out-kasir').value;
+
+      // NOTE: Supabase bisa select relasi jika foreign key terdaftar dengan nama tabel:
+      // pengeluaran ( ... , kasir_id -> akun.id )
+      // gunakan select akun(username)
+      let q = sb.from('pengeluaran')
+        .select('waktu, deskripsi, jumlah, akun:kasir_id(username)')
+        .order('waktu', { ascending: false }).limit(500);
+
+      if (start) q = q.gte('waktu', start);
+      if (end)   q = q.lt('waktu', new Date(new Date(end).getTime() + 86400000).toISOString().slice(0,10));
+      const { data, error } = await q;
+      if (error) { console.error(error); alert('Gagal memuat pengeluaran'); return; }
+
+      const filtered = kasir ? data.filter(r => (r.akun?.username || '') === kasir) : data;
+
+      const tbody = el('tbody-out'); tbody.innerHTML = '';
+      filtered.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${fmtDateTime(r.waktu)}</td>
+          <td>${r.deskripsi}</td>
+          <td>${fmtIDR(r.jumlah)}</td>
+          <td>${r.akun?.username || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    el('btnFilterOut').addEventListener('click', loadPengeluaran);
+    el('btnRefreshOut').addEventListener('click', ()=>{
+      el('out-start').value=''; el('out-end').value=''; el('out-kasir').value='';
+      loadPengeluaran();
+    });
+
+    // ---------- Boot ----------
+    enforceLoggedIn();
   </script>
 </body>
 </html>
