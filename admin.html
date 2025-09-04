@@ -1,233 +1,395 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Admin - Resto Bunda Ana</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f0f8ff;
-      color: #333;
+    :root{
+      --blue:#1e90ff;
+      --blue-600:#0d6efd;
+      --bg:#f0f8ff;
+      --card:#ffffff;
+      --muted:#e6f2ff;
+      --text:#333;
+      --border:#d8e7f7;
     }
-    header {
-      background: #1e90ff;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 20px;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
-    main {
-      padding: 20px;
+    header{
+      background: var(--blue);
+      color:#fff;
+      padding:14px 16px;
+      text-align:center;
+      font-weight:700;
+      letter-spacing:.3px;
     }
-    .card {
-      background: white;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    main{
+      max-width:1100px;
+      margin: 18px auto;
+      padding: 0 12px 32px;
     }
-    h2 {
-      margin-top: 0;
-      color: #1e90ff;
+    .card{
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(30,144,255,0.08);
+      border:1px solid var(--border);
+      padding:16px;
+      margin-bottom:16px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+    .card h2{
+      margin:6px 0 12px;
+      color: var(--blue);
+      font-size:1.2rem;
     }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
+    .actions{
+      display:flex; gap:8px; flex-wrap:wrap;
+      margin-bottom:10px;
     }
-    th {
-      background: #1e90ff;
-      color: white;
+    button{
+      background: var(--blue);
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
     }
-    button {
-      background: #1e90ff;
-      border: none;
-      padding: 10px 15px;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
+    button:hover{ background: var(--blue-600); }
+    .ghost{
+      background:#fff; color: var(--blue); border:1px solid var(--blue);
     }
-    button:hover {
-      background: #0d6efd;
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(2,minmax(160px,1fr)) auto auto;
+      gap:8px; align-items:end;
     }
-    .back {
-      margin-top: 20px;
-      display: inline-block;
+    label{font-size:.9rem; font-weight:600; color:#245e94;}
+    input[type="text"], input[type="number"], input[type="date"]{
+      width:100%; padding:10px 12px; border:1px solid #cfdff4; border-radius:8px; background:#fff;
     }
+    .table-wrap{
+      overflow-x:auto; border:1px solid var(--border); border-radius:10px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:720px;
+    }
+    th, td{
+      padding:10px 12px; border-bottom:1px solid var(--border); text-align:left;
+    }
+    th{
+      position:sticky; top:0; background:linear-gradient(#e9f4ff,#e3f0ff);
+      color:#0e62a6; font-weight:700;
+    }
+    tr:hover td{ background:#f7fbff; }
+    .right{ text-align:right; white-space:nowrap; }
+    .muted{ color:#6a8db1; }
+    .backArea{ display:flex; justify-content:flex-start; margin-top:10px; }
+    .backBtn{ background:#fff; color:var(--blue); border:1px solid var(--blue); }
     /* Popup login */
-    .popup {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+    .popup{
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.45);
+      z-index:1000; padding:16px; display:flex; align-items:center; justify-content:center;
     }
-    .popup-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 350px;
-      margin: 100px auto;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    .popup-content{
+      width:100%; max-width:360px; background:#fff; border-radius:14px;
+      padding:20px; box-shadow:0 18px 50px rgba(0,0,0,.25);
+      border:1px solid var(--border);
     }
-    .popup input {
-      width: 90%;
-      padding: 8px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+    .popup-content h3{ margin:0 0 12px; color:var(--blue); text-align:center; }
+    .popup-content .field{ margin-bottom:10px; }
+    .popup-content .field input{ width:100%; }
+    .err{ color:#c0392b; font-size:.9rem; display:none; margin-top:6px; text-align:center; }
+    @media (max-width:640px){
+      .controls{ grid-template-columns: 1fr 1fr; }
+      .controls > button{ grid-column: span 1; }
+      .controls .wide{ grid-column: span 2; }
     }
   </style>
 </head>
 <body>
-  <header>Panel Admin - Resto Bunda Ana</header>
+  <header>Panel Admin — Resto Bunda Ana</header>
 
   <main>
-    <div class="card">
+    <!-- Manajemen Akun -->
+    <section class="card">
       <h2>Manajemen Akun</h2>
-      <button onclick="tambahAkun()">Tambah Akun</button>
-      <table id="akunTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Role</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+      <div class="actions">
+        <button onclick="tambahAkun()">+ Tambah Akun</button>
+        <button class="ghost" onclick="muatAkun()">↻ Muat Ulang</button>
+      </div>
+      <div class="table-wrap">
+        <table id="akunTable">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Username</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="3" class="muted">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
-    <div class="card">
+    <!-- Manajemen Menu -->
+    <section class="card">
       <h2>Manajemen Menu</h2>
-      <button onclick="tambahMenu()">Tambah Menu</button>
-      <table id="menuTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nama</th>
-            <th>Harga</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+      <div class="actions">
+        <button onclick="tambahMenu()">+ Tambah Menu</button>
+        <button class="ghost" onclick="muatMenu()">↻ Muat Ulang</button>
+      </div>
+      <div class="table-wrap">
+        <table id="menuTable">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Nama</th>
+              <th class="right">Harga</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="3" class="muted">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
-    <a href="index.html" class="back">
-      <button onclick="logout()">⬅ Kembali ke Beranda</button>
-    </a>
+    <!-- Semua Transaksi + Filter Tanggal -->
+    <section class="card">
+      <h2>Semua Transaksi</h2>
+      <div class="controls" style="margin-bottom:10px;">
+        <div>
+          <label for="tglMulai">Tanggal mulai</label>
+          <input type="date" id="tglMulai" />
+        </div>
+        <div>
+          <label for="tglSelesai">Tanggal selesai</label>
+          <input type="date" id="tglSelesai" />
+        </div>
+        <button id="btnFilter" onclick="muatTransaksi()">Terapkan Filter</button>
+        <button class="ghost" onclick="setHariIni()">Hari Ini</button>
+      </div>
+      <div class="table-wrap">
+        <table id="trxTable">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Waktu</th>
+              <th>Kasir</th>
+              <th>Detail Item</th>
+              <th class="right">Total</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="5" class="muted">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="backArea">
+      <button class="backBtn" onclick="backToIndex()">⬅ Kembali ke Beranda</button>
+    </div>
   </main>
 
-  <!-- Popup Login -->
+  <!-- Popup Login (otomatis muncul bila belum ada sesi) -->
   <div class="popup" id="loginPopup">
     <div class="popup-content">
       <h3>Login Admin</h3>
-      <input type="text" id="username" placeholder="Username"><br>
-      <input type="password" id="password" placeholder="Password"><br>
-      <button onclick="login()">Login</button>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="admin" />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••" />
+      </div>
+      <button style="width:100%; margin-top:6px" onclick="login()">Masuk</button>
+      <div id="loginErr" class="err">Username/Password salah</div>
     </div>
   </div>
 
   <script>
+    // ====== Konfigurasi Supabase (REST) ======
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
+    const headers = {
+      apikey: SUPABASE_KEY,
+      Authorization: "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
+    };
 
-    async function fetchData(table, tableId) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, {
-        headers: { apikey: SUPABASE_KEY }
-      });
+    // ====== Util ======
+    const rupiah = n => new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR"}).format(Number(n||0));
+    const fmtWaktu = s => {
+      const d = new Date(s);
+      return d.toLocaleString("id-ID", { dateStyle:"medium", timeStyle:"short" });
+    };
+
+    function showLogin(){ document.getElementById("loginPopup").style.display="flex"; }
+    function hideLogin(){ document.getElementById("loginPopup").style.display="none"; }
+
+    // ====== Session rules ======
+    // - Simpan sesi di sessionStorage (refresh tetap login)
+    // - Saat klik Kembali ke Beranda -> hapus sesi (wajib login ulang saat masuk lagi)
+    function backToIndex(){
+      sessionStorage.removeItem("adminUser");
+      window.location.href = "index.html";
+    }
+
+    async function login(){
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=*&username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&role=eq.admin`, { headers });
       const data = await res.json();
-      const tbody = document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        let tr = "<tr>";
-        for (let key in row) {
-          tr += `<td>${row[key]}</td>`;
-        }
-        tr += "</tr>";
-        tbody.innerHTML += tr;
-      });
-    }
-
-    async function tambahAkun() {
-      const username = prompt("Masukkan username:");
-      const password = prompt("Masukkan password:");
-      const role = prompt("Masukkan role (admin/kasir):");
-      if (!username || !password || !role) return;
-      await fetch(`${SUPABASE_URL}/rest/v1/akun`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password, role })
-      });
-      fetchData("akun", "akunTable");
-    }
-
-    async function tambahMenu() {
-      const nama = prompt("Masukkan nama menu:");
-      const harga = prompt("Masukkan harga menu:");
-      if (!nama || !harga) return;
-      await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ nama, harga })
-      });
-      fetchData("menu", "menuTable");
-    }
-
-    function showLogin() {
-      document.getElementById("loginPopup").style.display = "block";
-    }
-
-    function hideLogin() {
-      document.getElementById("loginPopup").style.display = "none";
-    }
-
-    async function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?username=eq.${username}&password=eq.${password}&role=eq.admin`, {
-        headers: { apikey: SUPABASE_KEY }
-      });
-      const data = await res.json();
-      if (data.length > 0) {
+      if(Array.isArray(data) && data.length){
         sessionStorage.setItem("adminUser", JSON.stringify(data[0]));
         hideLogin();
         init();
-      } else {
-        alert("Login gagal!");
+      }else{
+        const err = document.getElementById("loginErr");
+        err.style.display="block";
+        err.textContent = "Username/Password salah";
       }
     }
 
-    function logout() {
-      sessionStorage.removeItem("adminUser");
+    // ====== Data: Akun ======
+    async function muatAkun(){
+      const tbody = document.querySelector("#akunTable tbody");
+      tbody.innerHTML = `<tr><td colspan="3" class="muted">Memuat…</td></tr>`;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=id,username,role&order=id.asc`, { headers });
+      const rows = await res.json();
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td colspan="3" class="muted">Belum ada data akun</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = "";
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.username}</td>
+          <td>${r.role}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    async function init() {
-      fetchData("akun", "akunTable");
-      fetchData("menu", "menuTable");
+    async function tambahAkun(){
+      const username = prompt("Masukkan username:");
+      const password = prompt("Masukkan password:");
+      const role = prompt("Masukkan role (admin/kasir):");
+      if(!username || !password || !role) return;
+      await fetch(`${SUPABASE_URL}/rest/v1/akun`, {
+        method:"POST", headers,
+        body: JSON.stringify({ username, password, role })
+      });
+      muatAkun();
+    }
+
+    // ====== Data: Menu ======
+    async function muatMenu(){
+      const tbody = document.querySelector("#menuTable tbody");
+      tbody.innerHTML = `<tr><td colspan="3" class="muted">Memuat…</td></tr>`;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?select=id,nama,harga&order=id.asc`, { headers });
+      const rows = await res.json();
+      if(!rows.length){
+        tbody.innerHTML = `<tr><td colspan="3" class="muted">Belum ada data menu</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = "";
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.nama}</td>
+          <td class="right">${rupiah(r.harga)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function tambahMenu(){
+      const nama = prompt("Masukkan nama menu:");
+      const harga = prompt("Masukkan harga menu (angka):");
+      if(!nama || !harga) return;
+      await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
+        method:"POST", headers,
+        body: JSON.stringify({ nama, harga: Number(harga) })
+      });
+      muatMenu();
+    }
+
+    // ====== Data: Transaksi (dari VIEW v_transaksi_detail) ======
+    function setHariIni(){
+      const tgl = new Date();
+      const iso = tgl.toISOString().slice(0,10);
+      document.getElementById("tglMulai").value = iso;
+      document.getElementById("tglSelesai").value = iso;
+      muatTransaksi();
+    }
+
+    async function muatTransaksi(){
+      const tbody = document.querySelector("#trxTable tbody");
+      tbody.innerHTML = `<tr><td colspan="5" class="muted">Memuat…</td></tr>`;
+
+      const start = document.getElementById("tglMulai").value;
+      const end   = document.getElementById("tglSelesai").value;
+
+      let url = `${SUPABASE_URL}/rest/v1/v_transaksi_detail?select=id,waktu,kasir,detail,total&order=waktu.desc`;
+
+      // Filter tanggal optional
+      const params = [];
+      if(start){
+        params.push(`waktu=gte.${encodeURIComponent(start + "T00:00:00")}`);
+      }
+      if(end){
+        params.push(`waktu=lte.${encodeURIComponent(end + "T23:59:59")}`);
+      }
+      if(params.length){
+        url += "&" + params.join("&");
+      }
+
+      const res = await fetch(url, { headers });
+      const rows = await res.json();
+
+      if(!Array.isArray(rows) || rows.length === 0){
+        tbody.innerHTML = `<tr><td colspan="5" class="muted">Tidak ada transaksi pada rentang tanggal ini</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = "";
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${fmtWaktu(r.waktu)}</td>
+          <td>${r.kasir || "-"}</td>
+          <td>${r.detail || "-"}</td>
+          <td class="right">${rupiah(r.total)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ====== Init ======
+    async function init(){
+      muatAkun();
+      muatMenu();
+      // default: tampilkan hari ini
+      setHariIni();
     }
 
     window.onload = () => {
       const user = sessionStorage.getItem("adminUser");
-      if (!user) {
+      if(!user){
         showLogin();
-      } else {
+      }else{
         init();
       }
     };
