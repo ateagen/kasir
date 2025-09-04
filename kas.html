@@ -9,7 +9,16 @@
 <body class="bg-blue-50 min-h-screen flex items-center justify-center">
   <div class="container mx-auto p-6">
     <div class="bg-white shadow-xl rounded-2xl p-6">
-      <h1 class="text-2xl font-bold text-blue-700 mb-4">📊 Kas Harian</h1>
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h1 class="text-2xl font-bold text-blue-700">📊 Kas Harian</h1>
+          <p id="namaKasir" class="text-gray-700">Kasir: -</p>
+        </div>
+        <button onclick="logoutKasir()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+          Logout
+        </button>
+      </div>
 
       <!-- Input kasir -->
       <div class="mb-4">
@@ -75,6 +84,7 @@
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentKasirId = null;
+    let currentKasirName = null;
 
     const formatRupiah = (angka) => {
       if (!angka) angka = 0;
@@ -87,15 +97,23 @@
         alert("Masukkan username kasir!");
         return;
       }
-      const { data, error } = await supabase.from("akun").select("id").eq("username", username).single();
+      const { data, error } = await supabase.from("akun").select("id, username").eq("username", username).single();
       if (error || !data) {
         alert("Kasir tidak ditemukan!");
         return;
       }
       currentKasirId = data.id;
-      alert("Kasir berhasil di-set: " + username);
+      currentKasirName = data.username;
+      document.getElementById("namaKasir").textContent = "Kasir: " + currentKasirName;
+      alert("Kasir berhasil di-set: " + currentKasirName);
       muatRingkasan();
       muatPengeluaran();
+    }
+
+    function logoutKasir() {
+      currentKasirId = null;
+      currentKasirName = null;
+      window.location.href = "index.html";
     }
 
     async function muatRingkasan() {
