@@ -19,8 +19,8 @@
     <section class="bg-white p-4 rounded shadow">
       <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Akun</h2>
       <form id="formAkun" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="username" placeholder="Username" class="border rounded px-2 py-1 flex-1" required>
-        <input type="password" id="password" placeholder="Password" class="border rounded px-2 py-1 flex-1" required>
+        <input type="text" id="username" placeholder="Username" class="border rounded px-2 py-1 flex-1">
+        <input type="password" id="password" placeholder="Password" class="border rounded px-2 py-1 flex-1">
         <select id="role" class="border rounded px-2 py-1">
           <option value="kasir">Kasir</option>
           <option value="admin">Admin</option>
@@ -43,8 +43,8 @@
     <section class="bg-white p-4 rounded shadow">
       <h2 class="text-lg font-semibold mb-4 text-blue-600">Manajemen Menu</h2>
       <form id="formMenu" class="flex flex-wrap gap-2 mb-4">
-        <input type="text" id="menuNama" placeholder="Nama Menu" class="border rounded px-2 py-1 flex-1" required>
-        <input type="number" id="menuHarga" placeholder="Harga" class="border rounded px-2 py-1 flex-1" required>
+        <input type="text" id="menuNama" placeholder="Nama Menu" class="border rounded px-2 py-1 flex-1">
+        <input type="number" id="menuHarga" placeholder="Harga" class="border rounded px-2 py-1 flex-1">
         <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Submit</button>
       </form>
       <table class="w-full border text-sm">
@@ -165,167 +165,50 @@
   <script>
     const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const headers = { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY };
 
+    // ====== LOGIN ======
     const loginPopup = document.getElementById("loginPopup");
-    const loadingPopup = document.getElementById("loadingPopup");
+    const loginBtn = document.getElementById("loginBtn");
+    const btnKembali = document.getElementById("btnKembali");
 
     function showLoading(show) {
-      loadingPopup.classList.toggle("hidden", !show);
+      document.getElementById("loadingPopup").classList.toggle("hidden", !show);
     }
 
-    // Session check
-    if (sessionStorage.getItem("role") !== "admin") {
-      loginPopup.classList.remove("hidden");
-    }
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const u = document.getElementById("loginUsername").value;
-      const p = document.getElementById("loginPassword").value;
-      showLoading(true);
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?username=eq.${u}&password=eq.${p}&role=eq.admin`, { headers });
+    async function doLogin(username, password) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?username=eq.${username}&password=eq.${password}&role=eq.admin`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+      });
       const data = await res.json();
-      showLoading(false);
       if (data.length > 0) {
-        sessionStorage.setItem("role", "admin");
+        localStorage.setItem("role", "admin");
+        localStorage.setItem("username", username);
         loginPopup.classList.add("hidden");
         loadAll();
       } else {
         alert("Login gagal. Pastikan kredensial admin benar.");
       }
+    }
+
+    loginBtn.addEventListener("click", () => {
+      const u = document.getElementById("loginUsername").value;
+      const p = document.getElementById("loginPassword").value;
+      doLogin(u, p);
     });
 
-    document.getElementById("btnKembali").addEventListener("click", () => {
-      sessionStorage.clear();
+    // ====== LOGOUT ======
+    btnKembali.addEventListener("click", () => {
+      localStorage.clear();
       window.location.href = "index.html";
     });
 
-    // ========== LOAD DATA ==========
-    async function loadAkun() {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun?select=id,username,role`, { headers });
-      const data = await res.json();
-      document.getElementById("akunTable").innerHTML = data.map(a =>
-        `<tr><td class="border p-1">${a.id}</td><td class="border p-1">${a.username}</td><td class="border p-1">${a.role}</td></tr>`
-      ).join("");
-    }
-
-    async function loadMenu() {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu?select=id,nama,harga`, { headers });
-      const data = await res.json();
-      document.getElementById("menuTable").innerHTML = data.map(m =>
-        `<tr><td class="border p-1">${m.id}</td><td class="border p-1">${m.nama}</td><td class="border p-1">${m.harga}</td></tr>`
-      ).join("");
-    }
-
-    async function loadTransaksi(filter="") {
-      const url = `${SUPABASE_URL}/rest/v1/v_transaksi_detail?select=*${filter}`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      document.getElementById("transaksiTable").innerHTML = data.map(t =>
-        `<tr><td class="border p-1">${t.id}</td><td class="border p-1">${t.waktu}</td><td class="border p-1">${t.kasir}</td><td class="border p-1">${t.detail}</td><td class="border p-1">${t.total}</td></tr>`
-      ).join("");
-    }
-
-    async function loadKas(filter="") {
-      const url = `${SUPABASE_URL}/rest/v1/v_kas_harian?select=*${filter}`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      document.getElementById("kasTable").innerHTML = data.map(k =>
-        `<tr><td class="border p-1">${k.tanggal}</td><td class="border p-1">${k.kas_awal}</td><td class="border p-1">${k.total_penjualan}</td><td class="border p-1">${k.total_pengeluaran}</td><td class="border p-1">${k.kas_akhir}</td></tr>`
-      ).join("");
-    }
-
-    async function loadPengeluaran(filter="") {
-      const url = `${SUPABASE_URL}/rest/v1/pengeluaran?select=waktu,deskripsi,jumlah,akun(username)${filter}`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      document.getElementById("pengeluaranTable").innerHTML = data.map(p =>
-        `<tr><td class="border p-1">${p.waktu}</td><td class="border p-1">${p.deskripsi}</td><td class="border p-1">${p.jumlah}</td><td class="border p-1">${p.akun?.username||"-"}</td></tr>`
-      ).join("");
-    }
-
-    async function loadRekap(filter="") {
-      const url = `${SUPABASE_URL}/rest/v1/v_transaksi_detail?select=kasir,total${filter}`;
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-      const byKasir = {};
-      data.forEach(d => { byKasir[d.kasir] = (byKasir[d.kasir]||0)+Number(d.total) });
-      document.getElementById("rekapTable").innerHTML = Object.entries(byKasir).map(([k,v]) =>
-        `<tr><td class="border p-1">${k}</td><td class="border p-1">${v}</td></tr>`
-      ).join("");
-    }
-
-    // ========== FORM ==========
-    document.getElementById("formAkun").addEventListener("submit", async e => {
-      e.preventDefault();
-      showLoading(true);
-      const body = { username: username.value, password: password.value, role: role.value };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/akun`, {
-        method:"POST", headers:{...headers,"Content-Type":"application/json"}, body:JSON.stringify(body)
-      });
-      showLoading(false);
-      if (res.ok) { alert("Akun berhasil ditambahkan"); loadAkun(); }
-      else { alert("Gagal tambah akun"); }
-    });
-
-    document.getElementById("formMenu").addEventListener("submit", async e => {
-      e.preventDefault();
-      showLoading(true);
-      const body = { nama: menuNama.value, harga: Number(menuHarga.value) };
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/menu`, {
-        method:"POST", headers:{...headers,"Content-Type":"application/json"}, body:JSON.stringify(body)
-      });
-      showLoading(false);
-      if (res.ok) { alert("Menu berhasil ditambahkan"); loadMenu(); }
-      else { alert("Gagal tambah menu"); }
-    });
-
-    // ========== FILTER ==========
-    document.getElementById("filterTransaksi").addEventListener("click", () => {
-      const s = transaksiMulai.value, e = transaksiAkhir.value;
-      let f = "";
-      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
-      loadTransaksi(f);
-    });
-    document.getElementById("hariIniTransaksi").addEventListener("click", () => {
-      const today = new Date().toISOString().slice(0,10);
-      loadTransaksi(`&waktu=gte.${today}T00:00:00&waktu=lte.${today}T23:59:59`);
-    });
-
-    document.getElementById("filterKas").addEventListener("click", () => {
-      const s = kasMulai.value, e = kasAkhir.value;
-      let f = "";
-      if (s && e) f = `&tanggal=gte.${s}&tanggal=lte.${e}`;
-      loadKas(f);
-    });
-
-    document.getElementById("filterPengeluaran").addEventListener("click", () => {
-      const s = pengeluaranMulai.value, e = pengeluaranAkhir.value;
-      let f = "";
-      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
-      loadPengeluaran(f);
-    });
-
-    document.getElementById("filterRekap").addEventListener("click", () => {
-      const s = rekapMulai.value, e = rekapAkhir.value;
-      let f = "";
-      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
-      loadRekap(f);
-    });
-
-    // load awal
-    async function loadAll() {
-      await loadAkun();
-      await loadMenu();
-      await loadTransaksi();
-      await loadKas();
-      await loadPengeluaran();
-      await loadRekap();
-    }
-
-    if (sessionStorage.getItem("role") === "admin") {
+    // ====== AUTO LOGIN CHECK ======
+    if (localStorage.getItem("role") === "admin") {
+      loginPopup.classList.add("hidden");
       loadAll();
     }
+
+    // TODO: Tambahkan script fetch + insert tabel (akun, menu, transaksi, kas, pengeluaran, rekap) sesuai kebutuhan
   </script>
 </body>
 </html>
