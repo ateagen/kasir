@@ -87,6 +87,15 @@
     </div>
   </div>
 
+  <!-- Custom Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-80 text-center">
+      <h3 id="modal-title" class="text-lg font-semibold text-blue-700 mb-3"></h3>
+      <p id="modal-message" class="mb-4 text-gray-700"></p>
+      <div id="modal-buttons" class="space-x-3"></div>
+    </div>
+  </div>
+
   <!-- Login Popup -->
   <div id="login-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg w-80">
@@ -109,6 +118,29 @@
     const loginPopup = document.getElementById("login-popup");
     const loading = document.getElementById("loading");
 
+    // === MODAL HANDLER ===
+    const modal = document.getElementById("modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalMessage = document.getElementById("modal-message");
+    const modalButtons = document.getElementById("modal-buttons");
+
+    function showModal(title, message, buttons = []) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalButtons.innerHTML = "";
+      buttons.forEach(btn => {
+        const button = document.createElement("button");
+        button.textContent = btn.text;
+        button.className = btn.class;
+        button.onclick = () => {
+          modal.classList.add("hidden");
+          btn.onClick();
+        };
+        modalButtons.appendChild(button);
+      });
+      modal.classList.remove("hidden");
+    }
+
     // === LOGIN HANDLER ===
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -116,7 +148,7 @@
       const password = document.getElementById("login-password").value;
 
       showLoading(true);
-      const { data, error } = await db.from("akun").select("*").eq("username", username).eq("password", password).eq("role", "admin").single();
+      const { data } = await db.from("akun").select("*").eq("username", username).eq("password", password).eq("role", "admin").single();
       showLoading(false);
 
       if (data) {
@@ -125,7 +157,9 @@
         loadAkun();
         loadMenu();
       } else {
-        alert("Login gagal! Username/Password salah atau bukan admin.");
+        showModal("Login Gagal", "Username/Password salah atau bukan admin.", [
+          { text: "OK", class: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => {} }
+        ]);
       }
     });
 
@@ -170,6 +204,9 @@
       showLoading(false);
       loadAkun();
       e.target.reset();
+      showModal("Berhasil", "Akun baru berhasil ditambahkan.", [
+        { text: "OK", class: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => {} }
+      ]);
     });
 
     // === MENU ===
@@ -199,27 +236,42 @@
       showLoading(false);
       loadMenu();
       e.target.reset();
+      showModal("Berhasil", "Menu baru berhasil ditambahkan.", [
+        { text: "OK", class: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => {} }
+      ]);
     });
 
     // === RESET KAS ===
-    document.getElementById("reset-kas").addEventListener("click", async () => {
-      if (confirm("Yakin reset kas awal hari ini ke 0?")) {
-        showLoading(true);
-        await db.from("kas").update({ kas_awal: 0 }).eq("tanggal", new Date().toISOString().slice(0,10));
-        showLoading(false);
-        alert("Kas awal berhasil direset.");
-      }
+    document.getElementById("reset-kas").addEventListener("click", () => {
+      showModal("Konfirmasi", "Yakin reset kas awal hari ini ke 0?", [
+        { text: "Batal", class: "bg-gray-400 text-white px-4 py-2 rounded", onClick: () => {} },
+        { text: "Ya", class: "bg-yellow-500 text-white px-4 py-2 rounded", onClick: async () => {
+            showLoading(true);
+            await db.from("kas").update({ kas_awal: 0 }).eq("tanggal", new Date().toISOString().slice(0,10));
+            showLoading(false);
+            showModal("Berhasil", "Kas awal berhasil direset.", [
+              { text: "OK", class: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => {} }
+            ]);
+          }
+        }
+      ]);
     });
 
     // === HAPUS SEMUA TRANSAKSI ===
-    document.getElementById("hapus-transaksi").addEventListener("click", async () => {
-      if (confirm("Yakin hapus semua transaksi? Data tidak bisa dikembalikan!")) {
-        showLoading(true);
-        await db.from("transaksi_detail").delete().neq("id", 0);
-        await db.from("transaksi").delete().neq("id", 0);
-        showLoading(false);
-        alert("Semua transaksi berhasil dihapus.");
-      }
+    document.getElementById("hapus-transaksi").addEventListener("click", () => {
+      showModal("Konfirmasi", "Yakin hapus semua transaksi? Data tidak bisa dikembalikan!", [
+        { text: "Batal", class: "bg-gray-400 text-white px-4 py-2 rounded", onClick: () => {} },
+        { text: "Ya", class: "bg-red-600 text-white px-4 py-2 rounded", onClick: async () => {
+            showLoading(true);
+            await db.from("transaksi_detail").delete().neq("id", 0);
+            await db.from("transaksi").delete().neq("id", 0);
+            showLoading(false);
+            showModal("Berhasil", "Semua transaksi berhasil dihapus.", [
+              { text: "OK", class: "bg-blue-600 text-white px-4 py-2 rounded", onClick: () => {} }
+            ]);
+          }
+        }
+      ]);
     });
 
     // === LOADING HANDLER ===
