@@ -2,211 +2,240 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kas Harian</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kontrol Kas - POS Resto Bunda Ana</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-blue-50 min-h-screen">
-
-  <!-- Popup Login -->
-  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-2xl shadow-xl w-80">
-      <h2 class="text-xl font-bold mb-4 text-center text-blue-600">Login Kas</h2>
-      <input id="username" type="text" placeholder="Username"
-             class="w-full p-2 border rounded mb-2" />
-      <input id="password" type="password" placeholder="Password"
-             class="w-full p-2 border rounded mb-4" />
-      <button onclick="login()"
-              class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
-      <p id="loginError" class="text-red-500 text-sm mt-2 hidden">Login gagal. Periksa username/password.</p>
-    </div>
-  </div>
+<body class="bg-blue-50 text-gray-800 flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-    <h1 class="text-lg font-bold">Kas Harian</h1>
-    <button onclick="logout()" class="bg-red-500 px-3 py-1 rounded">Kembali</button>
+  <header class="bg-blue-600 text-white p-4 text-center text-xl font-bold shadow-md">
+    Kontrol Kas - POS Resto Bunda Ana
   </header>
 
-  <main class="p-4 space-y-6">
+  <!-- Konten -->
+  <main class="flex-1 p-4 space-y-6">
 
-    <!-- Form Input Pengeluaran -->
-    <section class="bg-white p-4 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold text-blue-600 mb-3">Input Pengeluaran</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input id="deskripsi" type="text" placeholder="Keterangan"
-               class="p-2 border rounded" />
-        <input id="jumlah" type="number" placeholder="Jumlah"
-               class="p-2 border rounded" />
-        <button onclick="tambahPengeluaran()"
-                class="bg-blue-500 text-white rounded p-2 hover:bg-blue-600">Tambah</button>
+    <!-- Ringkasan Kas -->
+    <section id="summary" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white shadow rounded-xl p-4 text-center">
+        <h3 class="text-blue-600 font-semibold">Kas Awal</h3>
+        <p id="kasAwal" class="text-xl font-bold">Rp 0</p>
+      </div>
+      <div class="bg-white shadow rounded-xl p-4 text-center">
+        <h3 class="text-blue-600 font-semibold">Total Penjualan</h3>
+        <p id="totalPenjualan" class="text-xl font-bold">Rp 0</p>
+      </div>
+      <div class="bg-white shadow rounded-xl p-4 text-center">
+        <h3 class="text-blue-600 font-semibold">Total Pengeluaran</h3>
+        <p id="totalPengeluaran" class="text-xl font-bold">Rp 0</p>
+      </div>
+      <div class="bg-white shadow rounded-xl p-4 text-center">
+        <h3 class="text-blue-600 font-semibold">Kas Akhir</h3>
+        <p id="kasAkhir" class="text-xl font-bold">Rp 0</p>
       </div>
     </section>
 
-    <!-- Tabel Pengeluaran -->
-    <section class="bg-white p-4 rounded-2xl shadow">
-      <h2 class="text-lg font-semibold text-blue-600 mb-3">Pengeluaran Hari Ini</h2>
-      <div class="flex space-x-2 mb-3">
-        <input type="date" id="pengeluaranMulai" class="border p-1 rounded" />
-        <input type="date" id="pengeluaranAkhir" class="border p-1 rounded" />
-        <button onclick="filterPengeluaran()"
-                class="bg-blue-500 text-white px-3 rounded">Filter</button>
-      </div>
+    <!-- Tabel Transaksi Hari Ini -->
+    <section class="bg-white shadow rounded-xl p-4">
+      <h3 class="text-lg font-bold text-blue-600 mb-2">Transaksi & Pengeluaran Hari Ini</h3>
       <div class="overflow-x-auto">
-        <table class="w-full border text-sm">
+        <table class="w-full border text-sm text-left">
           <thead class="bg-blue-100">
             <tr>
-              <th class="border px-2 py-1">Tanggal</th>
-              <th class="border px-2 py-1">Keterangan</th>
-              <th class="border px-2 py-1">Jumlah</th>
-              <th class="border px-2 py-1">Kasir</th>
+              <th class="border p-2">Tanggal</th>
+              <th class="border p-2">Nama Kasir</th>
+              <th class="border p-2">Menu</th>
+              <th class="border p-2">Pengeluaran</th>
+              <th class="border p-2">Jumlah</th>
+              <th class="border p-2">Harga</th>
+              <th class="border p-2 text-center">Aksi</th>
             </tr>
           </thead>
-          <tbody id="tabelPengeluaran"></tbody>
+          <tbody id="tableBody">
+            <tr><td colspan="7" class="text-center p-4">Memuat data...</td></tr>
+          </tbody>
         </table>
       </div>
     </section>
 
-    <!-- Ringkasan Kas -->
-    <section class="bg-white p-4 rounded-2xl shadow space-y-2">
-      <p><span class="font-semibold text-blue-600">Kas Awal:</span> Rp <span id="kasAwal">0</span></p>
-      <p><span class="font-semibold text-blue-600">Total Penjualan Hari Ini:</span> Rp <span id="totalPenjualan">0</span></p>
-      <p><span class="font-semibold text-blue-600">Total Pengeluaran Hari Ini:</span> Rp <span id="totalPengeluaran">0</span></p>
-      <p><span class="font-semibold text-blue-600">Kas Akhir:</span> Rp <span id="kasAkhir">0</span></p>
-    </section>
-
+    <!-- Tombol Kembali -->
+    <div class="text-center">
+      <button onclick="logout()" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700">
+        Kembali ke Layar Utama
+      </button>
+    </div>
   </main>
 
+  <!-- Modal Loading -->
+  <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p class="text-blue-600 font-semibold">Memuat...</p>
+    </div>
+  </div>
+
+  <!-- Modal Custom -->
+  <div id="customModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div class="bg-white w-80 rounded-xl shadow-lg p-6 text-center space-y-4">
+      <h3 id="modalTitle" class="text-lg font-bold text-blue-600">Info</h3>
+      <p id="modalMessage" class="text-gray-700">Pesan...</p>
+      <div id="modalButtons" class="flex justify-center gap-4"></div>
+    </div>
+  </div>
+
   <script>
-    const supabaseUrl = "https://flrxlfxomfvcdjukedzd.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-    const headers = { apikey: supabaseKey, Authorization: "Bearer " + supabaseKey };
+    const supabaseUrl = "https://linujagdxugmocstckmd.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    let currentUser = null;
+    // 🔹 Helpers Modal
+    function showLoading(show = true) {
+      document.getElementById("loadingModal").classList.toggle("hidden", !show);
+    }
+    function showModal(title, message, buttons=[{text:"OK",action:()=>hideModal()}]) {
+      document.getElementById("modalTitle").innerText = title;
+      document.getElementById("modalMessage").innerText = message;
+      const btnContainer = document.getElementById("modalButtons");
+      btnContainer.innerHTML = "";
+      buttons.forEach(btn=>{
+        const b = document.createElement("button");
+        b.innerText = btn.text;
+        b.className = "px-4 py-2 rounded-lg text-white " + (btn.danger?"bg-red-600 hover:bg-red-700":"bg-blue-600 hover:bg-blue-700");
+        b.onclick = btn.action;
+        btnContainer.appendChild(b);
+      });
+      document.getElementById("customModal").classList.remove("hidden");
+    }
+    function hideModal(){ document.getElementById("customModal").classList.add("hidden"); }
 
-    // ========== LOGIN ==========
-    async function login() {
-      const u = document.getElementById("username").value;
-      const p = document.getElementById("password").value;
-      const res = await fetch(`${supabaseUrl}/rest/v1/akun?username=eq.${u}&password=eq.${p}&select=*`, { headers });
-      const data = await res.json();
-      if (data.length > 0) {
-        currentUser = data[0];
-        localStorage.setItem("user", JSON.stringify(currentUser));
-        document.getElementById("loginModal").classList.add("hidden");
-        loadKas();
+    // 🔹 Session & Login
+    const sessionKey = "pos_session";
+    async function checkLogin(){
+      const sess = JSON.parse(localStorage.getItem(sessionKey));
+      if(!sess || sess.role!=="admin"){ 
+        showModal("Login Diperlukan","Hanya admin yang bisa mengakses halaman ini!",[
+          {text:"OK",action:()=>{window.location.href="index.html";}}
+        ]);
       } else {
-        document.getElementById("loginError").classList.remove("hidden");
+        loadData();
       }
     }
-
-    function logout() {
-      localStorage.removeItem("user");
-      window.location.href = "index.html";
+    function logout(){
+      localStorage.removeItem(sessionKey);
+      window.location.href="index.html";
     }
 
-    function checkLogin() {
-      const u = localStorage.getItem("user");
-      if (!u) {
-        document.getElementById("loginModal").classList.remove("hidden");
-      } else {
-        currentUser = JSON.parse(u);
-        document.getElementById("loginModal").classList.add("hidden");
-        loadKas();
+    // 🔹 Load Data Kas
+    async function loadData(){
+      showLoading(true);
+
+      try {
+        const today = new Date().toISOString().split("T")[0];
+
+        // Kas Awal = kas akhir kemarin
+        let { data: kasKemarin } = await supabaseClient
+          .from("kas")
+          .select("kas_akhir, tanggal")
+          .lt("tanggal", today)
+          .order("tanggal", { ascending: false })
+          .limit(1);
+        let kasAwal = kasKemarin && kasKemarin.length>0 ? kasKemarin[0].kas_akhir : 0;
+
+        // Total Penjualan Hari Ini
+        let { data: penjualan } = await supabaseClient
+          .from("v_transaksi_detail")
+          .select("total_harga")
+          .gte("waktu", today)
+          .lte("waktu", today+" 23:59:59");
+        let totalPenjualan = penjualan?.reduce((sum,r)=>sum+ (r.total_harga||0),0) || 0;
+
+        // Total Pengeluaran Hari Ini
+        let { data: pengeluaran } = await supabaseClient
+          .from("pengeluaran")
+          .select("jumlah")
+          .gte("waktu", today)
+          .lte("waktu", today+" 23:59:59");
+        let totalPengeluaran = pengeluaran?.reduce((sum,r)=>sum+ (r.jumlah||0),0) || 0;
+
+        let kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
+
+        document.getElementById("kasAwal").innerText = "Rp " + kasAwal.toLocaleString();
+        document.getElementById("totalPenjualan").innerText = "Rp " + totalPenjualan.toLocaleString();
+        document.getElementById("totalPengeluaran").innerText = "Rp " + totalPengeluaran.toLocaleString();
+        document.getElementById("kasAkhir").innerText = "Rp " + kasAkhir.toLocaleString();
+
+        // 🔹 Tabel Hari Ini (gabungan transaksi & pengeluaran)
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+
+        // Transaksi
+        penjualan.forEach(tr=>{
+          const trEl = document.createElement("tr");
+          trEl.innerHTML = `
+            <td class="border p-2">${new Date(tr.waktu).toLocaleString()}</td>
+            <td class="border p-2">${tr.nama_kasir||"-"}</td>
+            <td class="border p-2">${tr.nama_menu||"-"}</td>
+            <td class="border p-2">-</td>
+            <td class="border p-2">${tr.jumlah||1}</td>
+            <td class="border p-2">Rp ${(tr.total_harga||0).toLocaleString()}</td>
+            <td class="border p-2 text-center"><button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusTransaksi(${tr.id})">Hapus</button></td>
+          `;
+          tbody.appendChild(trEl);
+        });
+
+        // Pengeluaran
+        pengeluaran.forEach(pg=>{
+          const trEl = document.createElement("tr");
+          trEl.innerHTML = `
+            <td class="border p-2">${new Date(pg.waktu).toLocaleString()}</td>
+            <td class="border p-2">${pg.nama_kasir||"-"}</td>
+            <td class="border p-2">-</td>
+            <td class="border p-2">${pg.keterangan||"Pengeluaran"}</td>
+            <td class="border p-2">1</td>
+            <td class="border p-2">Rp ${(pg.jumlah||0).toLocaleString()}</td>
+            <td class="border p-2 text-center"><button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusPengeluaran(${pg.id})">Hapus</button></td>
+          `;
+          tbody.appendChild(trEl);
+        });
+
+      } catch (err) {
+        console.error(err);
+        showModal("Error","Gagal memuat data!");
       }
+
+      showLoading(false);
     }
 
-    // ========== PENGELUARAN ==========
-    async function tambahPengeluaran() {
-      const deskripsi = document.getElementById("deskripsi").value;
-      const jumlah = document.getElementById("jumlah").value;
-      if (!deskripsi || !jumlah) {
-        alert("Lengkapi data pengeluaran");
-        return;
-      }
-      const body = { deskripsi, jumlah, kasir_id: currentUser.id };
-      const res = await fetch(`${supabaseUrl}/rest/v1/pengeluaran`, {
-        method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) {
-        document.getElementById("deskripsi").value = "";
-        document.getElementById("jumlah").value = "";
-        loadPengeluaran();
-        loadKasRingkasan();
-      }
+    // 🔹 Hapus Transaksi
+    async function hapusTransaksi(id){
+      showModal("Konfirmasi","Yakin hapus transaksi ini?",[
+        {text:"Batal",action:()=>hideModal()},
+        {text:"Ya",danger:true,action:async()=>{
+          hideModal(); showLoading(true);
+          await supabaseClient.from("transaksi").delete().eq("id",id);
+          showLoading(false);
+          showModal("Sukses","Transaksi berhasil dihapus!",[{text:"OK",action:()=>{hideModal();loadData();}}]);
+        }}
+      ]);
+    }
+    // 🔹 Hapus Pengeluaran
+    async function hapusPengeluaran(id){
+      showModal("Konfirmasi","Yakin hapus pengeluaran ini?",[
+        {text:"Batal",action:()=>hideModal()},
+        {text:"Ya",danger:true,action:async()=>{
+          hideModal(); showLoading(true);
+          await supabaseClient.from("pengeluaran").delete().eq("id",id);
+          showLoading(false);
+          showModal("Sukses","Pengeluaran berhasil dihapus!",[{text:"OK",action:()=>{hideModal();loadData();}}]);
+        }}
+      ]);
     }
 
-    async function loadPengeluaran(filter = "") {
-      const res = await fetch(`${supabaseUrl}/rest/v1/pengeluaran?select=waktu,deskripsi,jumlah,akun(username)${filter}`, {
-        headers,
-      });
-      const data = await res.json();
-      const tbody = document.getElementById("tabelPengeluaran");
-      tbody.innerHTML = "";
-      let total = 0;
-      data.forEach(r => {
-        total += Number(r.jumlah);
-        tbody.innerHTML += `
-          <tr>
-            <td class="border px-2 py-1">${new Date(r.waktu).toLocaleString()}</td>
-            <td class="border px-2 py-1">${r.deskripsi}</td>
-            <td class="border px-2 py-1">Rp ${r.jumlah}</td>
-            <td class="border px-2 py-1">${r.akun?.username || "-"}</td>
-          </tr>`;
-      });
-      document.getElementById("totalPengeluaran").textContent = total;
-      hitungKasAkhir();
-    }
-
-    function filterPengeluaran() {
-      const s = document.getElementById("pengeluaranMulai").value;
-      const e = document.getElementById("pengeluaranAkhir").value;
-      let f = "";
-      if (s && e) f = `&waktu=gte.${s}T00:00:00&waktu=lte.${e}T23:59:59`;
-      loadPengeluaran(f);
-    }
-
-    // ========== KAS ==========
-    async function loadKas() {
-      await loadPengeluaran();
-      await loadKasRingkasan();
-    }
-
-    async function loadKasRingkasan() {
-      // ambil kas akhir terakhir
-      const res = await fetch(`${supabaseUrl}/rest/v1/v_kas_harian?select=tanggal,kas_akhir&order=tanggal.desc&limit=1`, { headers });
-      const data = await res.json();
-      const kasAwal = data.length > 0 ? data[0].kas_akhir : 0;
-      document.getElementById("kasAwal").textContent = kasAwal;
-
-      // total penjualan hari ini
-      const today = new Date().toISOString().split("T")[0];
-      const res2 = await fetch(`${supabaseUrl}/rest/v1/transaksi?select=total&waktu=gte.${today}T00:00:00&waktu=lte.${today}T23:59:59&kasir_id=eq.${currentUser.id}`, { headers });
-      const data2 = await res2.json();
-      let total = 0;
-      data2.forEach(r => total += Number(r.total));
-      document.getElementById("totalPenjualan").textContent = total;
-
-      hitungKasAkhir();
-    }
-
-    function hitungKasAkhir() {
-      const kasAwal = Number(document.getElementById("kasAwal").textContent) || 0;
-      const penjualan = Number(document.getElementById("totalPenjualan").textContent) || 0;
-      const pengeluaran = Number(document.getElementById("totalPengeluaran").textContent) || 0;
-      document.getElementById("kasAkhir").textContent = kasAwal + penjualan - pengeluaran;
-    }
-
-    // ========== BACK BUTTON DEVICE ==========
-    window.addEventListener("popstate", function () {
-      localStorage.removeItem("user");
-      window.location.href = "index.html";
-    });
-
-    // init
+    // Init
     checkLogin();
   </script>
 </body>
 </html>
+
