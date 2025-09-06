@@ -3,212 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - POS Resto Bunda Ana</title>
+<title>Admin - POS Kasir Bunda Ana</title>
 <style>
-  body { font-family: Arial, sans-serif; margin:0; background:#e0f0ff; color:#333; }
-  header { background:#4da6ff; color:#fff; padding:20px; text-align:center; font-size:24px; }
-  .container { padding:20px; max-width:1200px; margin:auto; }
-  .section { background:#fff; padding:20px; margin-bottom:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-  h2 { margin-top:0; color:#0073e6; }
-  input, select, button { padding:8px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; border:1px solid #ccc; }
-  button { background:#4da6ff; color:#fff; border:none; cursor:pointer; }
-  button:hover { background:#3399ff; }
-  table { width:100%; border-collapse:collapse; margin-top:10px; }
-  th, td { border:1px solid #ccc; padding:8px; text-align:left; }
-  th { background:#cce0ff; }
-  .action-btn { background:#ff6666; }
-  .action-btn:hover { background:#ff3333; }
-  #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index:9999; text-align:center; padding-top:20%; }
-  #loadingOverlay div { background:white; padding:20px 40px; border-radius:10px; display:inline-block; font-size:18px; }
-  /* Login popup */
-  #loginPopup { display:block; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:10000; text-align:center; padding-top:10%; }
-  #loginPopup div { background:#fff; padding:30px; border-radius:10px; width:300px; display:inline-block; text-align:left; }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#e6f0ff; color:#333;}
+    header { background:#4da6ff; color:#fff; padding:15px; text-align:center; font-size:24px; }
+    .container { padding:20px; max-width:1200px; margin:auto;}
+    h2 { color:#004080; margin-top:30px; }
+    table { width:100%; border-collapse: collapse; margin-top:10px;}
+    th, td { border:1px solid #004080; padding:8px; text-align:left;}
+    th { background:#99ccff;}
+    button { padding:5px 10px; background:#4da6ff; color:#fff; border:none; cursor:pointer; border-radius:4px; }
+    button:hover { background:#3399ff; }
+    input, select { padding:5px; margin:5px 0; width:100%; max-width:300px; }
+    .flex { display:flex; gap:10px; flex-wrap:wrap; }
+    .popup-bg { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:1000;}
+    .popup { background:#fff; padding:20px; border-radius:8px; min-width:300px; max-width:90%; }
+    .popup h3 { margin-top:0; }
+    .close-btn { float:right; cursor:pointer; color:red; font-weight:bold; }
+    @media(max-width:768px){ .flex { flex-direction:column; } }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.27.0/dist/supabase.min.js"></script>
 </head>
 <body>
 
-<header>Admin - POS Resto Bunda Ana</header>
+<header>Admin - POS Kasir Resto Bunda Ana</header>
 
-<!-- Loading overlay -->
-<div id="loadingOverlay"><div>Loading...</div></div>
+<div class="container">
 
-<!-- Login Popup -->
-<div id="loginPopup">
-  <div>
-    <h3>Login Admin</h3>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="loginAdmin()">Login</button>
-  </div>
-</div>
+    <!-- Tombol Kembali -->
+    <button id="btnBack">Kembali ke Index</button>
 
-<div class="container" id="adminContent" style="display:none;">
-
-  <button onclick="backToIndex()">Kembali ke Index</button>
-
-  <!-- Section Akun -->
-  <div class="section">
+    <!-- ===== AKUN ===== -->
     <h2>Manajemen Akun</h2>
-    <input type="text" id="newUsername" placeholder="Username">
-    <input type="password" id="newPassword" placeholder="Password">
-    <select id="newRole">
-      <option value="admin">Admin</option>
-      <option value="kasir">Kasir</option>
-    </select>
-    <button onclick="tambahAkun()">Tambah Akun</button>
-    <table id="akunTable">
-      <thead>
-        <tr><th>ID</th><th>Username</th><th>Role</th><th>Aksi</th></tr>
-      </thead>
-      <tbody></tbody>
+    <div class="flex">
+        <input type="text" id="akunUsername" placeholder="Username">
+        <input type="password" id="akunPassword" placeholder="Password">
+        <select id="akunRole">
+            <option value="kasir">Kasir</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button id="btnTambahAkun">Tambah Akun</button>
+    </div>
+    <table id="tabelAkun">
+        <thead>
+            <tr><th>ID</th><th>Username</th><th>Role</th><th>Aksi</th></tr>
+        </thead>
+        <tbody></tbody>
     </table>
-  </div>
 
-  <!-- Section Menu -->
-  <div class="section">
+    <!-- ===== MENU ===== -->
     <h2>Manajemen Menu</h2>
-    <input type="text" id="newMenu" placeholder="Nama Menu">
-    <input type="number" id="newHarga" placeholder="Harga">
-    <button onclick="tambahMenu()">Tambah Menu</button>
-    <table id="menuTable">
-      <thead>
-        <tr><th>ID</th><th>Nama Menu</th><th>Harga</th><th>Aksi</th></tr>
-      </thead>
-      <tbody></tbody>
+    <div class="flex">
+        <input type="text" id="menuNama" placeholder="Nama Menu">
+        <input type="number" id="menuHarga" placeholder="Harga">
+        <button id="btnTambahMenu">Tambah Menu</button>
+    </div>
+    <table id="tabelMenu">
+        <thead>
+            <tr><th>ID</th><th>Nama Menu</th><th>Harga</th><th>Aksi</th></tr>
+        </thead>
+        <tbody></tbody>
     </table>
-  </div>
 
-  <!-- Section Kas & Transaksi -->
-  <div class="section">
+    <!-- ===== KAS ===== -->
     <h2>Kas & Transaksi</h2>
-    <button onclick="resetKas()">Reset Kas ke 0</button>
-    <button onclick="hapusSemuaTransaksi()">Hapus Semua Transaksi</button>
-  </div>
+    <div class="flex">
+        <button id="btnResetKas">Reset Kas ke 0</button>
+        <button id="btnHapusTransaksi">Hapus Semua Transaksi</button>
+    </div>
 
 </div>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.js';
+<!-- ===== POPUP LOGIN ===== -->
+<div class="popup-bg" id="popupLoginBg">
+    <div class="popup">
+        <span class="close-btn" id="closeLogin">&times;</span>
+        <h3>Login Admin</h3>
+        <input type="text" id="loginUsername" placeholder="Username">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="btnLogin">Login</button>
+    </div>
+</div>
 
-  const SUPABASE_URL = 'https://linujagdxugmocstckmd.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInJlZiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window.supabaseClient = supabaseClient; // Supaya bisa diakses dari fungsi lain
+<script>
+const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // Loading overlay
-  function showLoading(){ document.getElementById('loadingOverlay').style.display='block'; }
-  function hideLoading(){ document.getElementById('loadingOverlay').style.display='none'; }
-
-  function backToIndex(){ window.location.href='index.html'; }
-
-  // =================== LOGIN ===================
-  window.loginAdmin = async function(){
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if(!username || !password){ alert('Isi username & password'); return; }
-    showLoading();
-    const { data, error } = await supabaseClient.from('akun').select('*').eq('username', username).eq('password', password).eq('role','admin').limit(1);
-    hideLoading();
-    if(data && data.length>0){
-      document.getElementById('loginPopup').style.display='none';
-      document.getElementById('adminContent').style.display='block';
-      loadAkun(); loadMenu();
+// ===== SESSION MANAGEMENT =====
+document.addEventListener("DOMContentLoaded", async () => {
+    const sessionAdmin = localStorage.getItem('adminLogin');
+    if(!sessionAdmin){
+        document.getElementById('popupLoginBg').style.display = 'flex';
     } else {
-      alert('Login gagal, pastikan admin benar');
+        loadAkun();
+        loadMenu();
     }
-  }
+});
 
-  // =================== AKUN ===================
-  window.loadAkun = async function(){
-    showLoading();
-    const { data, error } = await supabaseClient.from('akun').select('*');
-    hideLoading();
-    const tbody = document.querySelector('#akunTable tbody');
-    tbody.innerHTML='';
-    data.forEach(a=>{
-      tbody.innerHTML+=`<tr>
-        <td>${a.id}</td>
-        <td>${a.username}</td>
-        <td>${a.role}</td>
-        <td><button class="action-btn" onclick="hapusAkun(${a.id})">Hapus</button></td>
-      </tr>`;
+// Tombol kembali/logout
+document.getElementById('btnBack').addEventListener('click', () => {
+    localStorage.removeItem('adminLogin');
+    window.location.href = 'index.html';
+});
+
+// Tutup popup login
+document.getElementById('closeLogin').addEventListener('click', () => {
+    document.getElementById('popupLoginBg').style.display = 'none';
+});
+
+// Login admin
+document.getElementById('btnLogin').addEventListener('click', async () => {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    const { data, error } = await supabase
+        .from('akun')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)
+        .eq('role', 'admin')
+        .single();
+
+    if(data){
+        localStorage.setItem('adminLogin', username);
+        document.getElementById('popupLoginBg').style.display = 'none';
+        loadAkun();
+        loadMenu();
+    } else {
+        alert('Username/password salah atau bukan admin');
+    }
+});
+
+// ===== AKUN =====
+async function loadAkun(){
+    const { data } = await supabase.from('akun').select('*');
+    const tbody = document.querySelector('#tabelAkun tbody');
+    tbody.innerHTML = '';
+    data.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${a.id}</td><td>${a.username}</td><td>${a.role}</td>
+            <td><button onclick="hapusAkun(${a.id})">Hapus</button></td>`;
+        tbody.appendChild(tr);
     });
-  }
+}
 
-  window.tambahAkun = async function(){
-    const username = document.getElementById('newUsername').value.trim();
-    const password = document.getElementById('newPassword').value.trim();
-    const role = document.getElementById('newRole').value;
-    if(!username || !password){ alert('Isi semua field'); return; }
-    if(!confirm('Tambah akun baru?')) return;
-    showLoading();
-    const { data, error } = await supabaseClient.from('akun').insert([{username,password,role}]);
-    hideLoading();
-    if(error){ alert('Gagal tambah akun'); } else { alert('Akun berhasil ditambah'); loadAkun(); }
-  }
+document.getElementById('btnTambahAkun').addEventListener('click', async () => {
+    const username = document.getElementById('akunUsername').value;
+    const password = document.getElementById('akunPassword').value;
+    const role = document.getElementById('akunRole').value;
+    if(!username || !password) { alert('Isi semua field'); return; }
 
-  window.hapusAkun = async function(id){
-    if(!confirm('Yakin hapus akun ini?')) return;
-    showLoading();
-    const { data, error } = await supabaseClient.from('akun').delete().eq('id',id);
-    hideLoading();
-    if(error){ alert('Gagal hapus akun'); } else { alert('Akun berhasil dihapus'); loadAkun(); }
-  }
+    await supabase.from('akun').insert([{username,password,role}]);
+    document.getElementById('akunUsername').value='';
+    document.getElementById('akunPassword').value='';
+    loadAkun();
+});
 
-  // =================== MENU ===================
-  window.loadMenu = async function(){
-    showLoading();
-    const { data, error } = await supabaseClient.from('menu').select('*');
-    hideLoading();
-    const tbody = document.querySelector('#menuTable tbody');
-    tbody.innerHTML='';
-    data.forEach(m=>{
-      tbody.innerHTML+=`<tr>
-        <td>${m.id}</td>
-        <td>${m.nama_menu}</td>
-        <td>${m.harga}</td>
-        <td><button class="action-btn" onclick="hapusMenu(${m.id})">Hapus</button></td>
-      </tr>`;
+async function hapusAkun(id){
+    if(confirm('Hapus akun ini?')){
+        await supabase.from('akun').delete().eq('id', id);
+        loadAkun();
+    }
+}
+
+// ===== MENU =====
+async function loadMenu(){
+    const { data } = await supabase.from('menu').select('*');
+    const tbody = document.querySelector('#tabelMenu tbody');
+    tbody.innerHTML = '';
+    data.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${m.id}</td><td>${m.nama_menu}</td><td>${m.harga}</td>
+            <td><button onclick="hapusMenu(${m.id})">Hapus</button></td>`;
+        tbody.appendChild(tr);
     });
-  }
+}
 
-  window.tambahMenu = async function(){
-    const nama = document.getElementById('newMenu').value.trim();
-    const harga = parseFloat(document.getElementById('newHarga').value);
-    if(!nama || isNaN(harga)){ alert('Isi semua field'); return; }
-    if(!confirm('Tambah menu baru?')) return;
-    showLoading();
-    const { data, error } = await supabaseClient.from('menu').insert([{nama_menu:nama,harga}]);
-    hideLoading();
-    if(error){ alert('Gagal tambah menu'); } else { alert('Menu berhasil ditambah'); loadMenu(); }
-  }
+document.getElementById('btnTambahMenu').addEventListener('click', async () => {
+    const nama = document.getElementById('menuNama').value;
+    const harga = parseFloat(document.getElementById('menuHarga').value);
+    if(!nama || !harga) { alert('Isi semua field'); return; }
 
-  window.hapusMenu = async function(id){
-    if(!confirm('Yakin hapus menu ini?')) return;
-    showLoading();
-    const { data, error } = await supabaseClient.from('menu').delete().eq('id',id);
-    hideLoading();
-    if(error){ alert('Gagal hapus menu'); } else { alert('Menu berhasil dihapus'); loadMenu(); }
-  }
+    await supabase.from('menu').insert([{nama_menu:nama, harga}]);
+    document.getElementById('menuNama').value='';
+    document.getElementById('menuHarga').value='';
+    loadMenu();
+});
 
-  // =================== KAS & TRANSAKSI ===================
-  window.resetKas = async function(){
-    if(!confirm('Yakin reset kas ke 0?')) return;
-    showLoading();
-    await supabaseClient.from('pengeluaran').delete().neq('id',0);
-    hideLoading();
-    alert('Kas di-reset ke 0');
-  }
+async function hapusMenu(id){
+    if(confirm('Hapus menu ini?')){
+        await supabase.from('menu').delete().eq('id', id);
+        loadMenu();
+    }
+}
 
-  window.hapusSemuaTransaksi = async function(){
-    if(!confirm('Yakin hapus semua transaksi?')) return;
-    showLoading();
-    await supabaseClient.from('transaksi_detail').delete().neq('id',0);
-    await supabaseClient.from('transaksi').delete().neq('id',0);
-    hideLoading();
-    alert('Semua transaksi berhasil dihapus');
-  }
+// ===== KAS & TRANSAKSI =====
+document.getElementById('btnResetKas').addEventListener('click', async () => {
+    if(confirm('Reset kas ke 0?')){
+        await supabase.from('kas').delete(); // hapus semua kas
+        alert('Kas berhasil di-reset');
+    }
+});
 
+document.getElementById('btnHapusTransaksi').addEventListener('click', async () => {
+    if(confirm('Hapus semua transaksi?')){
+        await supabase.from('transaksi').delete();
+        await supabase.from('transaksi_detail').delete();
+        alert('Semua transaksi berhasil dihapus');
+    }
+});
 </script>
+
 </body>
 </html>
