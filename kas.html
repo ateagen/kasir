@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kontrol Kas - POS Resto Bunda Ana</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-blue-50 text-gray-800 flex flex-col min-h-screen">
+<body class="bg-blue-50 text-gray-800 min-h-screen flex flex-col">
 
   <!-- Header -->
   <header class="bg-blue-600 text-white p-4 text-center text-xl font-bold shadow-md">
     Kontrol Kas - POS Resto Bunda Ana
   </header>
 
-  <!-- Konten -->
-  <main class="flex-1 p-4 space-y-6 hidden" id="mainContent">
+  <!-- Main (hidden until login) -->
+  <main id="mainContent" class="flex-1 p-4 space-y-6 hidden">
 
     <!-- Ringkasan Kas -->
     <section id="summary" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -37,7 +37,7 @@
       </div>
     </section>
 
-    <!-- Tabel Transaksi Hari Ini -->
+    <!-- Tabel Transaksi & Pengeluaran Hari Ini -->
     <section class="bg-white shadow rounded-xl p-4">
       <h3 class="text-lg font-bold text-blue-600 mb-2">Transaksi & Pengeluaran Hari Ini</h3>
       <div class="overflow-x-auto">
@@ -46,15 +46,16 @@
             <tr>
               <th class="border p-2">Tanggal</th>
               <th class="border p-2">Nama Kasir</th>
-              <th class="border p-2">Menu</th>
-              <th class="border p-2">Pengeluaran</th>
+              <th class="border p-2">Nama Menu</th>
+              <th class="border p-2">Keterangan Pengeluaran</th>
               <th class="border p-2">Jumlah</th>
               <th class="border p-2">Harga</th>
+              <th class="border p-2">Total Harga</th>
               <th class="border p-2 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="7" class="text-center p-4">Memuat data...</td></tr>
+            <tr><td colspan="8" class="text-center p-4">Memuat data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -62,13 +63,11 @@
 
     <!-- Tombol Kembali -->
     <div class="text-center">
-      <button onclick="logout()" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700">
-        Kembali ke Layar Utama
-      </button>
+      <button id="btnBack" class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700">Kembali ke Layar Utama</button>
     </div>
   </main>
 
-  <!-- Modal Loading -->
+  <!-- Loading Modal -->
   <div id="loadingModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg text-center">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -76,7 +75,7 @@
     </div>
   </div>
 
-  <!-- Modal Custom -->
+  <!-- Custom Modal (info / konfirmasi) -->
   <div id="customModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
     <div class="bg-white w-80 rounded-xl shadow-lg p-6 text-center space-y-4">
       <h3 id="modalTitle" class="text-lg font-bold text-blue-600">Info</h3>
@@ -85,193 +84,255 @@
     </div>
   </div>
 
-  <!-- Modal Login -->
+  <!-- Login Modal (muncul saat akses jika belum login) -->
   <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
     <div class="bg-white w-80 rounded-xl shadow-lg p-6 space-y-4">
       <h3 class="text-lg font-bold text-blue-600 text-center">Login Admin</h3>
-      <input id="username" type="text" placeholder="Username" class="w-full border p-2 rounded"/>
-      <input id="password" type="password" placeholder="Password" class="w-full border p-2 rounded"/>
-      <button onclick="doLogin()" class="bg-blue-600 w-full text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
+      <input id="loginUsername" type="text" placeholder="Username" class="w-full border p-2 rounded" />
+      <input id="loginPassword" type="password" placeholder="Password" class="w-full border p-2 rounded" />
+      <button id="loginBtn" class="bg-blue-600 w-full text-white py-2 rounded-lg hover:bg-blue-700">Login</button>
     </div>
   </div>
 
-  <script>
-    const supabaseUrl = "https://linujagdxugmocstckmd.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+<script>
+  // Supabase credentials (sesuaikan)
+  const supabaseUrl = "https://linujagdxugmocstckmd.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
+  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 🔹 Helpers Modal
-    function showLoading(show = true) {
-      document.getElementById("loadingModal").classList.toggle("hidden", !show);
+  // Helper: modal & loading
+  function showLoading(show = true) {
+    document.getElementById("loadingModal").classList.toggle("hidden", !show);
+  }
+  function showModal(title, message, buttons = [{text:'OK', action:hideModal}]) {
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalMessage").innerText = message;
+    const btnContainer = document.getElementById("modalButtons");
+    btnContainer.innerHTML = "";
+    buttons.forEach(b => {
+      const btn = document.createElement("button");
+      btn.innerText = b.text;
+      btn.className = "px-4 py-2 rounded-lg text-white " + (b.danger ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700");
+      btn.onclick = b.action;
+      btnContainer.appendChild(btn);
+    });
+    document.getElementById("customModal").classList.remove("hidden");
+  }
+  function hideModal(){ document.getElementById("customModal").classList.add("hidden"); }
+
+  // Format rupiah
+  function formatRupiah(num){
+    const n = Number(num || 0);
+    return "Rp " + n.toLocaleString('id-ID');
+  }
+
+  // Session & login (localStorage)
+  const sessionKey = "pos_session";
+  document.getElementById("loginBtn").addEventListener("click", doLogin);
+  document.getElementById("btnBack").addEventListener("click", () => {
+    // logout then go back
+    localStorage.removeItem(sessionKey);
+    window.location.href = "index.html";
+  });
+
+  async function doLogin(){
+    const user = document.getElementById("loginUsername").value.trim();
+    const pass = document.getElementById("loginPassword").value.trim();
+    if(!user || !pass){
+      showModal("Login Gagal","Isi username & password!", [{text:"OK", action:hideModal}]);
+      return;
     }
-    function showModal(title, message, buttons=[{text:"OK",action:()=>hideModal()}]) {
-      document.getElementById("modalTitle").innerText = title;
-      document.getElementById("modalMessage").innerText = message;
-      const btnContainer = document.getElementById("modalButtons");
-      btnContainer.innerHTML = "";
-      buttons.forEach(btn=>{
-        const b = document.createElement("button");
-        b.innerText = btn.text;
-        b.className = "px-4 py-2 rounded-lg text-white " + (btn.danger?"bg-red-600 hover:bg-red-700":"bg-blue-600 hover:bg-blue-700");
-        b.onclick = btn.action;
-        btnContainer.appendChild(b);
-      });
-      document.getElementById("customModal").classList.remove("hidden");
+    showLoading(true);
+    const { data, error } = await supabaseClient
+      .from("akun")
+      .select("id, username, role")
+      .eq("username", user)
+      .eq("password", pass)
+      .single();
+    showLoading(false);
+    if(error || !data){
+      showModal("Login Gagal","Username atau password salah!", [{text:"OK", action:hideModal}]);
+      return;
     }
-    function hideModal(){ document.getElementById("customModal").classList.add("hidden"); }
+    if(data.role !== "admin"){
+      showModal("Ditolak","Hanya admin yang bisa masuk!", [{text:"OK", action:hideModal}]);
+      return;
+    }
+    // simpan session
+    localStorage.setItem(sessionKey, JSON.stringify({ id: data.id, username: data.username, role: data.role }));
+    document.getElementById("loginModal").classList.add("hidden");
+    document.getElementById("mainContent").classList.remove("hidden");
+    await loadData();
+  }
 
-    // 🔹 Session & Login
-    const sessionKey = "pos_session";
-    async function doLogin(){
-      const user = document.getElementById("username").value.trim();
-      const pass = document.getElementById("password").value.trim();
-
-      if(!user || !pass){
-        showModal("Login Gagal","Isi username & password!");
-        return;
-      }
-
-      showLoading(true);
-      let { data, error } = await supabaseClient
-        .from("akun")
-        .select("*")
-        .eq("username", user)
-        .eq("password", pass)
-        .single();
-      showLoading(false);
-
-      if(error || !data){
-        showModal("Login Gagal","Username atau password salah!");
-        return;
-      }
-
-      if(data.role !== "admin"){
-        showModal("Ditolak","Hanya admin yang bisa masuk!");
-        return;
-      }
-
-      // simpan session
-      localStorage.setItem(sessionKey, JSON.stringify({username:data.username, role:data.role}));
+  async function checkLogin(){
+    const sess = JSON.parse(localStorage.getItem(sessionKey));
+    if(sess && sess.role === "admin"){
       document.getElementById("loginModal").classList.add("hidden");
       document.getElementById("mainContent").classList.remove("hidden");
-      loadData();
+      await loadData();
+    } else {
+      // show login modal (default)
+      document.getElementById("loginModal").classList.remove("hidden");
+      document.getElementById("mainContent").classList.add("hidden");
     }
+  }
 
-    function logout(){
-      localStorage.removeItem(sessionKey);
-      window.location.href="index.html";
-    }
+  // Load data: kas, transaksi (detail), pengeluaran, akun (for lookup)
+  async function loadData(){
+    showLoading(true);
+    try {
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      const start = today + " 00:00:00";
+      const end = today + " 23:59:59";
 
-    async function checkLogin(){
-      const sess = JSON.parse(localStorage.getItem(sessionKey));
-      if(sess && sess.role==="admin"){
-        document.getElementById("loginModal").classList.add("hidden");
-        document.getElementById("mainContent").classList.remove("hidden");
-        loadData();
-      }
-    }
+      // Ambil semua akun untuk lookup username (dipakai untuk pengeluaran)
+      const { data: akunData } = await supabaseClient.from("akun").select("id, username");
+      const akunMap = {};
+      if(Array.isArray(akunData)) akunData.forEach(a => akunMap[a.id] = a.username);
 
-    // 🔹 Load Data Kas
-    async function loadData(){
-      showLoading(true);
-      try {
-        const today = new Date().toISOString().split("T")[0];
+      // Kas awal = kas_akhir kemarin (ambil record kas dengan tanggal < today paling baru)
+      const { data: kasKemarin } = await supabaseClient
+        .from("kas")
+        .select("kas_akhir, tanggal")
+        .lt("tanggal", today)
+        .order("tanggal", { ascending: false })
+        .limit(1);
+      const kasAwal = kasKemarin && kasKemarin.length>0 ? Number(kasKemarin[0].kas_akhir || 0) : 0;
 
-        // Kas Awal
-        let { data: kasKemarin } = await supabaseClient
-          .from("kas")
-          .select("kas_akhir, tanggal")
-          .lt("tanggal", today)
-          .order("tanggal", { ascending: false })
-          .limit(1);
-        let kasAwal = kasKemarin && kasKemarin.length>0 ? kasKemarin[0].kas_akhir : 0;
+      // Ambil transaksi (detail) hari ini dari view v_transaksi_detail
+      const { data: transaksiRows } = await supabaseClient
+        .from("v_transaksi_detail")
+        .select("transaksi_id, waktu, kasir, menu, qty, harga, subtotal")
+        .gte("waktu", start)
+        .lte("waktu", end)
+        .order("waktu", { ascending: true });
 
-        // Penjualan Hari Ini
-        let { data: transaksi } = await supabaseClient
-          .from("v_transaksi_detail")
-          .select("*")
-          .gte("waktu", today)
-          .lte("waktu", today+" 23:59:59");
-        let totalPenjualan = transaksi?.reduce((s,r)=>s+(r.total_harga||0),0) || 0;
+      // Total penjualan = sum(subtotal)
+      const totalPenjualan = Array.isArray(transaksiRows) ? transaksiRows.reduce((s, r) => s + Number(r.subtotal || 0), 0) : 0;
 
-        // Pengeluaran Hari Ini
-        let { data: pengeluaran } = await supabaseClient
-          .from("pengeluaran")
-          .select("*")
-          .gte("waktu", today)
-          .lte("waktu", today+" 23:59:59");
-        let totalPengeluaran = pengeluaran?.reduce((s,r)=>s+(r.jumlah||0),0) || 0;
+      // Ambil pengeluaran hari ini
+      const { data: pengeluaranRows } = await supabaseClient
+        .from("pengeluaran")
+        .select("id, kasir_id, waktu, keterangan, jumlah, biaya")
+        .gte("waktu", start)
+        .lte("waktu", end)
+        .order("waktu", { ascending: true });
 
-        let kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
+      // Total pengeluaran = sum(biaya * jumlah) OR sum(biaya) depending on meaning.
+      // Berdasarkan struktur: 'jumlah' = qty, 'biaya' = price per unit (numeric).
+      // Total per pengeluaran = jumlah * biaya. Untuk ringkasan gunakan SUM(jumlah * biaya).
+      const totalPengeluaran = Array.isArray(pengeluaranRows)
+        ? pengeluaranRows.reduce((s, r) => s + (Number(r.biaya || 0) * Number(r.jumlah || 1)), 0)
+        : 0;
 
-        document.getElementById("kasAwal").innerText = "Rp " + kasAwal.toLocaleString();
-        document.getElementById("totalPenjualan").innerText = "Rp " + totalPenjualan.toLocaleString();
-        document.getElementById("totalPengeluaran").innerText = "Rp " + totalPengeluaran.toLocaleString();
-        document.getElementById("kasAkhir").innerText = "Rp " + kasAkhir.toLocaleString();
+      // Hitung kas akhir
+      const kasAkhir = kasAwal + totalPenjualan - totalPengeluaran;
 
-        // Tabel
-        const tbody = document.getElementById("tableBody");
-        tbody.innerHTML = "";
-        transaksi.forEach(tr=>{
+      // Tampilkan ringkasan
+      document.getElementById("kasAwal").innerText = formatRupiah(kasAwal);
+      document.getElementById("totalPenjualan").innerText = formatRupiah(totalPenjualan);
+      document.getElementById("totalPengeluaran").innerText = formatRupiah(totalPengeluaran);
+      document.getElementById("kasAkhir").innerText = formatRupiah(kasAkhir);
+
+      // Prepare dan render tabel: gabungkan transaksiRows (detail) + pengeluaranRows
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      // Render transaksi (detail rows)
+      if(Array.isArray(transaksiRows) && transaksiRows.length > 0){
+        transaksiRows.forEach(tr => {
           const trEl = document.createElement("tr");
           trEl.innerHTML = `
             <td class="border p-2">${new Date(tr.waktu).toLocaleString()}</td>
-            <td class="border p-2">${tr.nama_kasir||"-"}</td>
-            <td class="border p-2">${tr.nama_menu||"-"}</td>
+            <td class="border p-2">${tr.kasir || "-"}</td>
+            <td class="border p-2">${tr.menu || "-"}</td>
             <td class="border p-2">-</td>
-            <td class="border p-2">${tr.jumlah||1}</td>
-            <td class="border p-2">Rp ${(tr.total_harga||0).toLocaleString()}</td>
-            <td class="border p-2 text-center"><button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusTransaksi(${tr.id})">Hapus</button></td>
+            <td class="border p-2">${tr.qty ?? 1}</td>
+            <td class="border p-2">${formatRupiah(tr.harga)}</td>
+            <td class="border p-2">${formatRupiah(tr.subtotal)}</td>
+            <td class="border p-2 text-center">
+              <button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusTransaksi(${tr.transaksi_id})">Hapus</button>
+            </td>
           `;
           tbody.appendChild(trEl);
         });
-        pengeluaran.forEach(pg=>{
+      }
+
+      // Render pengeluaran
+      if(Array.isArray(pengeluaranRows) && pengeluaranRows.length > 0){
+        pengeluaranRows.forEach(pg => {
+          const totalPg = Number(pg.biaya || 0) * Number(pg.jumlah || 1);
+          const namaKasir = (pg.kasir_id && akunMap[pg.kasir_id]) ? akunMap[pg.kasir_id] : "-";
           const trEl = document.createElement("tr");
           trEl.innerHTML = `
             <td class="border p-2">${new Date(pg.waktu).toLocaleString()}</td>
-            <td class="border p-2">${pg.nama_kasir||"-"}</td>
+            <td class="border p-2">${namaKasir}</td>
             <td class="border p-2">-</td>
-            <td class="border p-2">${pg.keterangan||"Pengeluaran"}</td>
-            <td class="border p-2">1</td>
-            <td class="border p-2">Rp ${(pg.jumlah||0).toLocaleString()}</td>
-            <td class="border p-2 text-center"><button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusPengeluaran(${pg.id})">Hapus</button></td>
+            <td class="border p-2">${pg.keterangan || "Pengeluaran"}</td>
+            <td class="border p-2">${pg.jumlah ?? 1}</td>
+            <td class="border p-2">${formatRupiah(pg.biaya)}</td>
+            <td class="border p-2">${formatRupiah(totalPg)}</td>
+            <td class="border p-2 text-center">
+              <button class="bg-red-600 text-white px-3 py-1 rounded" onclick="hapusPengeluaran(${pg.id})">Hapus</button>
+            </td>
           `;
           tbody.appendChild(trEl);
         });
-
-      } catch (err) {
-        console.error(err);
-        showModal("Error","Gagal memuat data!");
       }
-      showLoading(false);
-    }
 
-    // 🔹 Hapus Data
-    async function hapusTransaksi(id){
-      showModal("Konfirmasi","Yakin hapus transaksi ini?",[
-        {text:"Batal",action:()=>hideModal()},
-        {text:"Ya",danger:true,action:async()=>{
-          hideModal(); showLoading(true);
-          await supabaseClient.from("transaksi").delete().eq("id",id);
-          showLoading(false);
-          showModal("Sukses","Transaksi berhasil dihapus!",[{text:"OK",action:()=>{hideModal();loadData();}}]);
-        }}
-      ]);
-    }
-    async function hapusPengeluaran(id){
-      showModal("Konfirmasi","Yakin hapus pengeluaran ini?",[
-        {text:"Batal",action:()=>hideModal()},
-        {text:"Ya",danger:true,action:async()=>{
-          hideModal(); showLoading(true);
-          await supabaseClient.from("pengeluaran").delete().eq("id",id);
-          showLoading(false);
-          showModal("Sukses","Pengeluaran berhasil dihapus!",[{text:"OK",action:()=>{hideModal();loadData();}}]);
-        }}
-      ]);
-    }
+      // Jika tidak ada data
+      if((!transaksiRows || transaksiRows.length === 0) && (!pengeluaranRows || pengeluaranRows.length === 0)){
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center p-4">Tidak ada transaksi atau pengeluaran hari ini.</td></tr>`;
+      }
 
-    // Init
-    checkLogin();
-  </script>
+    } catch (err) {
+      console.error(err);
+      showModal("Error", "Gagal memuat data. Cek console.", [{text:"OK", action:hideModal}]);
+    }
+    showLoading(false);
+  }
+
+  // Hapus transaksi (hapus header transaksi -> cascade delete detail)
+  async function hapusTransaksi(transaksiId){
+    showModal("Konfirmasi", "Yakin hapus transaksi ini? (semua detail akan terhapus)", [
+      { text: "Batal", action: hideModal },
+      { text: "Ya", danger: true, action: async () => {
+          hideModal();
+          showLoading(true);
+          try {
+            await supabaseClient.from("transaksi").delete().eq("id", transaksiId);
+            showModal("Sukses", "Transaksi berhasil dihapus.", [{text:"OK", action: async ()=>{ hideModal(); await loadData(); }}]);
+          } catch(e){
+            console.error(e);
+            showModal("Error","Gagal hapus transaksi.");
+          }
+          showLoading(false);
+        }}
+    ]);
+  }
+
+  // Hapus pengeluaran
+  async function hapusPengeluaran(id){
+    showModal("Konfirmasi", "Yakin hapus pengeluaran ini?", [
+      { text: "Batal", action: hideModal },
+      { text: "Ya", danger: true, action: async () => {
+          hideModal();
+          showLoading(true);
+          try {
+            await supabaseClient.from("pengeluaran").delete().eq("id", id);
+            showModal("Sukses", "Pengeluaran berhasil dihapus.", [{text:"OK", action: async ()=>{ hideModal(); await loadData(); }}]);
+          } catch(e){
+            console.error(e);
+            showModal("Error","Gagal hapus pengeluaran.");
+          }
+          showLoading(false);
+        }}
+    ]);
+  }
+
+  // Start
+  checkLogin();
+</script>
 </body>
 </html>
