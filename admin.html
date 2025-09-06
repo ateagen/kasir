@@ -89,10 +89,10 @@
 </div>
 
 <script>
-// Supabase setup (diperbarui)
+// Supabase setup (perbaikan)
 const SUPABASE_URL = 'https://linujagdxugmocstckmd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInJlZiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Loading popup
 function showLoading(){ document.getElementById('loadingOverlay').style.display='block'; }
@@ -107,7 +107,7 @@ async function loginAdmin(){
   const password = document.getElementById('password').value.trim();
   if(!username || !password){ alert('Isi username & password'); return; }
   showLoading();
-  const { data, error } = await supabase.from('akun').select('*').eq('username', username).eq('password', password).eq('role','admin').limit(1);
+  const { data, error } = await supabaseClient.from('akun').select('*').eq('username', username).eq('password', password).eq('role','admin').limit(1);
   hideLoading();
   if(data && data.length>0){
     document.getElementById('loginPopup').style.display='none';
@@ -121,7 +121,7 @@ async function loginAdmin(){
 // =================== Akun ===================
 async function loadAkun(){
   showLoading();
-  const { data, error } = await supabase.from('akun').select('*');
+  const { data, error } = await supabaseClient.from('akun').select('*');
   hideLoading();
   const tbody = document.querySelector('#akunTable tbody');
   tbody.innerHTML='';
@@ -142,7 +142,7 @@ async function tambahAkun(){
   if(!username || !password){ alert('Isi semua field'); return; }
   if(!confirm('Tambah akun baru?')) return;
   showLoading();
-  const { data, error } = await supabase.from('akun').insert([{username,password,role}]);
+  const { data, error } = await supabaseClient.from('akun').insert([{username,password,role}]);
   hideLoading();
   if(error){ alert('Gagal tambah akun'); } else { alert('Akun berhasil ditambah'); loadAkun(); }
 }
@@ -150,7 +150,7 @@ async function tambahAkun(){
 async function hapusAkun(id){
   if(!confirm('Yakin hapus akun ini?')) return;
   showLoading();
-  const { data, error } = await supabase.from('akun').delete().eq('id',id);
+  const { data, error } = await supabaseClient.from('akun').delete().eq('id',id);
   hideLoading();
   if(error){ alert('Gagal hapus akun'); } else { alert('Akun berhasil dihapus'); loadAkun(); }
 }
@@ -158,7 +158,7 @@ async function hapusAkun(id){
 // =================== Menu ===================
 async function loadMenu(){
   showLoading();
-  const { data, error } = await supabase.from('menu').select('*');
+  const { data, error } = await supabaseClient.from('menu').select('*');
   hideLoading();
   const tbody = document.querySelector('#menuTable tbody');
   tbody.innerHTML='';
@@ -178,7 +178,7 @@ async function tambahMenu(){
   if(!nama || isNaN(harga)){ alert('Isi semua field'); return; }
   if(!confirm('Tambah menu baru?')) return;
   showLoading();
-  const { data, error } = await supabase.from('menu').insert([{nama_menu:nama,harga}]);
+  const { data, error } = await supabaseClient.from('menu').insert([{nama_menu:nama,harga}]);
   hideLoading();
   if(error){ alert('Gagal tambah menu'); } else { alert('Menu berhasil ditambah'); loadMenu(); }
 }
@@ -186,7 +186,7 @@ async function tambahMenu(){
 async function hapusMenu(id){
   if(!confirm('Yakin hapus menu ini?')) return;
   showLoading();
-  const { data, error } = await supabase.from('menu').delete().eq('id',id);
+  const { data, error } = await supabaseClient.from('menu').delete().eq('id',id);
   hideLoading();
   if(error){ alert('Gagal hapus menu'); } else { alert('Menu berhasil dihapus'); loadMenu(); }
 }
@@ -195,8 +195,7 @@ async function hapusMenu(id){
 async function resetKas(){
   if(!confirm('Yakin reset kas ke 0?')) return;
   showLoading();
-  // Hapus semua pengeluaran
-  await supabase.from('pengeluaran').delete().neq('id',0);
+  await supabaseClient.from('pengeluaran').delete().neq('id',0);
   hideLoading();
   alert('Kas di-reset ke 0');
 }
@@ -204,8 +203,8 @@ async function resetKas(){
 async function hapusSemuaTransaksi(){
   if(!confirm('Yakin hapus semua transaksi?')) return;
   showLoading();
-  await supabase.from('transaksi_detail').delete().neq('id',0);
-  await supabase.from('transaksi').delete().neq('id',0);
+  await supabaseClient.from('transaksi_detail').delete().neq('id',0);
+  await supabaseClient.from('transaksi').delete().neq('id',0);
   hideLoading();
   alert('Semua transaksi berhasil dihapus');
 }
