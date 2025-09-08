@@ -5,20 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - POS Resto Bunda Ana</title>
 <style>
-body { font-family: Arial; background-color: #e0f0ff; padding: 20px; }
-button { margin: 5px; padding: 5px 10px; }
-input, select { margin: 5px; padding: 5px; }
-table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-table, th, td { border: 1px solid #aaa; padding: 5px; text-align: left; }
-#loginPopup { position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-              background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; }
-#loginPopup div { background: white; padding: 20px; border-radius: 5px; }
+/* ============================= */
+/* CSS NUANSA BIRU MUDA MODERN  */
+/* ============================= */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e0f7ff;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+h2, h3 {
+    color: #01579b;
+}
+
+button {
+    margin: 5px;
+    padding: 8px 12px;
+    background-color: #4fc3f7;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #0288d1;
+}
+
+input, select {
+    margin: 5px 0;
+    padding: 6px 8px;
+    border-radius: 5px;
+    border: 1px solid #aaa;
+    width: 100%;
+    max-width: 300px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+}
+
+table, th, td {
+    border: 1px solid #aaa;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #b3e5fc;
+}
+
+#loginPopup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex; justify-content: center; align-items: center;
+}
+
+#loginPopup div {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+}
+
 .hidden { display: none; }
+
+/* Responsif */
+@media (max-width: 600px) {
+    input, select, button { width: 100%; }
+}
 </style>
 </head>
 <body>
 
-<!-- Login Popup -->
+<!-- LOGIN POPUP -->
 <div id="loginPopup">
   <div>
     <h2>Admin Login</h2>
@@ -63,130 +131,132 @@ table, th, td { border: 1px solid #aaa; padding: 5px; text-align: left; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script>
-const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
-const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+document.addEventListener('DOMContentLoaded', () => {
+  const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
+  const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-let currentAdmin = null;
+  let currentAdmin = null;
 
-// LOGIN
-document.getElementById('btnLogin').addEventListener('click', async () => {
-  const username = document.getElementById('loginUsername').value;
-  const password = document.getElementById('loginPassword').value;
+  // LOGIN
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
 
-  const { data, error } = await supabase
-    .from('akun')
-    .select('*')
-    .eq('username', username)
-    .eq('password', password)
-    .eq('role', 'admin')
-    .single();
+    const { data, error } = await supabase
+      .from('akun')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .eq('role', 'admin')
+      .single();
 
-  if (error || !data) {
-    alert('Login gagal, pastikan username/password benar dan admin.');
-  } else {
-    currentAdmin = data;
-    document.getElementById('loginPopup').classList.add('hidden');
-    loadAkunTable();
-    loadMenuTable();
+    if (error || !data) {
+      alert('Login gagal, pastikan username/password benar dan admin.');
+    } else {
+      currentAdmin = data;
+      document.getElementById('loginPopup').classList.add('hidden');
+      loadAkunTable();
+      loadMenuTable();
+    }
+  });
+
+  // KEMBALI KE INDEX
+  document.getElementById('btnBack').addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
+
+  // TAMBAH AKUN
+  document.getElementById('btnAddAkun').addEventListener('click', async () => {
+    const username = document.getElementById('newUsername').value;
+    const surname = document.getElementById('newSurname').value;
+    const password = document.getElementById('newPassword').value;
+    const role = document.getElementById('newRole').value;
+
+    const { data, error } = await supabase
+      .from('akun')
+      .insert([{ username, surname, password, role }]);
+
+    if (error) alert('Gagal tambah akun: '+error.message);
+    else loadAkunTable();
+  });
+
+  // LOAD AKUN TABLE
+  async function loadAkunTable() {
+    const { data, error } = await supabase.from('akun').select('*');
+    const tbody = document.querySelector('#akunTable tbody');
+    tbody.innerHTML = '';
+    if (data) {
+      data.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${a.username}</td><td>${a.surname}</td><td>${a.role}</td>
+        <td><button onclick="hapusAkun('${a.id}')">Hapus</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
   }
-});
 
-// KEMBALI KE INDEX
-document.getElementById('btnBack').addEventListener('click', () => {
-  window.location.href = 'index.html';
-});
+  // HAPUS AKUN
+  window.hapusAkun = async function(id) {
+    if (!confirm('Hapus akun ini?')) return;
+    const { error } = await supabase.from('akun').delete().eq('id', id);
+    if (error) alert('Gagal hapus: '+error.message);
+    else loadAkunTable();
+  };
 
-// TAMBAH AKUN
-document.getElementById('btnAddAkun').addEventListener('click', async () => {
-  const username = document.getElementById('newUsername').value;
-  const surname = document.getElementById('newSurname').value;
-  const password = document.getElementById('newPassword').value;
-  const role = document.getElementById('newRole').value;
+  // TAMBAH MENU
+  document.getElementById('btnAddMenu').addEventListener('click', async () => {
+    const nama = document.getElementById('newMenuNama').value;
+    const harga = Number(document.getElementById('newMenuHarga').value);
+    const kategori = document.getElementById('newMenuKategori').value;
 
-  const { data, error } = await supabase
-    .from('akun')
-    .insert([{ username, surname, password, role }]);
+    const { data, error } = await supabase.from('menu').insert([{ nama, harga, kategori }]);
+    if (error) alert('Gagal tambah menu: '+error.message);
+    else loadMenuTable();
+  });
 
-  if (error) alert('Gagal tambah akun: '+error.message);
-  else loadAkunTable();
-});
-
-// LOAD AKUN TABLE
-async function loadAkunTable() {
-  const { data, error } = await supabase.from('akun').select('*');
-  const tbody = document.querySelector('#akunTable tbody');
-  tbody.innerHTML = '';
-  if (data) {
-    data.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${a.username}</td><td>${a.surname}</td><td>${a.role}</td>
-      <td><button onclick="hapusAkun('${a.id}')">Hapus</button></td>`;
-      tbody.appendChild(tr);
-    });
+  // LOAD MENU TABLE
+  async function loadMenuTable() {
+    const { data, error } = await supabase.from('menu').select('*');
+    const tbody = document.querySelector('#menuTable tbody');
+    tbody.innerHTML = '';
+    if (data) {
+      data.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${m.nama}</td><td>${m.harga}</td><td>${m.kategori}</td>
+        <td><button onclick="hapusMenu('${m.id}')">Hapus</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
   }
-}
 
-// HAPUS AKUN
-async function hapusAkun(id) {
-  if (!confirm('Hapus akun ini?')) return;
-  const { error } = await supabase.from('akun').delete().eq('id', id);
-  if (error) alert('Gagal hapus: '+error.message);
-  else loadAkunTable();
-}
+  // HAPUS MENU
+  window.hapusMenu = async function(id) {
+    if (!confirm('Hapus menu ini?')) return;
+    const { error } = await supabase.from('menu').delete().eq('id', id);
+    if (error) alert('Gagal hapus: '+error.message);
+    else loadMenuTable();
+  };
 
-// TAMBAH MENU
-document.getElementById('btnAddMenu').addEventListener('click', async () => {
-  const nama = document.getElementById('newMenuNama').value;
-  const harga = Number(document.getElementById('newMenuHarga').value);
-  const kategori = document.getElementById('newMenuKategori').value;
+  // RESET KAS
+  document.getElementById('btnResetKas').addEventListener('click', async () => {
+    if (!confirm('Reset semua kas ke 0?')) return;
+    const { data: kasData } = await supabase.from('akun').select('id');
+    for (let a of kasData) {
+      await supabase.rpc('reset_kas_awal', { kasir_uuid: a.id, saldo_baru: 0 });
+    }
+    alert('Kas semua kasir telah di-reset ke 0.');
+  });
 
-  const { data, error } = await supabase.from('menu').insert([{ nama, harga, kategori }]);
-  if (error) alert('Gagal tambah menu: '+error.message);
-  else loadMenuTable();
+  // HAPUS SEMUA TRANSAKSI
+  document.getElementById('btnHapusSemuaTransaksi').addEventListener('click', async () => {
+    if (!confirm('Hapus semua transaksi?')) return;
+    const { error } = await supabase.rpc('hapus_semua_transaksi');
+    if (error) alert('Gagal hapus semua transaksi: '+error.message);
+    else alert('Semua transaksi telah dihapus.');
+  });
+
 });
-
-// LOAD MENU TABLE
-async function loadMenuTable() {
-  const { data, error } = await supabase.from('menu').select('*');
-  const tbody = document.querySelector('#menuTable tbody');
-  tbody.innerHTML = '';
-  if (data) {
-    data.forEach(m => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${m.nama}</td><td>${m.harga}</td><td>${m.kategori}</td>
-      <td><button onclick="hapusMenu('${m.id}')">Hapus</button></td>`;
-      tbody.appendChild(tr);
-    });
-  }
-}
-
-// HAPUS MENU
-async function hapusMenu(id) {
-  if (!confirm('Hapus menu ini?')) return;
-  const { error } = await supabase.from('menu').delete().eq('id', id);
-  if (error) alert('Gagal hapus: '+error.message);
-  else loadMenuTable();
-}
-
-// RESET KAS
-document.getElementById('btnResetKas').addEventListener('click', async () => {
-  if (!confirm('Reset semua kas ke 0?')) return;
-  const { data: kasData } = await supabase.from('akun').select('id');
-  for (let a of kasData) {
-    await supabase.rpc('reset_kas_awal', { kasir_uuid: a.id, saldo_baru: 0 });
-  }
-  alert('Kas semua kasir telah di-reset ke 0.');
-});
-
-// HAPUS SEMUA TRANSAKSI
-document.getElementById('btnHapusSemuaTransaksi').addEventListener('click', async () => {
-  if (!confirm('Hapus semua transaksi?')) return;
-  const { error } = await supabase.rpc('hapus_semua_transaksi');
-  if (error) alert('Gagal hapus semua transaksi: '+error.message);
-  else alert('Semua transaksi telah dihapus.');
-});
-
 </script>
 </body>
 </html>
