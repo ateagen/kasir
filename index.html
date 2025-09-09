@@ -4,168 +4,98 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>POS Kasir Resto Bunda Ana</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #e0f2ff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-
-    h1 {
-      margin: 20px 0;
-      color: #0275d8;
-      text-align: center;
-    }
-
-    .grid-container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      width: 90%;
-      max-width: 600px;
-    }
-
-    .grid-item {
-      background-color: #5bc0de;
-      color: white;
-      font-size: 1.5rem;
-      font-weight: bold;
-      text-align: center;
-      padding: 50px 20px;
-      border-radius: 12px;
-      cursor: pointer;
-      flex: 1 1 200px;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-
-    .grid-item:hover {
-      background-color: #31b0d5;
-      transform: scale(1.05);
-    }
-
-    /* Modal overlay */
-    .modal {
-      display: none; /* default hidden */
-      position: fixed;
-      z-index: 10;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background-color: #fff;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .modal input {
-      width: 80%;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 1rem;
-    }
-
-    .modal button {
-      padding: 10px 20px;
-      font-size: 1rem;
-      margin-top: 10px;
-      cursor: pointer;
-      border: none;
-      background-color: #0275d8;
-      color: white;
-      border-radius: 6px;
-      transition: background-color 0.2s;
-    }
-
-    .modal button:hover {
-      background-color: #025aa5;
-    }
-
-    .error {
-      color: red;
-      margin-top: 5px;
-    }
-
-    @media (max-width: 500px) {
-      .grid-item {
-        padding: 40px 10px;
-        font-size: 1.2rem;
-      }
-    }
+    body { background-color: #e0f2fe; } /* Biru muda */
+    .grid-card:hover { transform: scale(1.05); transition: 0.3s; cursor: pointer; }
+    .modal-bg { background-color: rgba(0,0,0,0.5); }
   </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-  <h1>Selamat datang di POS Kasir Resto Bunda Ana</h1>
+  <!-- Sambutan -->
+  <h1 class="text-3xl md:text-4xl font-bold text-center mb-8 text-sky-700">
+    Selamat datang di POS Kasir Resto Bunda Ana
+  </h1>
 
-  <div class="grid-container">
-    <div class="grid-item" id="kasirBtn">Kasir</div>
-    <div class="grid-item" id="adminBtn">Admin</div>
-  </div>
-
-  <!-- Modal Login Admin -->
-  <div id="adminModal" class="modal">
-    <div class="modal-content">
-      <h2>Login Admin</h2>
-      <input type="text" id="username" placeholder="Username" />
-      <input type="password" id="password" placeholder="Password" />
-      <div class="error" id="loginError"></div>
-      <button id="loginSubmit">Login</button>
+  <!-- Grid navigasi -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+    <!-- Kasir -->
+    <div id="kasirBtn" class="grid-card bg-white shadow-md rounded-2xl flex items-center justify-center p-10 text-xl font-semibold text-sky-700">
+      Kasir
+    </div>
+    <!-- Admin -->
+    <div id="adminBtn" class="grid-card bg-white shadow-md rounded-2xl flex items-center justify-center p-10 text-xl font-semibold text-sky-700">
+      Admin
     </div>
   </div>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+  <!-- Modal Login Admin -->
+  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center modal-bg z-50">
+    <div class="bg-white rounded-2xl shadow-lg p-6 w-11/12 max-w-md relative">
+      <h2 class="text-2xl font-bold text-center mb-4 text-sky-700">Login Admin</h2>
+      <div class="flex flex-col gap-4">
+        <input id="username" type="text" placeholder="Username" class="border p-2 rounded-md w-full">
+        <input id="password" type="password" placeholder="Password" class="border p-2 rounded-md w-full">
+        <button id="loginSubmit" class="bg-sky-600 text-white p-2 rounded-md hover:bg-sky-700">Login</button>
+        <p id="loginError" class="text-red-500 text-sm text-center hidden">Username atau password salah</p>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // === Supabase setup ===
-    const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // =========================
+    // Supabase setup
+    // =========================
+    const SUPABASE_URL = "https://linujagdxugmocstckmd.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const kasirBtn = document.getElementById('kasirBtn');
+    // =========================
+    // Session check
+    // =========================
+    window.addEventListener('load', () => {
+      const adminSession = localStorage.getItem('adminSession');
+      if (adminSession === 'true') {
+        window.location.href = 'admin.html';
+      }
+    });
+
+    // =========================
+    // Open modal
+    // =========================
     const adminBtn = document.getElementById('adminBtn');
-    const adminModal = document.getElementById('adminModal');
-    const loginSubmit = document.getElementById('loginSubmit');
-    const loginError = document.getElementById('loginError');
+    const loginModal = document.getElementById('loginModal');
+    adminBtn.addEventListener('click', () => loginModal.classList.remove('hidden'));
 
-    // === Kasir button: langsung ke kasir.html ===
+    // =========================
+    // Close modal on click outside
+    // =========================
+    loginModal.addEventListener('click', (e) => {
+      if (e.target === loginModal) loginModal.classList.add('hidden');
+    });
+
+    // =========================
+    // Kasir button
+    // =========================
+    const kasirBtn = document.getElementById('kasirBtn');
     kasirBtn.addEventListener('click', () => {
       window.location.href = 'kasir.html';
     });
 
-    // === Admin button: munculkan modal login ===
-    adminBtn.addEventListener('click', () => {
-      console.log("Grid Admin diklik"); // debug
-      adminModal.style.display = 'block';
-    });
-
-    // Session check: jika sudah login, langsung ke admin.html
-    if(localStorage.getItem('adminLoggedIn') === 'true') {
-      window.location.href = 'admin.html';
-    }
-
-    // === Login admin ===
+    // =========================
+    // Login submit
+    // =========================
+    const loginSubmit = document.getElementById('loginSubmit');
     loginSubmit.addEventListener('click', async () => {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
-      loginError.textContent = '';
+      const loginError = document.getElementById('loginError');
 
-      if(!username || !password){
-        loginError.textContent = 'Isi username dan password!';
+      if (!username || !password) {
+        loginError.textContent = "Username dan password wajib diisi";
+        loginError.classList.remove('hidden');
         return;
       }
 
@@ -175,24 +105,18 @@
         .select('*')
         .eq('username', username)
         .eq('password', password)
+        .limit(1)
         .single();
 
-      console.log("Login response:", data, error); // debug
-
-      if(error || !data){
-        loginError.textContent = 'Username atau password salah!';
+      if (error || !data) {
+        loginError.textContent = "Username atau password salah";
+        loginError.classList.remove('hidden');
       } else {
-        localStorage.setItem('adminLoggedIn', 'true');
+        // Sukses
+        localStorage.setItem('adminSession', 'true');
         window.location.href = 'admin.html';
       }
     });
-
-    // Tutup modal jika klik di luar
-    window.onclick = function(event) {
-      if(event.target === adminModal) {
-        adminModal.style.display = "none";
-      }
-    }
   </script>
 
 </body>
