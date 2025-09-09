@@ -49,8 +49,9 @@
       transform: scale(1.05);
     }
 
+    /* Modal overlay */
     .modal {
-      display: none;
+      display: none; /* default hidden */
       position: fixed;
       z-index: 10;
       left: 0;
@@ -141,13 +142,14 @@
     const loginSubmit = document.getElementById('loginSubmit');
     const loginError = document.getElementById('loginError');
 
-    // === Kasir: langsung ke kasir.html ===
+    // === Kasir button: langsung ke kasir.html ===
     kasirBtn.addEventListener('click', () => {
       window.location.href = 'kasir.html';
     });
 
-    // === Admin: munculkan modal login ===
+    // === Admin button: munculkan modal login ===
     adminBtn.addEventListener('click', () => {
+      console.log("Grid Admin diklik"); // debug
       adminModal.style.display = 'block';
     });
 
@@ -174,6 +176,8 @@
         .eq('username', username)
         .eq('password', password)
         .single();
+
+      console.log("Login response:", data, error); // debug
 
       if(error || !data){
         loginError.textContent = 'Username atau password salah!';
