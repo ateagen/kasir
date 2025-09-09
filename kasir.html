@@ -1,236 +1,228 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Kasir - Bunda Ana</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <style>
-    /* default: struk tidak tampil di layar */
-    #struk {
-      display: none;
-    }
-    @media print {
-      body * { visibility: hidden; }
-      #struk, #struk * { visibility: visible; }
-      #struk {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 50mm;  /* ⚡ ubah jadi 50mm untuk printer thermal 58mm */
-        display: block;
-        font-size: 12px; /* biar rapi dan pas di kertas kecil */
-      }
-      #struk h2 {
-        font-size: 14px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Kasir - Resto Bunda Ana</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Arial, sans-serif; background-color: #e0f0ff; color: #333; }
+  header { background-color: #b3e0ff; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; color: #064273; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .container { display: flex; height: calc(100vh - 60px); }
+  .sidebar { width: 200px; background-color: #a0d8ff; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+  .sidebar button { padding: 0.7rem; border: none; border-radius: 8px; background-color: #7ecfff; cursor: pointer; font-weight: bold; transition: 0.2s; }
+  .sidebar button:hover { background-color: #64c8ff; }
+  .main { flex: 1; padding: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; overflow-y: auto; justify-content: flex-start; align-content: flex-start; }
+  .menu-card { width: 120px; height: 120px; background-color: #d0f0ff; border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; text-align: center; font-weight: bold; transition: 0.2s; box-shadow: 0 3px 6px rgba(0,0,0,0.1);}
+  .menu-card:hover { background-color: #a0d8ff; transform: translateY(-3px); }
+  .sidebar-right { width: 300px; background-color: #cceeff; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; }
+  .order-item { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .total { font-weight: bold; margin-top: 1rem; }
+  .btn-pay, .btn-reset { margin-top: 0.5rem; padding: 0.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+  .btn-pay { background-color: #4CAF50; color: white; }
+  .btn-pay:hover { background-color: #45a049; }
+  .btn-reset { background-color: #f44336; color: white; }
+  .btn-reset:hover { background-color: #da190b; }
+  /* Pop-up loading */
+  .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; display: none; z-index: 999; }
+  .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  /* Pop-up modal */
+  .modal { display: none; position: fixed; z-index: 1000; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.4); }
+  .modal-content { background-color: #fefefe; margin: 15% auto; padding: 1rem; border: 1px solid #888; width: 300px; border-radius: 10px; text-align: center; }
+  .modal-content button { margin: 0.5rem; padding: 0.5rem 1rem; }
+  /* Input form pengeluaran */
+  .expense-form { display: flex; flex-direction: column; gap: 0.5rem; background-color: #d0f0ff; padding: 0.5rem; border-radius: 8px; }
+  .expense-form input { padding: 0.5rem; border-radius: 6px; border: 1px solid #888; }
+  @media(max-width: 900px) {
+    .container { flex-direction: column; }
+    .sidebar, .sidebar-right { width: 100%; display: flex; flex-direction: row; overflow-x: auto; }
+    .sidebar button { flex: 1; margin-right: 0.5rem; }
+  }
+</style>
 </head>
-<body class="bg-gray-100 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-xl font-bold">Kasir - Bunda Ana</h1>
-    <a href="index.html" class="bg-gray-500 text-white px-3 py-1 rounded">Kembali</a>
+<body>
+<header>
+  <button onclick="window.location.href='index.html'" style="margin-right:1rem; padding:0.3rem 0.6rem; border:none; border-radius:5px; cursor:pointer;">Kembali</button>
+  POS Kasir - Resto Bunda Ana
+</header>
+<div class="container">
+  <div class="sidebar">
+    <button onclick="loadMenu('Semua')">Semua Menu</button>
+    <button onclick="loadMenu('Makanan')">Makanan</button>
+    <button onclick="loadMenu('Minuman')">Minuman</button>
+    <button onclick="loadMenu('Cemilan')">Cemilan</button>
+    <button onclick="showExpenseForm()">Input Pengeluaran</button>
   </div>
-
-  <!-- Total penjualan hari ini -->
-  <div class="mb-4">
-    <p class="text-lg font-semibold">Total Penjualan Hari Ini: Rp <span id="totalHariIni">0</span></p>
+  <div class="main" id="main-content">
+    <!-- Grid menu atau form pengeluaran akan muncul di sini -->
   </div>
+  <div class="sidebar-right">
+    <h3>Daftar Pesanan</h3>
+    <div id="order-list"></div>
+    <div class="total" id="total-amount">Total: Rp 0</div>
+    <input type="number" id="input-bayar" placeholder="Bayar" />
+    <div class="total" id="kembalian">Kembalian: Rp 0</div>
+    <button class="btn-reset" onclick="resetOrder()">Reset Pesanan</button>
+    <button class="btn-pay" onclick="payOrder()">Bayar</button>
+  </div>
+</div>
 
-  <!-- Grid Menu -->
-  <div id="menuGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
+<!-- Modal konfirmasi cetak -->
+<div id="modal-print" class="modal">
+  <div class="modal-content">
+    <p>Cetak struk?</p>
+    <button onclick="confirmPrint(true)">Ya</button>
+    <button onclick="confirmPrint(false)">Tidak</button>
+  </div>
+</div>
 
-  <!-- Daftar Pesanan -->
-  <div class="bg-white p-4 rounded shadow mb-4">
-    <h2 class="font-semibold mb-2">Daftar Pesanan</h2>
-    <ul id="daftarPesanan" class="mb-2"></ul>
-    <p class="font-bold">Total: Rp <span id="totalPesanan">0</span></p>
-    <div class="mt-2">
-      <label class="block">Bayar:</label>
-      <input type="number" id="inputBayar" class="border p-1 w-full mb-2">
-      <p>Kembalian: Rp <span id="kembalian">0</span></p>
+<!-- Loading spinner -->
+<div id="loading" class="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+// ================= Supabase Setup =================
+const supabaseUrl = 'https://ekggvrzuguczvdvvzmri.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZ2d2cnp1Z3ZjenZkdnZ6bXJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczOTEyOTksImV4cCI6MjA3Mjk2NzI5OX0.S0pdzwQbC1poh3BbwtupFxSDxQ_6FBdbhGsU2DNexfQ'
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// ================= State =================
+let menuData = []
+let orders = []
+
+// ================= Loading =================
+function showLoading(show){
+  document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// ================= Load Menu =================
+async function loadMenu(kategori){
+  showLoading(true)
+  let { data, error } = await supabase.from('menu').select('*')
+  if(error){ alert('Error: '+error.message); showLoading(false); return; }
+  if(kategori !== 'Semua') data = data.filter(m=> m.kategori === kategori)
+  menuData = data
+  renderMenu()
+  showLoading(false)
+}
+
+// ================= Render Menu Grid =================
+function renderMenu(){
+  const main = document.getElementById('main-content')
+  main.innerHTML = ''
+  menuData.forEach(item=>{
+    const div = document.createElement('div')
+    div.className = 'menu-card'
+    div.innerText = item.nama + '\nRp '+item.harga
+    div.onclick = ()=> addOrder(item)
+    main.appendChild(div)
+  })
+}
+
+// ================= Orders =================
+function addOrder(item){
+  const existing = orders.find(o=>o.id===item.id)
+  if(existing){ existing.qty +=1 } 
+  else{ orders.push({id:item.id, name:item.nama, price:item.harga, qty:1}) }
+  renderOrders()
+}
+
+function renderOrders(){
+  const list = document.getElementById('order-list')
+  list.innerHTML = ''
+  let total = 0
+  orders.forEach(o=>{
+    const div = document.createElement('div')
+    div.className = 'order-item'
+    const subtotal = o.price * o.qty
+    div.innerHTML = `${o.name} x${o.qty} = Rp ${subtotal}`
+    list.appendChild(div)
+    total += subtotal
+  })
+  document.getElementById('total-amount').innerText = 'Total: Rp '+total
+  calcKembalian()
+}
+
+function calcKembalian(){
+  const bayar = parseInt(document.getElementById('input-bayar').value) || 0
+  let total = orders.reduce((a,o)=>a+o.price*o.qty,0)
+  document.getElementById('kembalian').innerText = 'Kembalian: Rp '+Math.max(0,bayar-total)
+}
+
+// ================= Reset =================
+function resetOrder(){
+  if(confirm('Reset semua pesanan?')){
+    orders=[]
+    renderOrders()
+    document.getElementById('input-bayar').value=''
+    document.getElementById('kembalian').innerText='Kembalian: Rp 0'
+  }
+}
+
+// ================= Pay Order =================
+async function payOrder(){
+  if(orders.length===0){ alert('Pesanan kosong'); return; }
+  const bayar = parseInt(document.getElementById('input-bayar').value) || 0
+  let total = orders.reduce((a,o)=>a+o.price*o.qty,0)
+  if(bayar < total){ alert('Pembayaran kurang'); return; }
+  // Simpan transaksi
+  showLoading(true)
+  const { data: trx, error: e1 } = await supabase.from('transaksi').insert([{ total_penjualan: total, total_pengeluaran: 0 }]).select().single()
+  if(e1){ alert('Error transaksi: '+e1.message); showLoading(false); return; }
+  const details = orders.map(o=>({ id_transaksi: trx.id, tipe:'Menu', nama_item:o.name, jumlah:o.qty, harga:o.price, debit:o.price*o.qty, kredit:0 }))
+  const { error: e2 } = await supabase.from('transaksi_detail').insert(details)
+  if(e2){ alert('Error detail: '+e2.message); showLoading(false); return; }
+  showLoading(false)
+  document.getElementById('modal-print').style.display='block'
+}
+
+// ================= Modal Print =================
+function confirmPrint(doPrint){
+  document.getElementById('modal-print').style.display='none'
+  if(doPrint){
+    let struk='POS Resto Bunda Ana\n\nDaftar Pesanan:\n'
+    orders.forEach(o=>{ struk+=`${o.name} x${o.qty} = Rp ${o.price*o.qty}\n` })
+    let total = orders.reduce((a,o)=>a+o.price*o.qty,0)
+    struk+='\nTotal: Rp '+total+'\n'
+    window.print() // Bisa diatur ke printer 58mm nanti
+  }
+  resetOrder()
+}
+
+// ================= Input Pengeluaran =================
+function showExpenseForm(){
+  const main = document.getElementById('main-content')
+  main.innerHTML = `
+    <div class="expense-form">
+      <input type="text" id="exp-ket" placeholder="Keterangan"/>
+      <input type="number" id="exp-jml" placeholder="Jumlah"/>
+      <input type="number" id="exp-harga" placeholder="Harga"/>
+      <button onclick="submitExpense()">Submit</button>
     </div>
-    <div class="flex gap-2 mt-2">
-      <button onclick="bayar()" class="bg-green-500 text-white px-3 py-1 rounded">Bayar</button>
-      <button onclick="resetPesanan()" class="bg-red-500 text-white px-3 py-1 rounded">Batal Pesanan</button>
-    </div>
-  </div>
+  `
+}
 
-  <!-- Popup konfirmasi cetak -->
-  <div id="popupCetak" class="hidden fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white p-4 rounded shadow w-64">
-      <p class="mb-4">Cetak struk sekarang?</p>
-      <div class="flex justify-between">
-        <button onclick="cetakStruk()" class="bg-blue-500 text-white px-3 py-1 rounded">Ya</button>
-        <button onclick="tutupPopup(false)" class="bg-gray-500 text-white px-3 py-1 rounded">Tidak</button>
-      </div>
-    </div>
-  </div>
+async function submitExpense(){
+  const ket = document.getElementById('exp-ket').value
+  const jml = parseInt(document.getElementById('exp-jml').value)||0
+  const harga = parseInt(document.getElementById('exp-harga').value)||0
+  if(!ket || jml<=0 || harga<=0){ alert('Isi semua field dengan benar'); return; }
+  showLoading(true)
+  const { error } = await supabase.from('pengeluaran').insert([{ keterangan: ket, jumlah: jml, harga: harga }])
+  showLoading(false)
+  if(error){ alert('Error: '+error.message); return; }
+  alert('Pengeluaran tersimpan')
+  document.getElementById('main-content').innerHTML=''
+}
 
-  <!-- Struk -->
-  <div id="struk">
-    <h2 class="text-center font-bold">Bunda Ana</h2>
-    <p>Tanggal: <span id="tanggalStruk"></span></p>
-    <hr>
-    <ul id="strukPesanan"></ul>
-    <hr>
-    <p>Total: Rp <span id="strukTotal"></span></p>
-    <p>Bayar: Rp <span id="strukBayar"></span></p>
-    <p>Kembalian: Rp <span id="strukKembalian"></span></p>
-    <hr>
-    <p class="text-center">Terima kasih</p>
-  </div>
+loadMenu('Semua')
 
-<script>
-  const SUPABASE_URL = "https://flrxlfxomfvcdjukedzd.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZscnhsZnhvbWZ2Y2RqdWtlZHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3MTkxNzUsImV4cCI6MjA3MjI5NTE3NX0.-zrx2JWMw03gDjLnrEa_WxQyiUOPdZ_WFYiE7VA1KhY";
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let pesanan = [];
-  let total = 0;
-
-  function updateTanggal() {
-    const now = new Date();
-    document.getElementById("tanggalStruk").innerText = now.toLocaleString();
-  }
-
-  // Ambil menu dari Supabase
-  async function loadMenu() {
-    let { data, error } = await supabaseClient.from("menu").select("*");
-    if (error) {
-      console.error(error);
-      return;
-    }
-    const menuGrid = document.getElementById("menuGrid");
-    menuGrid.innerHTML = "";
-    data.forEach(m => {
-      const btn = document.createElement("button");
-      btn.className = "bg-white p-4 rounded shadow hover:bg-blue-100";
-      btn.innerText = m.nama + "\nRp " + m.harga;
-      btn.onclick = () => tambahPesanan(m);
-      menuGrid.appendChild(btn);
-    });
-  }
-
-  function tambahPesanan(menu) {
-    let item = pesanan.find(p => p.id === menu.id);
-    if (item) {
-      item.qty++;
-    } else {
-      pesanan.push({id: menu.id, nama: menu.nama, harga: menu.harga, qty: 1});
-    }
-    renderPesanan();
-  }
-
-  function renderPesanan() {
-    const daftar = document.getElementById("daftarPesanan");
-    daftar.innerHTML = "";
-    total = 0;
-    pesanan.forEach(p => {
-      let li = document.createElement("li");
-      let subtotal = p.qty * p.harga;
-      li.innerText = `${p.nama} x${p.qty} = Rp ${subtotal}`;
-      daftar.appendChild(li);
-      total += subtotal;
-    });
-    document.getElementById("totalPesanan").innerText = total;
-    hitungKembalian();
-  }
-
-  function hitungKembalian() {
-    let bayar = parseInt(document.getElementById("inputBayar").value) || 0;
-    let kembalian = bayar - total;
-    document.getElementById("kembalian").innerText = kembalian >= 0 ? kembalian : 0;
-  }
-  document.getElementById("inputBayar").addEventListener("input", hitungKembalian);
-
-  async function bayar() {
-    if (pesanan.length === 0) {
-      alert("Belum ada pesanan!");
-      return;
-    }
-    let bayarVal = parseInt(document.getElementById("inputBayar").value) || 0;
-    if (bayarVal < total) {
-      alert("Uang bayar kurang!");
-      return;
-    }
-
-    let { error } = await supabaseClient.from("transaksi").insert([
-      {
-        kasir_id: null, // tidak pakai login kasir
-        total: total,
-        bayar: bayarVal,
-        kembalian: bayarVal - total,
-        detail: pesanan
-      }
-    ]);
-
-    if (error) {
-      alert("Gagal simpan transaksi!");
-      console.error(error);
-      return;
-    }
-
-    // update struk
-    updateTanggal();
-    document.getElementById("strukPesanan").innerHTML = pesanan.map(
-      p => `<li>${p.nama} x${p.qty} = Rp ${p.qty*p.harga}</li>`
-    ).join("");
-    document.getElementById("strukTotal").innerText = total;
-    document.getElementById("strukBayar").innerText = bayarVal;
-    document.getElementById("strukKembalian").innerText = bayarVal - total;
-
-    // popup konfirmasi
-    document.getElementById("popupCetak").classList.remove("hidden");
-
-    // refresh total hari ini
-    loadTotalHariIni();
-  }
-
-  function cetakStruk() {
-    document.getElementById("popupCetak").classList.add("hidden");
-    window.print();
-    resetPesanan();
-  }
-
-  function tutupPopup(reset=true) {
-    document.getElementById("popupCetak").classList.add("hidden");
-    if (reset) resetPesanan();
-  }
-
-  function resetPesanan() {
-    pesanan = [];
-    total = 0;
-    document.getElementById("daftarPesanan").innerHTML = "";
-    document.getElementById("totalPesanan").innerText = "0";
-    document.getElementById("inputBayar").value = "";
-    document.getElementById("kembalian").innerText = "0";
-  }
-
-  // Hitung total penjualan hari ini
-  async function loadTotalHariIni() {
-    let today = new Date().toISOString().split("T")[0];
-    let { data, error } = await supabaseClient
-      .from("transaksi")
-      .select("total")
-      .gte("created_at", today + "T00:00:00")
-      .lte("created_at", today + "T23:59:59");
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-    let totalHariIni = data.reduce((sum, t) => sum + parseFloat(t.total), 0);
-    document.getElementById("totalHariIni").innerText = totalHariIni;
-  }
-
-  // load saat halaman dibuka
-  loadMenu();
-  loadTotalHariIni();
+// ================= Hitung kembalian saat input bayar =================
+document.getElementById('input-bayar').addEventListener('input', calcKembalian)
 </script>
-
 </body>
 </html>
