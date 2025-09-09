@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>POS Kasir Resto Bunda Ana</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background-color: #e0f2fe; } /* Biru muda */
     .grid-card:hover { transform: scale(1.05); transition: 0.3s; cursor: pointer; }
-    .modal-bg { background-color: rgba(0,0,0,0.5); }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -31,91 +29,15 @@
     </div>
   </div>
 
-  <!-- Modal Login Admin -->
-  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center modal-bg z-50">
-    <div class="bg-white rounded-2xl shadow-lg p-6 w-11/12 max-w-md relative">
-      <h2 class="text-2xl font-bold text-center mb-4 text-sky-700">Login Admin</h2>
-      <div class="flex flex-col gap-4">
-        <input id="username" type="text" placeholder="Username" class="border p-2 rounded-md w-full">
-        <input id="password" type="password" placeholder="Password" class="border p-2 rounded-md w-full">
-        <button id="loginSubmit" class="bg-sky-600 text-white p-2 rounded-md hover:bg-sky-700">Login</button>
-        <p id="loginError" class="text-red-500 text-sm text-center hidden">Username atau password salah</p>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // =========================
-    // Supabase setup
-    // =========================
-    const SUPABASE_URL = "https://linujagdxugmocstckmd.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // =========================
-    // Session check
-    // =========================
-    window.addEventListener('load', () => {
-      const adminSession = localStorage.getItem('adminSession');
-      if (adminSession === 'true') {
-        window.location.href = 'admin.html';
-      }
-    });
-
-    // =========================
-    // Open modal
-    // =========================
-    const adminBtn = document.getElementById('adminBtn');
-    const loginModal = document.getElementById('loginModal');
-    adminBtn.addEventListener('click', () => loginModal.classList.remove('hidden'));
-
-    // =========================
-    // Close modal on click outside
-    // =========================
-    loginModal.addEventListener('click', (e) => {
-      if (e.target === loginModal) loginModal.classList.add('hidden');
-    });
-
-    // =========================
-    // Kasir button
-    // =========================
-    const kasirBtn = document.getElementById('kasirBtn');
-    kasirBtn.addEventListener('click', () => {
+    // Tombol Kasir → kasir.html
+    document.getElementById('kasirBtn').addEventListener('click', () => {
       window.location.href = 'kasir.html';
     });
 
-    // =========================
-    // Login submit
-    // =========================
-    const loginSubmit = document.getElementById('loginSubmit');
-    loginSubmit.addEventListener('click', async () => {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const loginError = document.getElementById('loginError');
-
-      if (!username || !password) {
-        loginError.textContent = "Username dan password wajib diisi";
-        loginError.classList.remove('hidden');
-        return;
-      }
-
-      // Cek akun di Supabase
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('username', username)
-        .eq('password', password)
-        .limit(1)
-        .single();
-
-      if (error || !data) {
-        loginError.textContent = "Username atau password salah";
-        loginError.classList.remove('hidden');
-      } else {
-        // Sukses
-        localStorage.setItem('adminSession', 'true');
-        window.location.href = 'admin.html';
-      }
+    // Tombol Admin → admin.html (login popup akan ada di admin.html)
+    document.getElementById('adminBtn').addEventListener('click', () => {
+      window.location.href = 'admin.html';
     });
   </script>
 
