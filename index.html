@@ -1,74 +1,325 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POS Kasir - Resto Bunda Ana</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom right, #b3e5fc, #e1f5fe);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #01579b;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS Kasir Bunda Ana</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    h1 {
-      margin-bottom: 30px;
-      font-size: 2rem;
-      font-weight: bold;
-    }
+const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFubCI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI'
+const supabase = createClient(supabaseUrl, supabaseKey)
 
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 20px;
-      width: 90%;
-      max-width: 600px;
-    }
+let currentUser=null, currentRole=null, cart=[]
 
-    .grid-item {
-      background-color: #4fc3f7;
-      color: white;
-      padding: 30px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: transform 0.2s, background-color 0.3s;
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
+function showPopup(message){
+  const popup=document.getElementById('popup')
+  popup.textContent=message
+  popup.classList.remove('hidden')
+  setTimeout(()=>popup.classList.add('hidden'),2000)
+}
 
-    .grid-item:hover {
-      background-color: #0288d1;
-      transform: translateY(-5px);
-    }
+function formatRp(value){
+  return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR'}).format(value)
+}
 
-    footer {
-      margin-top: 40px;
-      font-size: 0.9rem;
-      color: #0277bd;
-    }
-  </style>
+// ===== LOGIN =====
+async function login(){
+  const username=document.getElementById('username').value.trim()
+  const password=document.getElementById('password').value.trim()
+  if(!username||!password){ showPopup('Isi username & password'); return }
+
+  const { data, error } = await supabase.from('accounts').select('*').eq('username',username).single()
+  if(error || !data){ showPopup('User tidak ditemukan'); return }
+  if(password!==data.password){ showPopup('Password salah'); return } // NOTE: replace with hash check
+  currentUser=data.username
+  currentRole=data.role
+  showDashboard()
+}
+
+function logout(){
+  currentUser=null; currentRole=null; cart=[]
+  document.getElementById('loginSection').classList.remove('hidden')
+  document.getElementById('dashboard').classList.add('hidden')
+}
+
+function showDashboard(){
+  document.getElementById('loginSection').classList.add('hidden')
+  document.getElementById('dashboard').classList.remove('hidden')
+  document.getElementById('adminSection').classList.toggle('hidden',currentRole!=='admin')
+  loadMenus(); loadAccounts(); loadTransactions(); loadSummary()
+}
+
+// ===== ADMIN =====
+async function addAccount(){
+  const u=document.getElementById('adminUsername').value.trim()
+  const p=document.getElementById('adminPassword').value.trim()
+  const r=document.getElementById('adminRole').value
+  if(!u||!p){ showPopup('Isi username & password'); return }
+  const { data, error } = await supabase.rpc('create_user',{p_username:u,p_password:p,p_role:r})
+  if(error){ showPopup('Gagal tambah akun') }else{ showPopup('Akun ditambah'); loadAccounts() }
+}
+
+async function deleteAccount(id){
+  if(!confirm('Yakin ingin hapus akun?')) return
+  await supabase.from('accounts').delete().eq('id',id)
+  loadAccounts()
+}
+
+async function addMenu(){
+  const name=document.getElementById('menuName').value.trim()
+  const price=parseFloat(document.getElementById('menuPrice').value)
+  const category=document.getElementById('menuCategory').value
+  if(!name||!price){ showPopup('Isi nama & harga'); return }
+  await supabase.from('menus').insert({name,price,category})
+  showPopup('Menu ditambah'); loadMenus()
+}
+
+async function deleteMenu(id){
+  if(!confirm('Yakin ingin hapus menu?')) return
+  await supabase.from('menus').delete().eq('id',id)
+  loadMenus()
+}
+
+async function loadAccounts(){
+  if(currentRole!=='admin') return
+  const { data } = await supabase.from('accounts').select('*')
+  const tbody=document.getElementById('tableAccounts')
+  tbody.innerHTML=''
+  data.forEach(u=>{
+    const tr=document.createElement('tr')
+    tr.innerHTML=`<td>${u.username}</td><td>${u.role}</td><td><button class="bg-red-500 text-white px-2 rounded" onclick="deleteAccount('${u.id}')">Hapus</button></td>`
+    tbody.appendChild(tr)
+  })
+}
+
+// ===== MENU =====
+async function loadMenus(){
+  const { data } = await supabase.from('menus').select('*')
+  const tbody=document.getElementById('tableMenus')
+  tbody.innerHTML=''
+  const menuList=document.getElementById('menuList')
+  menuList.innerHTML=''
+  data.forEach(m=>{
+    const tr=document.createElement('tr')
+    tr.innerHTML=`<td>${m.name}</td><td>${formatRp(m.price)}</td><td>${m.category}</td><td><button class="bg-red-500 text-white px-2 rounded" onclick="deleteMenu('${m.id}')">Hapus</button></td>`
+    tbody.appendChild(tr)
+    const btn=document.createElement('button')
+    btn.textContent=`${m.name} (${m.category})`
+    btn.className='bg-blue-500 text-white px-2 py-1 m-1 rounded'
+    btn.onclick=()=>addToCart(m)
+    menuList.appendChild(btn)
+  })
+}
+
+// ===== KASIR =====
+function addToCart(menu){
+  const idx=cart.findIndex(c=>c.id===menu.id)
+  if(idx>=0) cart[idx].quantity+=1
+  else cart.push({...menu,quantity:1})
+  renderCart()
+}
+
+function renderCart(){
+  const tbody=document.getElementById('cartBody')
+  tbody.innerHTML=''
+  let total=0
+  cart.forEach(c=>{
+    const subtotal=c.quantity*c.price
+    total+=subtotal
+    const tr=document.createElement('tr')
+    tr.innerHTML=`<td>${c.name}</td><td>${c.quantity}</td><td>${formatRp(c.price)}</td><td>${formatRp(subtotal)}</td>`
+    tbody.appendChild(tr)
+  })
+  document.getElementById('totalBiaya').textContent=formatRp(total)
+}
+
+async function getCurrentUserId(){
+  const { data } = await supabase.from('accounts').select('id').eq('username',currentUser).single()
+  return data.id
+}
+
+// ===== CETAK STRUK =====
+function openStruk(transaksi){
+  const content = document.getElementById('strukContent')
+  let lines = []
+  lines.push('POS Kasir Bunda Ana')
+  lines.push('Tanggal: '+new Date(transaksi.tanggal).toLocaleString())
+  lines.push('Kasir: '+(transaksi.kasir??'-'))
+  lines.push('--------------------------')
+  transaksi.items.forEach(i=>{ lines.push(`${i.name} x${i.quantity} ${formatRp(i.price*i.quantity)}`) })
+  lines.push('--------------------------')
+  lines.push('Total: '+formatRp(transaksi.total))
+  lines.push('Bayar: '+formatRp(transaksi.bayar))
+  lines.push('Kembalian: '+formatRp(transaksi.kembalian))
+  lines.push('--------------------------')
+  lines.push('Terima kasih!')
+  content.textContent = lines.join('\n')
+  document.getElementById('printModal').classList.remove('hidden')
+}
+
+function closeStruk(){ document.getElementById('printModal').classList.add('hidden') }
+
+function doPrint(){
+  const printWindow = window.open('','_blank','width=240,height=600')
+  printWindow.document.write('<pre style="font-family:monospace;font-size:12px;">'+document.getElementById('strukContent').textContent+'</pre>')
+  printWindow.document.close()
+  printWindow.print()
+  closeStruk()
+}
+
+// ===== BAYAR =====
+async function bayar(){
+  const bayarInput=parseFloat(document.getElementById('inputBayar').value)
+  if(!cart.length||!bayarInput){ showPopup('Isi pesanan & bayar'); return }
+  const total=cart.reduce((s,c)=>s+c.quantity*c.price,0)
+  const kembalian=bayarInput-total
+  const { data:trx } = await supabase.from('transactions').insert({cashier_id:(await getCurrentUserId()),total,bayar:bayarInput,kembalian}).select().single()
+  for(const c of cart) await supabase.from('transaction_items').insert({transaction_id:trx.id,menu_id:c.id,quantity:c.quantity,price:c.price})
+  showPopup('Transaksi berhasil')
+  const { data:items } = await supabase.from('transaction_items_view').select('*').eq('transaction_id',trx.id)
+  openStruk({...trx,items})
+  cart=[]; renderCart(); document.getElementById('inputBayar').value=''
+  loadTransactions(); loadSummary()
+}
+
+// ===== TRANSAKSI & SUMMARY =====
+async function loadTransactions(){
+  const { data } = await supabase.from('history_view').select('*')
+  const tbody=document.getElementById('tableHistory')
+  tbody.innerHTML=''
+  data.forEach(row=>{
+    const tr=document.createElement('tr')
+    tr.innerHTML=`<td>${row.tanggal}</td><td>${row.kasir??'-'}</td><td>${formatRp(row.total??0)}</td><td>${formatRp(row.bayar??0)}</td><td>${formatRp(row.kembalian??0)}</td><td><button class="bg-gray-500 text-white px-2 rounded" onclick="showDetail(${JSON.stringify(row.detail)})">Detail</button></td>`
+    if(currentRole==='admin') tr.innerHTML+=`<td><button class="bg-red-500 text-white px-2 rounded" onclick="deleteTransaction('${row.id}')">Hapus</button></td>`
+    tbody.appendChild(tr)
+  })
+}
+
+function showDetail(detail){ alert(JSON.stringify(detail,null,2)) }
+
+async function deleteTransaction(id){
+  if(!confirm('Yakin ingin hapus transaksi/pengeluaran?')) return
+  await supabase.from('transactions').delete().eq('id',id)
+  loadTransactions(); loadSummary()
+}
+
+async function loadSummary(){
+  const { data } = await supabase.from('daily_summary_view').select('*').single()
+  document.getElementById('summaryPenjualan').textContent=formatRp(data.total_penjualan)
+  document.getElementById('summaryPengeluaran').textContent=formatRp(data.total_pengeluaran)
+  document.getElementById('summaryKas').textContent=formatRp(data.kas_akhir)
+}
+
+// ===== PENGELUARAN =====
+async function addExpense(){
+  const desc=document.getElementById('expenseDesc').value.trim()
+  const amt=parseFloat(document.getElementById('expenseAmount').value)
+  if(!desc||!amt){ showPopup('Isi pengeluaran & jumlah'); return }
+  await supabase.from('expenses').insert({description:desc,amount:amt})
+  showPopup('Pengeluaran ditambah'); loadTransactions(); loadSummary()
+  document.getElementById('expenseDesc').value=''; document.getElementById('expenseAmount').value=''
+}
+</script>
 </head>
-<body>
-  <h1>Selamat Datang di POS Kasir<br>Resto Bunda Ana</h1>
+<body class="bg-gray-100 p-2">
 
-  <div class="grid-container">
-    <div class="grid-item" onclick="location.href='admin.html'">Admin</div>
-    <div class="grid-item" onclick="location.href='kas.html'">Kontrol Kas</div>
-    <div class="grid-item" onclick="location.href='kasir.html'">Kasir</div>
-    <div class="grid-item" onclick="location.href='semuatransaksi.html'">Semua Transaksi</div>
+<!-- POPUP -->
+<div id="popup" class="fixed top-2 right-2 bg-gray-800 text-white px-4 py-2 rounded hidden z-50"></div>
+
+<!-- LOGIN -->
+<div id="loginSection" class="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+  <h2 class="text-xl font-bold mb-4 text-center">Selamat datang di POS Kasir Bunda Ana</h2>
+  <input id="username" placeholder="Username" class="border p-2 w-full mb-2 rounded">
+  <input id="password" type="password" placeholder="Password" class="border p-2 w-full mb-2 rounded">
+  <button class="bg-blue-500 text-white px-4 py-2 rounded w-full" onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+  <button class="bg-gray-500 text-white px-4 py-1 rounded mb-2" onclick="logout()">Logout</button>
+
+  <!-- ADMIN -->
+  <div id="adminSection" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 hidden">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-bold mb-2">Tambah Akun</h3>
+      <input id="adminUsername" placeholder="Username" class="border p-2 w-full mb-2 rounded">
+      <input id="adminPassword" type="password" placeholder="Password" class="border p-2 w-full mb-2 rounded">
+      <select id="adminRole" class="border p-2 w-full mb-2 rounded">
+        <option value="admin">Admin</option>
+        <option value="kasir">Kasir</option>
+      </select>
+      <button class="bg-green-500 text-white px-4 py-1 rounded" onclick="addAccount()">Tambah</button>
+      <h4 class="font-bold mt-4 mb-2">Daftar Akun</h4>
+      <table class="w-full border"><tbody id="tableAccounts"></tbody></table>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-bold mb-2">Tambah Menu</h3>
+      <input id="menuName" placeholder="Nama Menu" class="border p-2 w-full mb-2 rounded">
+      <input id="menuPrice" type="number" placeholder="Harga" class="border p-2 w-full mb-2 rounded">
+      <select id="menuCategory" class="border p-2 w-full mb-2 rounded">
+        <option value="makanan">Makanan</option>
+        <option value="minuman">Minuman</option>
+        <option value="cemilan">Cemilan</option>
+      </select>
+      <button class="bg-green-500 text-white px-4 py-1 rounded" onclick="addMenu()">Tambah</button>
+      <h4 class="font-bold mt-4 mb-2">Daftar Menu</h4>
+      <table class="w-full border"><tbody id="tableMenus"></tbody></table>
+    </div>
   </div>
 
-  <footer>
-    &copy; 2025 Resto Bunda Ana
-  </footer>
+  <!-- KASIR -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-bold mb-2">Menu</h3>
+      <div id="menuList" class="flex flex-wrap"></div>
+    </div>
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-bold mb-2">Daftar Pesanan</h3>
+      <table class="w-full border">
+        <thead><tr><th>Menu</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
+        <tbody id="cartBody"></tbody>
+      </table>
+      <div class="mt-2">Total: <span id="totalBiaya">0</span></div>
+      <input id="inputBayar" type="number" placeholder="Bayar" class="border p-2 w-full mt-2 mb-2 rounded">
+      <button class="bg-green-500 text-white px-4 py-1 rounded" onclick="bayar()">Bayar</button>
+    </div>
+  </div>
+
+  <!-- RIWAYAT & PENGELUARAN -->
+  <div class="bg-white p-4 rounded shadow mb-4">
+    <h3 class="font-bold mb-2">Ringkasan Hari Ini</h3>
+    Penjualan: <span id="summaryPenjualan">0</span><br>
+    Pengeluaran: <span id="summaryPengeluaran">0</span><br>
+    Kas Akhir: <span id="summaryKas">0</span><br>
+
+    <h3 class="font-bold mt-4 mb-2">Riwayat Transaksi & Pengeluaran</h3>
+    <table class="w-full border">
+      <thead><tr><th>Tanggal</th><th>Kasir</th><th>Total</th><th>Bayar</th><th>Kembalian</th><th>Detail</th><th>Action</th></tr></thead>
+      <tbody id="tableHistory"></tbody>
+    </table>
+
+    <h3 class="font-bold mt-4 mb-2">Input Pengeluaran</h3>
+    <input id="expenseDesc" placeholder="Keterangan" class="border p-2 w-full mb-2 rounded">
+    <input id="expenseAmount" type="number" placeholder="Jumlah" class="border p-2 w-full mb-2 rounded">
+    <button class="bg-green-500 text-white px-4 py-1 rounded" onclick="addExpense()">Submit</button>
+  </div>
+</div>
+
+<!-- MODAL CETAK STRUK -->
+<div id="printModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-4 rounded shadow w-80">
+    <h3 class="font-bold mb-2">Cetak Struk</h3>
+    <div id="strukContent" class="text-sm font-mono"></div>
+    <div class="mt-2 flex justify-between">
+      <button class="bg-gray-500 text-white px-3 py-1 rounded" onclick="closeStruk()">Batal</button>
+      <button class="bg-green-500 text-white px-3 py-1 rounded" onclick="doPrint()">Cetak</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
-
