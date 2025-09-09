@@ -49,7 +49,6 @@
       transform: scale(1.05);
     }
 
-    /* Modal overlay */
     .modal {
       display: none;
       position: fixed;
@@ -136,27 +135,28 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // === Kasir button ===
-    document.getElementById('kasirBtn').addEventListener('click', () => {
-      window.location.href = 'kasir.html';
-    });
-
-    // === Admin login modal ===
+    const kasirBtn = document.getElementById('kasirBtn');
     const adminBtn = document.getElementById('adminBtn');
     const adminModal = document.getElementById('adminModal');
     const loginSubmit = document.getElementById('loginSubmit');
     const loginError = document.getElementById('loginError');
 
-    // Session check
-    if(localStorage.getItem('adminLoggedIn') === 'true') {
-      window.location.href = 'admin.html';
-    }
+    // === Kasir: langsung ke kasir.html ===
+    kasirBtn.addEventListener('click', () => {
+      window.location.href = 'kasir.html';
+    });
 
-    // Klik grid Admin → munculkan modal login
+    // === Admin: munculkan modal login ===
     adminBtn.addEventListener('click', () => {
       adminModal.style.display = 'block';
     });
 
+    // Session check: jika sudah login, langsung ke admin.html
+    if(localStorage.getItem('adminLoggedIn') === 'true') {
+      window.location.href = 'admin.html';
+    }
+
+    // === Login admin ===
     loginSubmit.addEventListener('click', async () => {
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
