@@ -5,206 +5,195 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin POS - Resto Bunda Ana</title>
 <style>
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,sans-serif;background-color:#e0f0ff;color:#333}
-  header{background-color:#b3e0ff;padding:1rem;text-align:center;font-size:1.5rem;font-weight:bold;color:#064273;box-shadow:0 2px 5px rgba(0,0,0,0.1);display:flex;justify-content:space-between;align-items:center;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Arial,sans-serif;background:#e0f0ff;color:#333;}
+  header{background:#b3e0ff;padding:1rem;color:#064273;font-size:1.5rem;font-weight:bold;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
   header button{padding:0.3rem 0.6rem;border:none;border-radius:5px;cursor:pointer;}
-  .container{display:flex;flex-direction:column;padding:1rem;gap:1rem}
-  .card{background-color:#cceeff;padding:1rem;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
-  table{width:100%;border-collapse:collapse}
-  th,td{border:1px solid #888;padding:0.5rem;text-align:center}
-  th{background-color:#7ecfff}
-  input,select{padding:0.5rem;margin:0.3rem 0;border-radius:5px;border:1px solid #888;width:100%}
-  button.action{padding:0.5rem;border:none;border-radius:5px;background-color:#4CAF50;color:white;cursor:pointer;margin:0.2rem}
-  button.action:hover{background-color:#45a049}
-  button.delete{background-color:#f44336;color:white}
-  button.delete:hover{background-color:#da190b}
-  /* modal */
-  .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,0.4);}
-  .modal-content{background-color:#fefefe;margin:10% auto;padding:1rem;border:1px solid #888;width:300px;border-radius:10px;text-align:center;}
-  .modal-content button{margin:0.5rem;padding:0.5rem 1rem;}
-  /* loading */
-  .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;justify-content:center;align-items:center;z-index:999;}
+  .container{padding:1rem;}
+  h2{margin-top:1rem;}
+  table{width:100%;border-collapse:collapse;margin-top:0.5rem;}
+  table, th, td{border:1px solid #888;}
+  th, td{padding:0.5rem;text-align:left;}
+  button{cursor:pointer;border:none;border-radius:5px;padding:0.3rem 0.6rem;}
+  .btn-delete{background:#f44336;color:white;}
+  .btn-delete:hover{background:#da190b;}
+  .btn-add{background:#4CAF50;color:white;}
+  .btn-add:hover{background:#45a049;}
+  input, select{padding:0.4rem;margin:0.2rem 0;border-radius:5px;border:1px solid #888;}
+  /* Loading */
+  .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:flex;justify-content:center;align-items:center;display:none;z-index:999;}
   .spinner{border:8px solid #f3f3f3;border-top:8px solid #3498db;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;}
   @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-  @media(max-width:900px){table,th,td,input,select,button{font-size:12px}}
+  /* Modal */
+  .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;overflow:auto;background-color: rgba(0,0,0,0.4);}
+  .modal-content{background:#fefefe;margin:15% auto;padding:1rem;border-radius:10px;text-align:center;width:300px;}
+  .modal-content input{width:90%;}
+  .modal-content button{margin:0.5rem;}
 </style>
 </head>
 <body>
 <header>
-  <span>Admin POS - Resto Bunda Ana</span>
   <button onclick="window.location.href='index.html'">Kembali</button>
+  Admin POS - Resto Bunda Ana
 </header>
 
-<div class="container" id="main-content">
-  <!-- Content muncul setelah login -->
+<div class="container">
+  <h2>Tambah Akun Admin</h2>
+  <input type="text" id="new-username" placeholder="Username">
+  <input type="password" id="new-password" placeholder="Password">
+  <button class="btn-add" onclick="addAdmin()">Submit</button>
+  <table id="table-admin"><thead><tr><th>ID</th><th>Username</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+
+  <h2>Tambah Menu</h2>
+  <input type="text" id="menu-nama" placeholder="Nama Menu">
+  <select id="menu-kategori">
+    <option value="">Pilih Kategori</option>
+    <option value="Makanan">Makanan</option>
+    <option value="Minuman">Minuman</option>
+    <option value="Cemilan">Cemilan</option>
+  </select>
+  <input type="number" id="menu-harga" placeholder="Harga">
+  <button class="btn-add" onclick="addMenu()">Submit</button>
+  <table id="table-menu"><thead><tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Aksi</th></tr></thead><tbody></tbody></table>
+
+  <h2>Riwayat Transaksi</h2>
+  Dari: <input type="date" id="filter-dari"> 
+  Sampai: <input type="date" id="filter-sampai">
+  <button onclick="loadTransaksi()">Filter</button>
+  <button class="btn-delete" onclick="deleteAllTransaksi()">Hapus Semua Transaksi</button>
+
+  <h3>Total Transaksi</h3>
+  <table id="table-transaksi-total"><thead><tr><th>ID</th><th>Tanggal</th><th>Total Penjualan</th><th>Total Pengeluaran</th><th>Kas Akhir</th></tr></thead><tbody></tbody></table>
+
+  <h3>Detail Transaksi</h3>
+  <table id="table-transaksi-detail"><thead><tr><th>ID</th><th>Tanggal</th><th>Menu/Pengeluaran</th><th>Jumlah</th><th>Harga</th><th>Debit</th><th>Kredit</th><th>Aksi</th></tr></thead><tbody></tbody></table>
 </div>
 
-<!-- Modal Login -->
 <div id="modal-login" class="modal">
   <div class="modal-content">
     <h3>Login Admin</h3>
-    <input type="text" id="login-username" placeholder="Username">
-    <input type="password" id="login-password" placeholder="Password">
-    <button onclick="window.doLogin()">Login</button>
+    <input type="text" id="login-username" placeholder="Username"><br>
+    <input type="password" id="login-password" placeholder="Password"><br>
+    <button onclick="loginAdmin()">Login</button>
   </div>
 </div>
 
-<!-- Modal Konfirmasi Hapus -->
 <div id="modal-confirm" class="modal">
   <div class="modal-content">
-    <p id="confirm-text"></p>
-    <button onclick="window.confirmAction(true)">Ya</button>
-    <button onclick="window.confirmAction(false)">Tidak</button>
+    <p id="confirm-text">Apakah yakin ingin dihapus?</p>
+    <button onclick="confirmAction(true)">Ya</button>
+    <button onclick="confirmAction(false)">Tidak</button>
   </div>
 </div>
 
-<!-- Loading -->
 <div id="loading" class="loading-overlay"><div class="spinner"></div></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-// ================= Supabase =================
 const supabaseUrl = 'https://ekggvrzuguczvdvvzmri.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZ2d2cnp1Z3ZkdnZ6bXJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczOTEyOTksImV4cCI6MjA3Mjk2NzI5OX0.S0pdzwQbC1poh3BbwtupFxSDxQ_6FBdbhGsU2DNexfQ'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZ2d2cnZ6bXJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczOTEyOTksImV4cCI6MjA3Mjk2NzI5OX0.S0pdzwQbC1poh3BbwtupFxSDxQ_6FBdbhGsU2DNexfQ'
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
+let pendingAction=null
 
-// ================= Global State =================
-let currentUser = null
-let pendingAction = null
+const showLoading=(show)=>{ document.getElementById('loading').style.display=show?'flex':'none'; }
 
-// ================= Loading =================
-window.showLoading = (show)=>{ document.getElementById('loading').style.display=show?'flex':'none'; }
-
-// ================= Login =================
-window.doLogin = async ()=>{
-  const u = document.getElementById('login-username').value
-  const p = document.getElementById('login-password').value
-  if(!u||!p){ alert('Isi username & password'); return;}
-  window.showLoading(true)
+// ================= Login Admin =================
+window.loginAdmin = async()=>{
+  const u=document.getElementById('login-username').value
+  const p=document.getElementById('login-password').value
+  if(!u||!p){ alert('Isi username & password'); return; }
+  showLoading(true)
   const { data, error } = await supabase.from('admin').select('*').eq('username',u).eq('password',p).single()
-  window.showLoading(false)
-  if(error || !data){ alert('Login gagal'); return;}
-  currentUser = data
+  showLoading(false)
+  if(error || !data){ alert('Login gagal'); return; }
   document.getElementById('modal-login').style.display='none'
-  window.renderAdmin()
+  loadAdmins(); loadMenuTable(); loadTransaksi()
 }
 
-// ================= Render Admin Page =================
-window.renderAdmin = async ()=>{
-  const container = document.getElementById('main-content')
-  container.innerHTML=`
-  <div class="card" id="akun-section">
-    <h3>Akun Login</h3>
-    <input type="text" id="new-username" placeholder="Username">
-    <input type="password" id="new-password" placeholder="Password">
-    <button class="action" onclick="window.addAdmin()">Tambah Akun</button>
-    <table id="table-admin"><thead><tr><th>ID</th><th>Username</th><th>Aksi</th></tr></thead><tbody></tbody></table>
-  </div>
-  <div class="card" id="menu-section">
-    <h3>Menu</h3>
-    <input type="text" id="menu-nama" placeholder="Nama Menu">
-    <input type="text" id="menu-kategori" placeholder="Kategori">
-    <input type="number" id="menu-harga" placeholder="Harga">
-    <button class="action" onclick="window.addMenu()">Tambah Menu</button>
-    <table id="table-menu"><thead><tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Aksi</th></tr></thead><tbody></tbody></table>
-  </div>
-  <div class="card" id="transaksi-section">
-    <h3>Riwayat Transaksi</h3>
-    Dari: <input type="date" id="filter-dari"> Sampai: <input type="date" id="filter-sampai">
-    <button class="action" onclick="window.loadTransaksi()">Filter</button>
-    <button class="delete" onclick="window.deleteAllTransaksi()">Hapus Semua Transaksi</button>
-    <h4>Tabel Transaksi Total</h4>
-    <table id="table-transaksi-total"><thead><tr><th>ID</th><th>Tgl</th><th>Total Penjualan</th><th>Total Pengeluaran</th><th>Kas Akhir</th></tr></thead><tbody></tbody></table>
-    <h4>Tabel Transaksi Detail</h4>
-    <table id="table-transaksi-detail"><thead><tr><th>ID</th><th>Tgl</th><th>Menu/Pengeluaran</th><th>Jumlah</th><th>Harga</th><th>Debit</th><th>Kredit</th><th>Aksi</th></tr></thead><tbody></tbody></table>
-  </div>
-  `
-  window.loadAdmins()
-  window.loadMenuTable()
-  window.loadTransaksi()
-}
-
-// ================= Admin =================
-window.loadAdmins = async ()=>{
+// ================= Load Admins =================
+window.loadAdmins=async()=>{
   const { data, error } = await supabase.from('admin').select('*')
   if(error){ alert(error.message); return;}
   const tbody = document.querySelector('#table-admin tbody')
   tbody.innerHTML=''
   data.forEach(a=>{
     const tr=document.createElement('tr')
-    tr.innerHTML=`<td>${a.id}</td><td>${a.username}</td><td><button class="delete" onclick="window.confirmDelete('admin',${a.id})">Hapus</button></td>`
+    tr.innerHTML=`<td>${a.id}</td><td>${a.username}</td><td><button class="btn-delete" onclick="confirmDelete('admin',${a.id})">Hapus</button></td>`
     tbody.appendChild(tr)
   })
 }
 
-window.addAdmin=async ()=>{
-  const u = document.getElementById('new-username').value
-  const p = document.getElementById('new-password').value
-  if(!u||!p){ alert('Isi username & password'); return;}
-  window.showLoading(true)
-  const { error } = await supabase.from('admin').insert([{username:u,password:p}])
-  window.showLoading(false)
-  if(error){ alert(error.message); return;}
-  alert('Akun berhasil ditambah')
-  document.getElementById('new-username').value=''
-  document.getElementById('new-password').value=''
-  window.loadAdmins()
-}
-
-// ================= Menu =================
-window.loadMenuTable=async ()=>{
+// ================= Load Menu =================
+window.loadMenuTable=async()=>{
   const { data, error } = await supabase.from('menu').select('*')
   if(error){ alert(error.message); return;}
   const tbody = document.querySelector('#table-menu tbody')
   tbody.innerHTML=''
   data.forEach(m=>{
     const tr=document.createElement('tr')
-    tr.innerHTML=`<td>${m.id}</td><td>${m.nama}</td><td>${m.kategori}</td><td>${m.harga}</td><td><button class="delete" onclick="window.confirmDelete('menu',${m.id})">Hapus</button></td>`
+    tr.innerHTML=`<td>${m.id}</td><td>${m.nama}</td><td>${m.kategori}</td><td>${m.harga}</td><td><button class="btn-delete" onclick="confirmDelete('menu',${m.id})">Hapus</button></td>`
     tbody.appendChild(tr)
   })
 }
 
-window.addMenu=async ()=>{
+// ================= Tambah / Hapus =================
+window.addAdmin=async()=>{
+  const u=document.getElementById('new-username').value
+  const p=document.getElementById('new-password').value
+  if(!u||!p){ alert('Isi username & password'); return; }
+  showLoading(true)
+  const { error } = await supabase.from('admin').insert([{username:u,password:p}])
+  showLoading(false)
+  if(error){ alert(error.message); return; }
+  alert('Akun berhasil ditambah')
+  document.getElementById('new-username').value=''
+  document.getElementById('new-password').value=''
+  loadAdmins()
+}
+
+window.addMenu=async()=>{
   const nama=document.getElementById('menu-nama').value
   const kategori=document.getElementById('menu-kategori').value
   const harga=parseInt(document.getElementById('menu-harga').value)||0
   if(!nama||!kategori||harga<=0){ alert('Isi data menu dengan benar'); return;}
-  window.showLoading(true)
+  showLoading(true)
   const { error } = await supabase.from('menu').insert([{nama,kategori,harga}])
-  window.showLoading(false)
+  showLoading(false)
   if(error){ alert(error.message); return;}
   alert('Menu berhasil ditambah')
   document.getElementById('menu-nama').value=''
   document.getElementById('menu-kategori').value=''
   document.getElementById('menu-harga').value=''
-  window.loadMenuTable()
+  loadMenuTable()
 }
 
 // ================= Transaksi =================
-window.loadTransaksi=async ()=>{
+window.loadTransaksi=async()=>{
   let dari=document.getElementById('filter-dari').value
   let sampai=document.getElementById('filter-sampai').value
   let filter=""
   if(dari && sampai) filter=`gte=created_at,${dari}&lte=created_at,${sampai}`
+
   const { data, error } = await supabase.from('transaksi').select('*')
-  if(error){ alert(error.message); return;}
+  if(error){ alert(error.message); return; }
   const tbodyTotal=document.querySelector('#table-transaksi-total tbody')
   tbodyTotal.innerHTML=''
   data.forEach(t=>{
-    const kas=t.total_penjualan - t.total_pengeluaran
+    const kas=t.total_penjualan-t.total_pengeluaran
     const tr=document.createElement('tr')
     tr.innerHTML=`<td>${t.id}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td>${t.total_penjualan}</td><td>${t.total_pengeluaran}</td><td>${kas}</td>`
     tbodyTotal.appendChild(tr)
   })
+
   const { data:detail, error:errD } = await supabase.from('transaksi_detail').select('*')
-  if(errD){ alert(errD.message); return;}
+  if(errD){ alert(errD.message); return; }
   const tbodyDetail=document.querySelector('#table-transaksi-detail tbody')
   tbodyDetail.innerHTML=''
   detail.forEach(d=>{
     const tr=document.createElement('tr')
-    tr.innerHTML=`<td>${d.id}</td><td>${new Date(d.created_at||d.id).toLocaleDateString()}</td><td>${d.nama_item}</td><td>${d.jumlah}</td><td>${d.harga}</td><td>${d.debit}</td><td>${d.kredit}</td><td><button class="delete" onclick="window.confirmDelete('transaksi_detail',${d.id})">Hapus</button></td>`
+    tr.innerHTML=`<td>${d.id}</td><td>${new Date(d.created_at||d.id).toLocaleDateString()}</td><td>${d.nama_item}</td><td>${d.jumlah}</td><td>${d.harga}</td><td>${d.debit}</td><td>${d.kredit}</td><td><button class="btn-delete" onclick="confirmDelete('transaksi_detail',${d.id})">Hapus</button></td>`
     tbodyDetail.appendChild(tr)
   })
 }
@@ -216,34 +205,33 @@ window.confirmDelete=(type,id)=>{
   document.getElementById('modal-confirm').style.display='block'
 }
 
-window.confirmAction=async (yes)=>{
+window.confirmAction=async(yes)=>{
   document.getElementById('modal-confirm').style.display='none'
-  if(!yes) return;
-  if(!pendingAction) return;
-  window.showLoading(true)
+  if(!yes || !pendingAction) return
+  showLoading(true)
   const {type,id}=pendingAction
   let error=null
   if(type==='admin') error=(await supabase.from('admin').delete().eq('id',id)).error
   if(type==='menu') error=(await supabase.from('menu').delete().eq('id',id)).error
   if(type==='transaksi_detail') error=(await supabase.from('transaksi_detail').delete().eq('id',id)).error
-  window.showLoading(false)
+  showLoading(false)
   if(error){ alert(error.message); return;}
   alert('Berhasil dihapus')
   pendingAction=null
-  window.loadAdmins(); window.loadMenuTable(); window.loadTransaksi()
+  loadAdmins(); loadMenuTable(); loadTransaksi()
 }
 
-window.deleteAllTransaksi=async ()=>{
+window.deleteAllTransaksi=async()=>{
   if(!confirm('Hapus semua transaksi?')) return;
-  window.showLoading(true)
+  showLoading(true)
   const { error } = await supabase.from('transaksi').delete().neq('id',0)
-  window.showLoading(false)
-  if(error){ alert(error.message); return;}
+  showLoading(false)
+  if(error){ alert(error.message); return; }
   alert('Semua transaksi berhasil dihapus')
-  window.loadTransaksi()
+  loadTransaksi()
 }
 
-// ================= Show Login Modal =================
+// ================= Tampilkan modal login saat pertama =================
 document.getElementById('modal-login').style.display='block'
 
 </script>
