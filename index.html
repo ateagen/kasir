@@ -107,7 +107,6 @@
       }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 </head>
 <body>
 
@@ -129,23 +128,26 @@
     </div>
   </div>
 
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <script>
-    // Setup Supabase
+    // === Supabase setup ===
     const supabaseUrl = 'https://linujagdxugmocstckmd.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Kasir: langsung buka kasir.html
+    // === Kasir button ===
     document.getElementById('kasirBtn').addEventListener('click', () => {
       window.location.href = 'kasir.html';
     });
 
+    // === Admin login ===
     const adminBtn = document.getElementById('adminBtn');
     const adminModal = document.getElementById('adminModal');
     const loginSubmit = document.getElementById('loginSubmit');
     const loginError = document.getElementById('loginError');
 
-    // Check session
+    // Session check
     if(localStorage.getItem('adminLoggedIn') === 'true') {
       window.location.href = 'admin.html';
     }
@@ -164,6 +166,7 @@
         return;
       }
 
+      // Cek akun di Supabase
       const { data, error } = await supabase
         .from('accounts')
         .select('*')
