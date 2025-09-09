@@ -3,294 +3,314 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - POS Bunda Ana</title>
+  <title>Admin POS Kasir</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #e6f0ff;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #3399ff;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
-    main {
-      padding: 20px;
-    }
-    h2 { color: #0059b3; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    table, th, td { border: 1px solid #3399ff; }
-    th, td { padding: 10px; text-align: left; }
-    button {
-      background-color: #3399ff;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      margin: 4px 0;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover { background-color: #2673cc; }
-    input, select {
-      padding: 6px;
-      margin: 4px 0;
-      border: 1px solid #3399ff;
-      border-radius: 4px;
-    }
-    .form-group { margin-bottom: 10px; }
-    .popup {
-      position: fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.5); display: flex;
-      justify-content: center; align-items: center; display:none;
-    }
-    .popup-content {
-      background: white; padding: 20px; border-radius: 8px;
-      min-width: 300px; max-width: 400px; text-align: center;
-    }
+    body { background-color: #e0f2fe; }
+    .hover-card:hover { transform: scale(1.03); transition: 0.3s; cursor: pointer; }
+    .modal-bg { background-color: rgba(0,0,0,0.5); }
+    .table-container { max-height: 300px; overflow-y: auto; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-  <script>
-    // ==============================
-    // Supabase Config
-    // ==============================
-    const SUPABASE_URL = 'https://linujagdxugmocstckmd.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let currentAdmin = null;
-
-    // ==============================
-    // Utility Popups
-    // ==============================
-    function showPopup(msg) {
-      const popup = document.getElementById('popup');
-      popup.querySelector('p').innerText = msg;
-      popup.style.display = 'flex';
-    }
-    function hidePopup() { document.getElementById('popup').style.display = 'none'; }
-
-    function confirmAction(msg) {
-      return confirm(msg);
-    }
-
-    // ==============================
-    // Login Admin
-    // ==============================
-    async function loginAdmin() {
-      const username = document.getElementById('loginUsername').value;
-      const password = document.getElementById('loginPassword').value;
-      const { data, error } = await supabase.rpc('login_akun', { p_username: username, p_password: password });
-
-      if (error || data.length === 0) {
-        alert('Username atau password salah');
-        return;
-      }
-
-      if (data[0].role !== 'admin') {
-        alert('Hanya admin yang bisa akses halaman ini');
-        return;
-      }
-
-      currentAdmin = data[0];
-      document.getElementById('loginDiv').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
-      loadAkun();
-      loadMenu();
-    }
-
-    // ==============================
-    // Load Akun
-    // ==============================
-    async function loadAkun() {
-      const { data: akunData, error } = await supabase.from('akun').select('*');
-      const tbody = document.getElementById('akunTableBody');
-      tbody.innerHTML = '';
-      akunData.forEach(a => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${a.username}</td>
-          <td>${a.surname}</td>
-          <td>${a.role}</td>
-          <td><button onclick="hapusAkun('${a.id}')">Hapus</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function tambahAkun() {
-      const username = document.getElementById('akunUsername').value;
-      const surname = document.getElementById('akunSurname').value;
-      const password = document.getElementById('akunPassword').value;
-      const role = document.getElementById('akunRole').value;
-
-      if(!confirmAction(`Tambah akun ${username}?`)) return;
-
-      const { error } = await supabase.from('akun').insert([
-        { username, surname, password: password, role }
-      ]);
-
-      if(error) { showPopup(error.message); return; }
-      showPopup('Akun berhasil ditambah');
-      loadAkun();
-    }
-
-    async function hapusAkun(id) {
-      if(!confirmAction('Hapus akun ini?')) return;
-      const { error } = await supabase.from('akun').delete().eq('id', id);
-      if(error) { showPopup(error.message); return; }
-      showPopup('Akun berhasil dihapus');
-      loadAkun();
-    }
-
-    // ==============================
-    // Load Menu
-    // ==============================
-    async function loadMenu() {
-      const { data: menuData, error } = await supabase.from('menu').select('*');
-      const tbody = document.getElementById('menuTableBody');
-      tbody.innerHTML = '';
-      menuData.forEach(m => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${m.nama}</td>
-          <td>${m.harga}</td>
-          <td>${m.kategori}</td>
-          <td><button onclick="hapusMenu('${m.id}')">Hapus</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function tambahMenu() {
-      const nama = document.getElementById('menuNama').value;
-      const harga = parseFloat(document.getElementById('menuHarga').value);
-      const kategori = document.getElementById('menuKategori').value;
-
-      if(!confirmAction(`Tambah menu ${nama}?`)) return;
-
-      const { error } = await supabase.from('menu').insert([{ nama, harga, kategori }]);
-      if(error) { showPopup(error.message); return; }
-      showPopup('Menu berhasil ditambah');
-      loadMenu();
-    }
-
-    async function hapusMenu(id) {
-      if(!confirmAction('Hapus menu ini?')) return;
-      const { error } = await supabase.from('menu').delete().eq('id', id);
-      if(error) { showPopup(error.message); return; }
-      showPopup('Menu berhasil dihapus');
-      loadMenu();
-    }
-
-    // ==============================
-    // Reset Kas Awal
-    // ==============================
-    async function resetKas() {
-      if(!confirmAction('Reset kas awal semua kasir ke 0?')) return;
-      const { data: kasirData } = await supabase.from('akun').select('id').eq('role','kasir');
-      for(const k of kasirData){
-        await supabase.rpc('reset_kas_awal', { kasir_uuid: k.id, saldo_baru: 0 });
-      }
-      showPopup('Kas awal berhasil direset');
-    }
-
-    // ==============================
-    // Hapus Semua Transaksi
-    // ==============================
-    async function hapusSemuaTransaksi() {
-      if(!confirmAction('Hapus semua transaksi?')) return;
-      const { error } = await supabase.rpc('hapus_semua_transaksi');
-      if(error) { showPopup(error.message); return; }
-      showPopup('Semua transaksi berhasil dihapus');
-    }
-
-  </script>
 </head>
-<body>
+<body class="min-h-screen p-4">
 
-  <!-- Login Admin -->
-  <div id="loginDiv" style="padding:20px;">
-    <h2>Login Admin</h2>
-    <div class="form-group">
-      <input type="text" id="loginUsername" placeholder="Username">
-    </div>
-    <div class="form-group">
-      <input type="password" id="loginPassword" placeholder="Password">
-    </div>
-    <button onclick="loginAdmin()">Login</button>
-  </div>
-
-  <!-- Konten Admin -->
-  <main id="adminContent" style="display:none;">
-    <button onclick="window.location.href='index.html'">Kembali ke Index</button>
-
-    <h2>Tambah Akun</h2>
-    <div class="form-group">
-      <input type="text" id="akunUsername" placeholder="Username">
-      <input type="text" id="akunSurname" placeholder="Nama">
-      <input type="password" id="akunPassword" placeholder="Password">
-      <select id="akunRole">
-        <option value="admin">Admin</option>
-        <option value="kasir">Kasir</option>
-      </select>
-      <button onclick="tambahAkun()">Tambah Akun</button>
-    </div>
-
-    <h2>Tabel Akun</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Username</th>
-          <th>Nama</th>
-          <th>Role</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="akunTableBody"></tbody>
-    </table>
-
-    <h2>Tambah Menu</h2>
-    <div class="form-group">
-      <input type="text" id="menuNama" placeholder="Nama Menu">
-      <input type="number" id="menuHarga" placeholder="Harga">
-      <select id="menuKategori">
-        <option value="makanan">Makanan</option>
-        <option value="minuman">Minuman</option>
-      </select>
-      <button onclick="tambahMenu()">Tambah Menu</button>
-    </div>
-
-    <h2>Tabel Menu</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Harga</th>
-          <th>Kategori</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="menuTableBody"></tbody>
-    </table>
-
-    <button onclick="resetKas()">Reset Kas Awal Semua Kasir</button>
-    <button onclick="hapusSemuaTransaksi()">Hapus Semua Transaksi</button>
-  </main>
-
-  <!-- Popup -->
-  <div id="popup" class="popup" onclick="hidePopup()">
-    <div class="popup-content">
-      <p></p>
-      <button onclick="hidePopup()">Tutup</button>
+<!-- Pop-up Login Admin -->
+<div id="loginModal" class="fixed inset-0 flex items-center justify-center modal-bg z-50">
+  <div class="bg-white rounded-2xl shadow-lg p-6 w-11/12 max-w-md relative">
+    <h2 class="text-2xl font-bold text-center mb-4 text-sky-700">Login Admin</h2>
+    <div class="flex flex-col gap-4">
+      <input id="username" type="text" placeholder="Username" class="border p-2 rounded-md w-full">
+      <input id="password" type="password" placeholder="Password" class="border p-2 rounded-md w-full">
+      <button id="loginSubmit" class="bg-sky-600 text-white p-2 rounded-md hover:bg-sky-700">Login</button>
+      <p id="loginError" class="text-red-500 text-sm text-center hidden">Username atau password salah</p>
     </div>
   </div>
+</div>
+
+<!-- Dashboard Admin -->
+<div id="dashboard" class="hidden">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-sky-700">Dashboard Admin</h1>
+    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Logout</button>
+  </div>
+
+  <!-- Grid Menu/Kelola Akun -->
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+
+    <!-- Kelola Menu -->
+    <div class="bg-white p-4 rounded-2xl shadow hover-card">
+      <h2 class="text-xl font-bold mb-2 text-sky-700">Kelola Menu</h2>
+      <form id="addMenuForm" class="flex flex-col gap-2 mb-4">
+        <input type="text" id="menuName" placeholder="Nama Menu" class="border p-2 rounded-md">
+        <input type="number" id="menuPrice" placeholder="Harga" class="border p-2 rounded-md">
+        <select id="menuCategory" class="border p-2 rounded-md">
+          <option value="Makanan">Makanan</option>
+          <option value="Minuman">Minuman</option>
+          <option value="Cemilan">Cemilan</option>
+        </select>
+        <button type="submit" class="bg-sky-600 text-white p-2 rounded-md hover:bg-sky-700">Tambah Menu</button>
+      </form>
+      <div class="table-container">
+        <table class="w-full border-collapse text-sm" id="menuTable">
+          <thead>
+            <tr class="bg-sky-200">
+              <th class="border px-2 py-1">Nama</th>
+              <th class="border px-2 py-1">Harga</th>
+              <th class="border px-2 py-1">Kategori</th>
+              <th class="border px-2 py-1">Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Kelola Akun -->
+    <div class="bg-white p-4 rounded-2xl shadow hover-card">
+      <h2 class="text-xl font-bold mb-2 text-sky-700">Kelola Akun Admin</h2>
+      <form id="addAccountForm" class="flex flex-col gap-2 mb-4">
+        <input type="text" id="accUsername" placeholder="Username" class="border p-2 rounded-md">
+        <input type="password" id="accPassword" placeholder="Password" class="border p-2 rounded-md">
+        <button type="submit" class="bg-sky-600 text-white p-2 rounded-md hover:bg-sky-700">Tambah Akun</button>
+      </form>
+      <div class="table-container">
+        <table class="w-full border-collapse text-sm" id="accountTable">
+          <thead>
+            <tr class="bg-sky-200">
+              <th class="border px-2 py-1">Username</th>
+              <th class="border px-2 py-1">Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Riwayat Transaksi -->
+  <div class="bg-white p-4 rounded-2xl shadow hover-card mb-6">
+    <h2 class="text-xl font-bold mb-2 text-sky-700">Riwayat Transaksi</h2>
+    <div class="flex gap-2 mb-2">
+      <input type="date" id="filterFrom" class="border p-2 rounded-md">
+      <input type="date" id="filterTo" class="border p-2 rounded-md">
+      <button id="filterBtn" class="bg-sky-600 text-white px-3 rounded-md hover:bg-sky-700">Filter</button>
+      <button id="deleteAllBtn" class="bg-red-500 text-white px-3 rounded-md hover:bg-red-600">Hapus Semua</button>
+    </div>
+    <div class="table-container">
+      <table class="w-full border-collapse text-sm" id="transactionTable">
+        <thead>
+          <tr class="bg-sky-200">
+            <th class="border px-2 py-1">Tanggal</th>
+            <th class="border px-2 py-1">Menu/Keterangan</th>
+            <th class="border px-2 py-1">Jenis</th>
+            <th class="border px-2 py-1">Qty</th>
+            <th class="border px-2 py-1">Harga</th>
+            <th class="border px-2 py-1">Total</th>
+            <th class="border px-2 py-1">Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="mt-2 text-right font-bold" id="summaryText"></div>
+  </div>
+
+</div>
+
+<script>
+  // =========================
+  // Supabase setup
+  // =========================
+  const SUPABASE_URL = "https://linujagdxugmocstckmd.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpbnVqYWdkeHVnbW9jc3Rja21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NDA2NDQsImV4cCI6MjA3MjExNjY0NH0.VWGFS7xy5_f2Iplxqn07HTnfWUIILbRYv4m_RV7YEHI";
+  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const loginModal = document.getElementById('loginModal');
+  const dashboard = document.getElementById('dashboard');
+  const loginError = document.getElementById('loginError');
+
+  // =========================
+  // Session check
+  // =========================
+  window.addEventListener('load', () => {
+    const adminSession = localStorage.getItem('adminSession');
+    if (adminSession === 'true') {
+      loginModal.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+      loadMenu();
+      loadAccounts();
+      loadTransactions();
+    }
+  });
+
+  // =========================
+  // Login admin
+  // =========================
+  document.getElementById('loginSubmit').addEventListener('click', async () => {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!username || !password) {
+      loginError.textContent = "Username dan password wajib diisi";
+      loginError.classList.remove('hidden');
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('accounts')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      loginError.textContent = "Username atau password salah";
+      loginError.classList.remove('hidden');
+    } else {
+      localStorage.setItem('adminSession', 'true');
+      loginModal.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+      loadMenu();
+      loadAccounts();
+      loadTransactions();
+    }
+  });
+
+  // =========================
+  // Logout
+  // =========================
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('adminSession');
+    window.location.href = 'index.html';
+  });
+
+  // =========================
+  // Menu functions
+  // =========================
+  async function loadMenu() {
+    const { data: menus } = await supabase.from('menu').select('*');
+    const tbody = document.querySelector('#menuTable tbody');
+    tbody.innerHTML = '';
+    menus.forEach(menu => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${menu.name}</td>
+        <td class="border px-2 py-1">${menu.price}</td>
+        <td class="border px-2 py-1">${menu.category}</td>
+        <td class="border px-2 py-1"><button class="bg-red-500 text-white px-2 rounded-md hover:bg-red-600" onclick="deleteMenu(${menu.id})">Hapus</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('addMenuForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('menuName').value.trim();
+    const price = parseFloat(document.getElementById('menuPrice').value);
+    const category = document.getElementById('menuCategory').value;
+    if (!name || !price || !category) return;
+    await supabase.from('menu').insert({ name, price, category });
+    document.getElementById('menuName').value = '';
+    document.getElementById('menuPrice').value = '';
+    loadMenu();
+  });
+
+  async function deleteMenu(id) {
+    if (!confirm('Yakin hapus menu ini?')) return;
+    await supabase.from('menu').delete().eq('id', id);
+    loadMenu();
+  }
+
+  // =========================
+  // Account functions
+  // =========================
+  async function loadAccounts() {
+    const { data: accounts } = await supabase.from('accounts').select('*');
+    const tbody = document.querySelector('#accountTable tbody');
+    tbody.innerHTML = '';
+    accounts.forEach(acc => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${acc.username}</td>
+        <td class="border px-2 py-1"><button class="bg-red-500 text-white px-2 rounded-md hover:bg-red-600" onclick="deleteAccount(${acc.id})">Hapus</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('addAccountForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('accUsername').value.trim();
+    const password = document.getElementById('accPassword').value.trim();
+    if (!username || !password) return;
+    await supabase.from('accounts').insert({ username, password });
+    document.getElementById('accUsername').value = '';
+    document.getElementById('accPassword').value = '';
+    loadAccounts();
+  });
+
+  async function deleteAccount(id) {
+    if (!confirm('Yakin hapus akun ini?')) return;
+    await supabase.from('accounts').delete().eq('id', id);
+    loadAccounts();
+  }
+
+  // =========================
+  // Transactions functions
+  // =========================
+  async function loadTransactions(from=null, to=null) {
+    let query = supabase.from('transactions').select('*').order('created_at', { ascending: false });
+    if (from) query = query.gte('created_at', from);
+    if (to) query = query.lte('created_at', to);
+    const { data: txs } = await query;
+    const tbody = document.querySelector('#transactionTable tbody');
+    tbody.innerHTML = '';
+    let totalPenjualan = 0, totalPengeluaran = 0;
+    txs.forEach(tx => {
+      const jenis = tx.transaction_type;
+      const nama = tx.menu_id ? tx.menu_id : tx.description;
+      if(jenis === 'Penjualan') totalPenjualan += parseFloat(tx.total);
+      if(jenis === 'Pengeluaran') totalPengeluaran += parseFloat(tx.total);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${new Date(tx.created_at).toLocaleString()}</td>
+        <td class="border px-2 py-1">${nama}</td>
+        <td class="border px-2 py-1">${jenis}</td>
+        <td class="border px-2 py-1">${tx.quantity}</td>
+        <td class="border px-2 py-1">${tx.price}</td>
+        <td class="border px-2 py-1">${tx.total}</td>
+        <td class="border px-2 py-1"><button class="bg-red-500 text-white px-2 rounded-md hover:bg-red-600" onclick="deleteTransaction(${tx.id})">Hapus</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('summaryText').textContent = 
+      `Total Penjualan: Rp ${totalPenjualan} | Total Pengeluaran: Rp ${totalPengeluaran} | Kas Akhir: Rp ${totalPenjualan - totalPengeluaran}`;
+  }
+
+  document.getElementById('filterBtn').addEventListener('click', () => {
+    const from = document.getElementById('filterFrom').value;
+    const to = document.getElementById('filterTo').value;
+    loadTransactions(from, to);
+  });
+
+  document.getElementById('deleteAllBtn').addEventListener('click', async () => {
+    if (!confirm('Yakin hapus semua transaksi?')) return;
+    await supabase.from('transactions').delete();
+    loadTransactions();
+  });
+
+  async function deleteTransaction(id) {
+    if (!confirm('Yakin hapus transaksi ini?')) return;
+    await supabase.from('transactions').delete().eq('id', id);
+    loadTransactions();
+  }
+
+</script>
 
 </body>
 </html>
