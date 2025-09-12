@@ -1,396 +1,123 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin POS</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f4f6f9;
-      margin: 0;
-      color: #333;
-    }
-    header {
-      background: #2c3e50;
-      color: #fff;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-    header button {
-      background: #e74c3c;
-      border: none;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    main {
-      padding: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    section {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
-    h2 {
-      margin-top: 0;
-      font-size: 1rem;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 5px;
-    }
-    form {
-      margin-bottom: 12px;
-    }
-    input, select, button {
-      padding: 8px;
-      margin: 4px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      width: 100%;
-      font-size: 0.9rem;
-    }
-    button {
-      background: #3498db;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover {
-      background: #2980b9;
-    }
-    .danger {
-      background: #e74c3c !important;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 0.85rem;
-    }
-    th, td {
-      border: 1px solid #eee;
-      padding: 6px;
-      text-align: left;
-    }
-    th {
-      background: #f0f3f5;
-    }
-    /* Modal */
-    #loginModal, #loadingModal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    #loginBox {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      width: 300px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-    #loadingModal {
-      display: none;
-      flex-direction: column;
-      color: #fff;
-      font-weight: bold;
-    }
-    .spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #3498db;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      animation: spin 1s linear infinite;
-      margin-bottom: 10px;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin POS</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Admin POS</h1>
-    <button id="logoutBtn">Kembali</button>
-  </header>
 
-  <main>
-    <section>
-      <h2>Kelola Akun</h2>
-      <form id="addAkunForm">
-        <input type="text" placeholder="Username" name="username" required>
-        <input type="password" placeholder="Password" name="password" required>
-        <select name="role">
-          <option value="admin">Admin</option>
-          <option value="kasir">Kasir</option>
-        </select>
-        <button type="submit">Tambah Akun</button>
-      </form>
-      <table id="akunTable">
-        <thead><tr><th>Username</th><th>Role</th><th>Aksi</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
+<div id="loading">Loading...</div>
 
-    <section>
-      <h2>Kelola Menu</h2>
-      <form id="addMenuForm">
-        <input type="text" placeholder="Nama Menu" name="nama" required>
-        <input type="number" placeholder="Harga" name="harga" required>
-        <select name="kategori">
-          <option value="makanan">Makanan</option>
-          <option value="minuman">Minuman</option>
-        </select>
-        <button type="submit">Tambah Menu</button>
-      </form>
-      <table id="menuTable">
-        <thead><tr><th>Nama</th><th>Harga</th><th>Kategori</th><th>Aksi</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>Transaksi Harian</h2>
-      <input type="date" id="filterTanggal">
-      <table id="rekapTable">
-        <thead><tr><th>Tanggal</th><th>Total Jual</th><th>Total Pengeluaran</th><th>Kas Akhir</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>Detail Transaksi</h2>
-      <table id="transaksiTable">
-        <thead>
-          <tr><th>Tanggal</th><th>Kasir</th><th>Menu</th><th>Keterangan</th><th>Jumlah</th><th>Harga</th><th>Subtotal</th><th>Aksi</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button class="danger" id="hapus3Bulan">Hapus Data > 3 Bulan</button>
-      <button class="danger" id="hapusSemua">Hapus Semua Transaksi</button>
-    </section>
-  </main>
-
-  <!-- Login Modal -->
-  <div id="loginModal">
-    <div id="loginBox">
-      <h2>Login Admin</h2>
-      <input type="text" id="loginUser" placeholder="Username">
-      <input type="password" id="loginPass" placeholder="Password">
-      <button id="loginBtn">Login</button>
-      <p id="loginError" style="color:red;display:none;">Login gagal</p>
-    </div>
+<div class="modal" id="loginModal">
+  <div class="modal-content">
+    <h3>Login Admin/Kasir</h3>
+    <input type="text" id="loginUsername" placeholder="Username"><br>
+    <input type="password" id="loginPassword" placeholder="Password"><br>
+    <button id="loginBtn">Login</button>
   </div>
+</div>
 
-  <!-- Loading Modal -->
-  <div id="loadingModal">
-    <div class="spinner"></div>
-    <div>Loading...</div>
-  </div>
+<header>
+  <h1>Admin POS</h1>
+  <button id="logoutBtn">Logout</button>
+</header>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbyOqy4kedkVWD-Z3P913_klhnO5nyMohaPMhUuFiAjNT5A_yozGkFfIzDGecXJ1rxgP/exec";
+<main>
+  <!-- Sidebar akun -->
+  <aside>
+    <h3>Akun</h3>
+    <input type="text" id="newUsername" placeholder="Username">
+    <input type="password" id="newPassword" placeholder="Password">
+    <select id="newRole">
+      <option value="admin">Admin</option>
+      <option value="kasir">Kasir</option>
+    </select>
+    <button id="addAkunBtn">Tambah Akun</button>
+    <table id="akunTable">
+      <thead><tr><th>Username</th><th>Role</th><th>Aksi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </aside>
 
-    const loginModal = document.getElementById("loginModal");
-    const loadingModal = document.getElementById("loadingModal");
+  <!-- Menu -->
+  <section>
+    <h3>Menu</h3>
+    <input type="text" id="menuNama" placeholder="Nama Menu">
+    <input type="number" id="menuHarga" placeholder="Harga">
+    <select id="menuKategori">
+      <option value="Makanan">Makanan</option>
+      <option value="Minuman">Minuman</option>
+      <option value="Cemilan">Cemilan</option>
+    </select>
+    <button id="addMenuBtn">Tambah Menu</button>
+    <table id="menuTable">
+      <thead><tr><th>Nama</th><th>Harga</th><th>Kategori</th><th>Aksi</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-    function showLoading() { loadingModal.style.display = "flex"; }
-    function hideLoading() { loadingModal.style.display = "none"; }
+  <!-- Transaksi -->
+  <aside>
+    <h3>Transaksi</h3>
+    <button id="refreshTransaksiBtn">Refresh Transaksi</button>
+    <table id="transaksiTable">
+      <thead>
+        <tr><th>ID</th><th>Tanggal</th><th>Kasir</th><th>Menu</th><th>Keterangan</th><th>Jumlah</th><th>Harga</th><th>Debit</th><th>Kredit</th><th>Aksi</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button id="openKasirBtn">Buka Kasir</button>
+  </aside>
+</main>
 
-    // Session check
-    window.addEventListener("load", () => {
-      if(localStorage.getItem("adminSession")){
-        loginModal.style.display = "none";
-        loadAllData();
-      }
-    });
+<script>
+const apiUrl = 'https://script.google.com/macros/s/AKfycbyTh7GmIHn45Lq58gnQuT-ebKZtn9HARFIFIKzb9NxIvjd7a34qRYeCoLbqs_UzxBjd/exec';
+let sessionUser = JSON.parse(localStorage.getItem('adminSession')) || null;
 
-    // Login
-    document.getElementById("loginBtn").onclick = async () => {
-      const username = document.getElementById("loginUser").value;
-      const password = document.getElementById("loginPass").value;
-      showLoading();
-      try {
-        const res = await fetch(API_URL+"?action=login", {
-          method:"POST",
-          body: JSON.stringify({username,password})
-        });
-        const data = await res.json();
-        if(data.success && data.role==="admin"){
-          localStorage.setItem("adminSession", username);
-          loginModal.style.display = "none";
-          loadAllData();
-        } else {
-          document.getElementById("loginError").style.display="block";
-        }
-      } catch(e){ alert("Error koneksi"); }
-      hideLoading();
-    };
+function showLogin(){
+  document.getElementById('loginModal').style.display='block';
+}
 
-    // Logout
-    document.getElementById("logoutBtn").onclick = () => {
-      localStorage.removeItem("adminSession");
-      window.location.href = "index.html";
-    };
-
-    // Back device dianggap logout
-    window.addEventListener("popstate", () => {
-      localStorage.removeItem("adminSession");
-      window.location.href = "index.html";
-    });
-
-    // Load semua data
-    async function loadAllData(){
-      showLoading();
-      await loadAkun();
-      await loadMenu();
-      await loadRekap();
-      await loadTransaksi();
-      hideLoading();
+function doLogin(){
+  const user = document.getElementById('loginUsername').value;
+  const pw = document.getElementById('loginPassword').value;
+  fetch(apiUrl,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'login',username:user,password:pw})
+  }).then(r=>r.json()).then(res=>{
+    if(res.status=='success'){
+      sessionUser = {username:res.username, role:res.role};
+      localStorage.setItem('adminSession',JSON.stringify(sessionUser));
+      document.getElementById('loginModal').style.display='none';
+      alert('Login berhasil! Role: '+res.role);
+    } else {
+      alert('Login gagal: '+res.message);
     }
+  }).catch(err=>{
+    alert('Fetch error, pastikan jalankan dari server (localhost/GitHub Pages).');
+  });
+}
 
-    async function loadAkun(){
-      const res = await fetch(API_URL+"?action=getAkun");
-      const data = await res.json();
-      const tbody = document.querySelector("#akunTable tbody");
-      tbody.innerHTML="";
-      data.forEach(row=>{
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${row.username}</td><td>${row.role}</td>
-        <td><button class="danger" onclick="hapusAkun('${row.username}')">Hapus</button></td>`;
-        tbody.appendChild(tr);
-      });
-    }
+function logout(){
+  localStorage.removeItem('adminSession');
+  sessionUser=null;
+  showLogin();
+}
 
-    async function hapusAkun(username){
-      if(confirm("Hapus akun "+username+"?")){
-        showLoading();
-        await fetch(API_URL+"?action=deleteAkun", {
-          method:"POST", body: JSON.stringify({username})
-        });
-        loadAkun(); hideLoading();
-      }
-    }
+function openKasir(){
+  if(sessionUser && (sessionUser.role=='admin'||sessionUser.role=='kasir')){
+    window.open('kasir.html','_blank');
+  } else alert('Hanya admin/kasir yang bisa akses kasir!');
+}
 
-    document.getElementById("addAkunForm").onsubmit = async (e)=>{
-      e.preventDefault();
-      const fd=new FormData(e.target);
-      showLoading();
-      await fetch(API_URL+"?action=addAkun", {
-        method:"POST", body: JSON.stringify(Object.fromEntries(fd))
-      });
-      e.target.reset();
-      loadAkun(); hideLoading();
-    };
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('logoutBtn').addEventListener('click',logout);
+document.getElementById('openKasirBtn').addEventListener('click',openKasir);
 
-    async function loadMenu(){
-      const res = await fetch(API_URL+"?action=getMenu");
-      const data = await res.json();
-      const tbody = document.querySelector("#menuTable tbody");
-      tbody.innerHTML="";
-      data.forEach(row=>{
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${row.nama}</td><td>${row.harga}</td><td>${row.kategori}</td>
-        <td><button class="danger" onclick="hapusMenu('${row.id}')">Hapus</button></td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function hapusMenu(id){
-      if(confirm("Hapus menu?")){
-        showLoading();
-        await fetch(API_URL+"?action=deleteMenu", {
-          method:"POST", body: JSON.stringify({id})
-        });
-        loadMenu(); hideLoading();
-      }
-    }
-
-    document.getElementById("addMenuForm").onsubmit = async (e)=>{
-      e.preventDefault();
-      const fd=new FormData(e.target);
-      showLoading();
-      await fetch(API_URL+"?action=addMenu", {
-        method:"POST", body: JSON.stringify(Object.fromEntries(fd))
-      });
-      e.target.reset();
-      loadMenu(); hideLoading();
-    };
-
-    async function loadRekap(){
-      const tgl=document.getElementById("filterTanggal").value || new Date().toISOString().split("T")[0];
-      const res = await fetch(API_URL+"?action=getRekap&tgl="+tgl);
-      const data = await res.json();
-      const tbody = document.querySelector("#rekapTable tbody");
-      tbody.innerHTML="";
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${tgl}</td><td>${data.totalJual}</td><td>${data.totalKeluar}</td><td>${data.kasAkhir}</td>`;
-      tbody.appendChild(tr);
-    }
-    document.getElementById("filterTanggal").onchange=loadRekap;
-
-    async function loadTransaksi(){
-      const tgl=document.getElementById("filterTanggal").value || new Date().toISOString().split("T")[0];
-      const res = await fetch(API_URL+"?action=getTransaksi&tgl="+tgl);
-      const data = await res.json();
-      const tbody = document.querySelector("#transaksiTable tbody");
-      tbody.innerHTML="";
-      data.forEach(row=>{
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${row.tgl}</td><td>${row.kasir}</td><td>${row.menu}</td>
-        <td>${row.keterangan||""}</td><td>${row.jumlah||""}</td><td>${row.harga||""}</td><td>${row.subtotal}</td>
-        <td><button class="danger" onclick="hapusTransaksi('${row.id}')">Hapus</button></td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    async function hapusTransaksi(id){
-      if(confirm("Hapus transaksi?")){
-        showLoading();
-        await fetch(API_URL+"?action=deleteTransaksi", {
-          method:"POST", body: JSON.stringify({id})
-        });
-        loadTransaksi(); hideLoading();
-      }
-    }
-
-    document.getElementById("hapus3Bulan").onclick = async ()=>{
-      if(confirm("Hapus semua transaksi lebih dari 3 bulan?")){
-        showLoading();
-        await fetch(API_URL+"?action=delete3Bulan");
-        loadTransaksi(); hideLoading();
-      }
-    };
-
-    document.getElementById("hapusSemua").onclick = async ()=>{
-      const pw=prompt("Masukkan password admin untuk konfirmasi:");
-      if(pw){
-        showLoading();
-        await fetch(API_URL+"?action=deleteAll", {
-          method:"POST", body: JSON.stringify({password:pw})
-        });
-        loadTransaksi(); hideLoading();
-      }
-    };
-  </script>
+if(!sessionUser) showLogin();
+</script>
 </body>
 </html>
